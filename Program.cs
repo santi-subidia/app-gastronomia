@@ -80,6 +80,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // =============================================
 builder.Services.AddScoped<IPedidoService, PedidoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
 // =============================================
 // 6. CORS (abierto para desarrollo; restringir en producción)
