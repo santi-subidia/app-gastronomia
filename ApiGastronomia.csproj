@@ -17,4 +17,12 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.3" />
   </ItemGroup>
 
+  <!-- Excluir el directorio de tests de la compilación del proyecto principal -->
+  <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <Content Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+  </ItemGroup>
+
 </Project>
