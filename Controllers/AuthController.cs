@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApiGastronomia.Controllers;
 
@@ -34,4 +35,4 @@ public class AuthController : ControllerBase
 /// <summary>
 /// Request DTO for login. Inline in controller following project convention.
 /// </summary>
-public record LoginRequest(string UsuarioNombre, string Password);
+public record LoginRequest(string UsuarioNombre, [property: MinLength(6)] string Password);
