@@ -140,6 +140,10 @@ public class AppDbContext : DbContext
             .HasIndex(u => u.UsuarioNombre)
             .IsUnique();
 
+        modelBuilder.Entity<Producto>()
+            .HasIndex(p => p.Nombre)
+            .IsUnique();
+
         modelBuilder.Entity<Rol>()
             .HasIndex(r => r.Nombre)
             .IsUnique();
