@@ -13,10 +13,22 @@ namespace ApiGastronomia.Tests.Services;
 
 public class AuthServiceTests
 {
+    private static void SeedRoles(AppDbContext context)
+    {
+        if (!context.Roles.Any())
+        {
+            context.Roles.AddRange(
+                new Rol { Id = 1, Nombre = "Cajero" },
+                new Rol { Id = 2, Nombre = "Cocina" },
+                new Rol { Id = 3, Nombre = "Repartidor" }
+            );
+            context.SaveChanges();
+        }
+    }
+
     /// <summary>
     /// Helper to create an InMemory DbContext seeded with a test user.
-    /// Uses roles from HasData seed (Ids 1-4: Admin, Cocinero, Repartidor, Cajero)
-    /// to avoid conflicts with AppDbContext.OnModelCreating seed data.
+    /// Uses SeedRoles helper to insert test roles matching production names.
     /// The password is hashed with BCrypt so that BCrypt.Verify works in tests.
     /// </summary>
     private static (AppDbContext Context, JwtSettings Settings) CreateDbContextAndSettings(
@@ -24,19 +36,17 @@ public class AuthServiceTests
         string plainPassword = "test123",
         bool activo = true,
         bool disponible = true,
-        int rolId = 1) // Default to Admin role from seed data
+        int rolId = 1) // Default to Cajero role
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase($"AuthTestDb_{Guid.NewGuid()}")
             .Options;
 
         var context = new AppDbContext(options);
-
-        // Ensure seed data is materialized (HasData from OnModelCreating)
-        // InMemory applies HasData on first use, so we force it by accessing the DB
         context.Database.EnsureCreated();
+        SeedRoles(context);
 
-        // Find the seeded role by ID (HasData seeds: 1=Admin, 2=Cocinero, 3=Repartidor, 4=Cajero)
+        // Find the seeded role by ID (SeedRoles: 1=Cajero, 2=Cocina, 3=Repartidor)
         var rol = context.Roles.First(r => r.Id == rolId);
 
         // Seed a User with BCrypt-hashed password linked to the seeded role
@@ -80,7 +90,7 @@ public class AuthServiceTests
         Assert.NotNull(result);
         Assert.Equal("admin", result!.UsuarioNombre);
         Assert.Equal(1, result.RolId);
-        Assert.Equal("Admin", result.RolNombre);
+        Assert.Equal("Cajero", result.RolNombre);
         Assert.False(string.IsNullOrEmpty(result.Token), "Token should not be empty");
         Assert.True(result.ExpiraEn > DateTime.UtcNow, "ExpiraEn should be in the future");
 
@@ -113,7 +123,7 @@ public class AuthServiceTests
         Assert.NotNull(uniqueNameClaim);
         Assert.Equal("admin", uniqueNameClaim!.Value);
         Assert.NotNull(roleClaim);
-        Assert.Equal("Admin", roleClaim!.Value);
+        Assert.Equal("Cajero", roleClaim!.Value);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -223,11 +233,11 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_DifferentRole_ReturnsCorrectRoleInToken()
     {
-        // Arrange: user with "Cocinero" role (Id=2 from HasData seed)
+        // Arrange: user with "Cocina" role (Id=2)
         var (context, settings) = CreateDbContextAndSettings(
             username: "cocinero1",
             plainPassword: "cocina123",
-            rolId: 2); // Cocinero role from seed data
+            rolId: 2); // Cocina role
         var service = new AuthService(context, settings);
 
         // Act
@@ -235,13 +245,13 @@ public class AuthServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("Cocinero", result!.RolNombre);
+        Assert.Equal("Cocina", result!.RolNombre);
 
         // Verify token has the correct role claim
         var handler = new JwtSecurityTokenHandler();
         var token = handler.ReadJwtToken(result.Token);
         var roleClaim = token.Claims.FirstOrDefault(c => c.Type == "role");
-        Assert.Equal("Cocinero", roleClaim!.Value);
+        Assert.Equal("Cocina", roleClaim!.Value);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();

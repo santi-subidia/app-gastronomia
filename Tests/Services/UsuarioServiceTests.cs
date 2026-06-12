@@ -9,10 +9,22 @@ namespace ApiGastronomia.Tests.Services;
 
 public class UsuarioServiceTests
 {
+    private static void SeedRoles(AppDbContext context)
+    {
+        if (!context.Roles.Any())
+        {
+            context.Roles.AddRange(
+                new Rol { Id = 1, Nombre = "Cajero" },
+                new Rol { Id = 2, Nombre = "Cocina" },
+                new Rol { Id = 3, Nombre = "Repartidor" }
+            );
+            context.SaveChanges();
+        }
+    }
+
     /// <summary>
     /// Helper to create an InMemory DbContext with seeded roles.
-    /// Uses the same pattern as AuthServiceTests: EnsureCreated() + query seeded roles
-    /// to avoid conflicts with OnModelCreating HasData seed data.
+    /// Uses SeedRoles helper to insert test roles matching production names.
     /// </summary>
     private static AppDbContext CreateDbContext(string? dbName = null)
     {
@@ -22,11 +34,12 @@ public class UsuarioServiceTests
 
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
+        SeedRoles(context);
         return context;
     }
 
     /// <summary>
-    /// Seeds a user with BCrypt-hashed password and a valid role from HasData.
+    /// Seeds a user with BCrypt-hashed password and a valid role from SeedRoles.
     /// Returns (context, user) so tests can reference the seeded entity.
     /// </summary>
     private static (AppDbContext Context, Usuario User) SeedUser(
@@ -106,7 +119,7 @@ public class UsuarioServiceTests
     [Fact]
     public async Task ObtenerUsuariosAsync_IncludesRolNavigation()
     {
-        // Arrange: seed user with Admin role (Id=1)
+        // Arrange: seed user with Cajero role (Id=1)
         var context = CreateDbContext();
         SeedUser(context, username: "admin_user", plainPassword: "pass123", rolId: 1);
         var service = new UsuarioService(context);
@@ -116,7 +129,7 @@ public class UsuarioServiceTests
 
         // Assert: RolNombre is populated from the navigation property
         var user = result.First();
-        Assert.Equal("Admin", user.RolNombre);
+        Assert.Equal("Cajero", user.RolNombre);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -143,7 +156,7 @@ public class UsuarioServiceTests
         Assert.Equal(user.Id, result!.Id);
         Assert.Equal("findme", result.UsuarioNombre);
         Assert.Equal(1, result.RolId);
-        Assert.Equal("Admin", result.RolNombre);
+        Assert.Equal("Cajero", result.RolNombre);
         Assert.True(result.Disponible);
         Assert.True(result.Activo);
 
@@ -187,7 +200,7 @@ public class UsuarioServiceTests
         // Assert: response DTO has correct fields
         Assert.Equal("newuser", result.UsuarioNombre);
         Assert.Equal(1, result.RolId);
-        Assert.Equal("Admin", result.RolNombre);
+        Assert.Equal("Cajero", result.RolNombre);
         Assert.True(result.Activo);
         Assert.True(result.Disponible);
 
@@ -357,15 +370,15 @@ public class UsuarioServiceTests
     [Fact]
     public async Task CrearUsuarioAsync_WithDifferentRole_ReturnsCorrectRolNombre()
     {
-        // Arrange: create user with Cocinero role (Id=2)
+        // Arrange: create user with Cocina role (Id=2)
         var context = CreateDbContext();
         var service = new UsuarioService(context);
 
         // Act
         var result = await service.CrearUsuarioAsync("cocinero1", "chefpass", rolId: 2);
 
-        // Assert: role name matches from HasData seed
-        Assert.Equal("Cocinero", result.RolNombre);
+        // Assert: role name matches from SeedRoles helper
+        Assert.Equal("Cocina", result.RolNombre);
         Assert.Equal(2, result.RolId);
 
         // Cleanup
