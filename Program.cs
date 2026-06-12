@@ -84,6 +84,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<RoleSeedService>();
 builder.Services.AddScoped<UserSeedService>();
+builder.Services.AddScoped<MetodoVentaSeedService>();
+builder.Services.AddScoped<MetodoPagoSeedService>();
+builder.Services.AddScoped<EstadoPedidoSeedService>();
 
 // =============================================
 // 6. CORS (abierto para desarrollo; restringir en producción)
@@ -116,11 +119,17 @@ if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
     using var scope = app.Services.CreateScope();
     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeedService>();
     var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeedService>();
+    var metodoVentaSeeder = scope.ServiceProvider.GetRequiredService<MetodoVentaSeedService>();
+    var metodoPagoSeeder = scope.ServiceProvider.GetRequiredService<MetodoPagoSeedService>();
+    var estadoPedidoSeeder = scope.ServiceProvider.GetRequiredService<EstadoPedidoSeedService>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     logger.LogInformation("Ejecutando seeds...");
     await roleSeeder.SeedAsync();
     await userSeeder.SeedAsync();
+    await metodoVentaSeeder.SeedAsync();
+    await metodoPagoSeeder.SeedAsync();
+    await estadoPedidoSeeder.SeedAsync();
     logger.LogInformation("Seeds completados");
 }
 
