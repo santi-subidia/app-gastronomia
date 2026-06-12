@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ApiGastronomia.Infrastructure.Data;
+using ApiGastronomia.Infrastructure.Data.Seeds;
 using ApiGastronomia.Services;
 using ApiGastronomia.Services.Hubs;
 using ApiGastronomia.Services.Interfaces;
@@ -53,6 +54,8 @@ builder.Services.AddSignalR();
 // 5. Inyección de Dependencias - Servicios
 // =============================================
 builder.Services.AddScoped<IPedidoService, PedidoService>();
+builder.Services.AddScoped<RoleSeedService>();
+builder.Services.AddScoped<UserSeedService>();
 
 // =============================================
 // 6. CORS (abierto para desarrollo; restringir en producción)
@@ -76,6 +79,22 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// =============================================
+// Seed de datos (solo cuando Database:RunSeeds = true)
+// =============================================
+if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
+{
+    using var scope = app.Services.CreateScope();
+    var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeedService>();
+    var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeedService>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    logger.LogInformation("Ejecutando seeds...");
+    await roleSeeder.SeedAsync();
+    await userSeeder.SeedAsync();
+    logger.LogInformation("Seeds completados");
+}
 
 // =============================================
 // Pipeline HTTP
