@@ -35,4 +35,4 @@ public class AuthController : ControllerBase
 /// <summary>
 /// Request DTO for login. Inline in controller following project convention.
 /// </summary>
-public record LoginRequest(string UsuarioNombre, [property: MinLength(6)] string Password);
+public record LoginRequest(string UsuarioNombre, [MinLength(6)] string Password);

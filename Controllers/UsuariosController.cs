@@ -110,9 +110,9 @@ public class UsuariosController : ControllerBase
 /// <summary>
 /// Request DTO for creating a user. Inline in controller following project convention.
 /// </summary>
-public record CreateUserRequest(string UsuarioNombre, [property: MinLength(6)] string Password, int RolId);
+public record CreateUserRequest(string UsuarioNombre, [MinLength(6)] string Password, int RolId);
 
 /// <summary>
 /// Request DTO for updating a user. All fields are optional (partial update).
 /// </summary>
-public record UpdateUserRequest(string? UsuarioNombre, [property: MinLength(6)] string? Password, int? RolId, bool? Disponible);
+public record UpdateUserRequest(string? UsuarioNombre, [MinLength(6)] string? Password, int? RolId, bool? Disponible);
