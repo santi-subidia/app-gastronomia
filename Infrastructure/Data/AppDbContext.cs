@@ -160,12 +160,5 @@ public class AppDbContext : DbContext
             new EstadoPedido { Id = 6, Nombre = "Retirado" },
             new EstadoPedido { Id = 7, Nombre = "Cancelado" }
         );
-
-        modelBuilder.Entity<Rol>().HasData(
-            new Rol { Id = 1, Nombre = "Admin" },
-            new Rol { Id = 2, Nombre = "Cocinero" },
-            new Rol { Id = 3, Nombre = "Repartidor" },
-            new Rol { Id = 4, Nombre = "Cajero" }
-        );
     }
 }
