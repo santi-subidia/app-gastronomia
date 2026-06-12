@@ -8,5 +8,6 @@ public enum EstadoPedidoEnum
     EnCamino = 4,
     Entregado = 5,
     Retirado = 6,
-    Cancelado = 7
+    Cancelado = 7,
+    Devuelto = 8
 }

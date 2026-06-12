@@ -149,16 +149,7 @@ public class AppDbContext : DbContext
             .IsUnique();
 
         // ================================================================
-        // Seed Data
+        // Seed Data — EstadoPedido seed moved to EstadoPedidoSeedService
         // ================================================================
-        modelBuilder.Entity<EstadoPedido>().HasData(
-            new EstadoPedido { Id = 1, Nombre = "Pendiente" },
-            new EstadoPedido { Id = 2, Nombre = "EnPreparacion" },
-            new EstadoPedido { Id = 3, Nombre = "ListoParaRetirar" },
-            new EstadoPedido { Id = 4, Nombre = "EnCamino" },
-            new EstadoPedido { Id = 5, Nombre = "Entregado" },
-            new EstadoPedido { Id = 6, Nombre = "Retirado" },
-            new EstadoPedido { Id = 7, Nombre = "Cancelado" }
-        );
     }
 }
