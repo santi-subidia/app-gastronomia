@@ -3,8 +3,11 @@ namespace ApiGastronomia.Tests;
 public class SmokeTests
 {
     [Fact]
-    public void TestRunner_Works()
+    public void Domain_Assembly_Loads()
     {
-        Assert.True(true);
+        // Verify core domain type is loadable
+        var type = typeof(ApiGastronomia.Domain.Entities.Usuario);
+        Assert.NotNull(type);
+        Assert.Equal("Usuario", type.Name);
     }
 }
