@@ -9,6 +9,8 @@ using ApiGastronomia.Services;
 using ApiGastronomia.Services.Hubs;
 using ApiGastronomia.Services.Interfaces;
 using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +25,41 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    // DocumentTransformer: define el security scheme "Bearer" en components/securitySchemes
+    options.AddDocumentTransformer((document, context, ct) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Token JWT del endpoint /api/auth/login"
+        };
+        return Task.CompletedTask;
+    });
+
+    // OperationTransformer: agrega security requirement solo a endpoints con [Authorize]
+    options.AddOperationTransformer((operation, context, ct) =>
+    {
+        var hasAuthorize = context.Description.ActionDescriptor.EndpointMetadata
+            .OfType<AuthorizeAttribute>()
+            .Any();
+
+        if (!hasAuthorize) return Task.CompletedTask;
+
+        operation.Security ??= new List<OpenApiSecurityRequirement>();
+        operation.Security.Add(new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer")] = new List<string>()
+        });
+
+        return Task.CompletedTask;
+    });
+});
 
 // =============================================
 // 2. Entity Framework Core -> PostgreSQL
@@ -142,13 +178,14 @@ if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.Authentication = new ScalarAuthenticationOptions
-        {
-            PreferredSecurityScheme = "Bearer"
-        };
-    });
+    // Scalar: API fluida con persistencia del token JWT
+    //   - AddPreferredSecuritySchemes: preselecciona "Bearer" en la UI
+    //   - EnablePersistentAuthentication: guarda el token en localStorage
+    //     Lo pegás UNA VEZ y se reusa en todos los endpoints y sesiones
+    app.MapScalarApiReference(options => options
+        .AddPreferredSecuritySchemes("Bearer")
+        .EnablePersistentAuthentication()
+    );
     app.UseCors("DevCors");
 }
 
