@@ -19,27 +19,69 @@ public class CajasController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Opens a new caja (apertura). Only one open caja can exist at a time.
+    /// </summary>
     [HttpPost("apertura")]
-    public Task<ActionResult<CajaResponse>> Apertura([FromBody] AperturaRequest request)
+    public async Task<ActionResult<CajaResponse>> Apertura([FromBody] AperturaRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var result = await _cajaService.AperturaAsync(request.UsuarioAperturaId, request.MontoApertura);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Mensaje = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Mensaje = ex.Message });
+        }
     }
 
+    /// <summary>
+    /// Closes an existing open caja by ID (cierre).
+    /// </summary>
     [HttpPost("{id:int}/cierre")]
-    public Task<ActionResult<CajaResponse>> Cerrar(int id, [FromBody] CierreRequest request)
+    public async Task<ActionResult<CajaResponse>> Cerrar(int id, [FromBody] CierreRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var result = await _cajaService.CierreAsync(
+                id, request.UsuarioCierreId, request.MontoCierreTeorico, request.MontoCierreReal);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Mensaje = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Mensaje = ex.Message });
+        }
     }
 
+    /// <summary>
+    /// Returns all cajas, optionally filtered by estado (abiertas/cerradas).
+    /// </summary>
     [HttpGet]
-    public Task<ActionResult<IEnumerable<CajaResponse>>> GetAll([FromQuery] string? estado = null)
+    public async Task<ActionResult<IEnumerable<CajaResponse>>> GetAll([FromQuery] string? estado = null)
     {
-        throw new NotImplementedException();
+        var cajas = await _cajaService.ObtenerTodasAsync(estado);
+        return Ok(cajas);
     }
 
+    /// <summary>
+    /// Returns a single caja by ID.
+    /// </summary>
     [HttpGet("{id:int}")]
-    public Task<ActionResult<CajaResponse>> GetById(int id)
+    public async Task<ActionResult<CajaResponse>> GetById(int id)
     {
-        throw new NotImplementedException();
+        var caja = await _cajaService.ObtenerPorIdAsync(id);
+        if (caja is null)
+            return NotFound(new { Mensaje = "Caja no encontrada." });
+
+        return Ok(caja);
     }
 }
