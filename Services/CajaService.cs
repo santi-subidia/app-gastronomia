@@ -76,9 +76,7 @@ public class CajaService : ICajaService
 
     public async Task<IEnumerable<CajaResponse>> ObtenerTodasAsync(string? estado = null)
     {
-        IQueryable<Caja> query = _context.Cajas
-            .Include(c => c.UsuarioApertura)
-            .Include(c => c.UsuarioCierre);
+        IQueryable<Caja> query = _context.Cajas;
 
         if (estado == "abiertas")
             query = query.Where(c => c.FechaCierre == null);
