@@ -1,0 +1,33 @@
+namespace ApiGastronomia.Domain.DTOs;
+
+/// <summary>
+/// DTO de respuesta para cajas. Proyectado desde la entidad Caja.
+/// </summary>
+public record CajaResponse(
+    int Id,
+    int UsuarioAperturaId,
+    string UsuarioAperturaNombre,
+    int? UsuarioCierreId,
+    string? UsuarioCierreNombre,
+    DateTime FechaApertura,
+    DateTime? FechaCierre,
+    decimal MontoApertura,
+    decimal? MontoCierreTeorico,
+    decimal? MontoCierreReal
+)
+{
+    /// <summary>
+    /// Computed estado: "abierta" when FechaCierre is null, "cerrada" otherwise.
+    /// </summary>
+    public string Estado => FechaCierre == null ? "abierta" : "cerrada";
+}
+
+/// <summary>
+/// Request DTO for opening a new caja (apertura).
+/// </summary>
+public record AperturaRequest(int UsuarioAperturaId, decimal MontoApertura);
+
+/// <summary>
+/// Request DTO for closing an existing caja (cierre).
+/// </summary>
+public record CierreRequest(int UsuarioCierreId, decimal MontoCierreTeorico, decimal MontoCierreReal);
