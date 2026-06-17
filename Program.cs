@@ -128,6 +128,7 @@ builder.Services.AddScoped<UserSeedService>();
 builder.Services.AddScoped<MetodoVentaSeedService>();
 builder.Services.AddScoped<MetodoPagoSeedService>();
 builder.Services.AddScoped<EstadoPedidoSeedService>();
+builder.Services.AddScoped<ProductoSeedService>();
 
 // =============================================
 // 6. CORS (abierto para desarrollo; restringir en producción)
@@ -163,6 +164,7 @@ if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
     var metodoVentaSeeder = scope.ServiceProvider.GetRequiredService<MetodoVentaSeedService>();
     var metodoPagoSeeder = scope.ServiceProvider.GetRequiredService<MetodoPagoSeedService>();
     var estadoPedidoSeeder = scope.ServiceProvider.GetRequiredService<EstadoPedidoSeedService>();
+    var productoSeeder = scope.ServiceProvider.GetRequiredService<ProductoSeedService>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     logger.LogInformation("Ejecutando seeds...");
@@ -171,6 +173,7 @@ if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
     await metodoVentaSeeder.SeedAsync();
     await metodoPagoSeeder.SeedAsync();
     await estadoPedidoSeeder.SeedAsync();
+    await productoSeeder.SeedAsync();
     logger.LogInformation("Seeds completados");
 }
 
