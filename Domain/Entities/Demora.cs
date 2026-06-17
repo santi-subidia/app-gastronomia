@@ -36,4 +36,11 @@ public class Demora
     [MaxLength(100)]
     [Column("sector")]
     public string? Sector { get; set; }
+
+    /// <summary>
+    /// Observaciones adicionales sobre la demora.
+    /// </summary>
+    [MaxLength(500)]
+    [Column("observaciones")]
+    public string? Observaciones { get; set; }
 }

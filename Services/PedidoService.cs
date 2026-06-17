@@ -151,36 +151,4 @@ public class PedidoService : IPedidoService
         _logger.LogInformation("Repartidor #{RepartidorId} asignado al pedido #{PedidoId}", repartidorId, pedidoId);
         return pedido;
     }
-
-    public async Task<Demora> RegistrarDemoraAsync(int pedidoId, int usuarioId, int demoraMinutos, string? sector)
-    {
-        _ = await _context.Pedidos.FindAsync(pedidoId)
-            ?? throw new KeyNotFoundException($"Pedido #{pedidoId} no encontrado.");
-
-        _ = await _context.Usuarios.FindAsync(usuarioId)
-            ?? throw new KeyNotFoundException($"Usuario #{usuarioId} no encontrado.");
-
-        var demora = new Demora
-        {
-            PedidoId = pedidoId,
-            UsuarioId = usuarioId,
-            DemoraMinutos = demoraMinutos,
-            Sector = sector
-        };
-
-        _context.Demoras.Add(demora);
-        await _context.SaveChangesAsync();
-
-        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("DemoraRegistrada", new
-        {
-            PedidoId = pedidoId,
-            Motivo = sector ?? "No especificado",
-            TiempoEstimadoMinutos = demoraMinutos,
-            Fecha = DateTime.UtcNow
-        });
-
-        _logger.LogInformation("Demora registrada en pedido #{PedidoId}: {Minutos}min (sector: {Sector})",
-            pedidoId, demoraMinutos, sector);
-        return demora;
-    }
 }

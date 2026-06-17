@@ -125,24 +125,6 @@ public class PedidosController : ControllerBase
             return NotFound(new { Mensaje = ex.Message });
         }
     }
-
-    /// <summary>
-    /// Registra una demora en un pedido.
-    /// </summary>
-    [HttpPost("{id:int}/demora")]
-    public async Task<ActionResult<Demora>> RegistrarDemora(int id, [FromBody] RegistrarDemoraRequest request)
-    {
-        try
-        {
-            var demora = await _pedidoService.RegistrarDemoraAsync(
-                id, request.UsuarioId, request.DemoraMinutos, request.Sector);
-            return CreatedAtAction(nameof(GetPedido), new { id }, demora);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { Mensaje = ex.Message });
-        }
-    }
 }
 
 // ---- Request DTOs inline ----
@@ -170,4 +152,3 @@ public record CrearDetalleRequest(
 
 public record CambiarEstadoRequest(EstadoPedidoEnum NuevoEstado);
 public record AsignarRepartidorRequest(int RepartidorId);
-public record RegistrarDemoraRequest(int UsuarioId, int DemoraMinutos, string? Sector);

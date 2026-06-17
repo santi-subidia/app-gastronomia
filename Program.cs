@@ -121,6 +121,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
+builder.Services.AddScoped<IDemoraService, DemoraService>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<RoleSeedService>();
 builder.Services.AddScoped<UserSeedService>();
 builder.Services.AddScoped<MetodoVentaSeedService>();
