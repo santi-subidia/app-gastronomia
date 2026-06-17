@@ -58,3 +58,4 @@ secrets.json
 *.log
 *.tmp
 *.cache
+Tests/TestResults/
