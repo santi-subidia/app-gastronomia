@@ -69,13 +69,3 @@ public class ConfiguracionController : ControllerBase
         return Ok(result);
     }
 }
-
-/// <summary>
-/// Request DTO for creating the singleton configuration.
-/// </summary>
-public record CrearConfiguracionRequest(int? MetodoPagoDefaultId, string? NombreGastronomico, double? LatitudPartida, double? LongitudPartida);
-
-/// <summary>
-/// Request DTO for partially updating the singleton configuration. All fields are optional.
-/// </summary>
-public record ActualizarConfiguracionRequest(int? MetodoPagoDefaultId, string? NombreGastronomico, double? LatitudPartida, double? LongitudPartida);

@@ -87,24 +87,3 @@ public class DemorasController : ControllerBase
         return NoContent();
     }
 }
-
-// ---- Request DTOs inline (same pattern as ProductosController) ----
-
-/// <summary>
-/// Request DTO for creating a demora.
-/// </summary>
-public record CrearDemoraRequest(
-    int PedidoId,
-    int DemoraMinutos,
-    string? Sector,
-    string? Observaciones
-);
-
-/// <summary>
-/// Request DTO for updating a demora.
-/// </summary>
-public record ActualizarDemoraRequest(
-    int DemoraMinutos,
-    string? Sector,
-    string? Observaciones
-);

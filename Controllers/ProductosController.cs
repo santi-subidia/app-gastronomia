@@ -96,13 +96,3 @@ public class ProductosController : ControllerBase
         return NoContent();
     }
 }
-
-/// <summary>
-/// Request DTO for creating a product.
-/// </summary>
-public record CrearProductoRequest(string Nombre, double Precio, int Demora);
-
-/// <summary>
-/// Request DTO for updating a product. All fields are optional (partial update).
-/// </summary>
-public record ActualizarProductoRequest(string? Nombre, double? Precio, int? Demora);

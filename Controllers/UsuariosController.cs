@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
-using System.ComponentModel.DataAnnotations;
 
 namespace ApiGastronomia.Controllers;
 
@@ -106,13 +105,3 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 }
-
-/// <summary>
-/// Request DTO for creating a user. Inline in controller following project convention.
-/// </summary>
-public record CreateUserRequest(string UsuarioNombre, [MinLength(6)] string Password, int RolId);
-
-/// <summary>
-/// Request DTO for updating a user. All fields are optional (partial update).
-/// </summary>
-public record UpdateUserRequest(string? UsuarioNombre, [MinLength(6)] string? Password, int? RolId, bool? Disponible);

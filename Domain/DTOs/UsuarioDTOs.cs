@@ -1,9 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ApiGastronomia.Domain.DTOs;
 
 /// <summary>
 /// DTOs para autenticación y gestión de usuarios.
-/// Los request DTOs específicos de cada endpoint viven inline en su controller.
-/// Los DTOs compartidos entre múltiples controllers van aquí.
+/// Todos los DTOs (request y response) centralizados aquí por entidad.
 /// </summary>
 
 /// <summary>
@@ -29,3 +30,18 @@ public record UsuarioResponse(
     bool Disponible,
     bool Activo
 );
+
+/// <summary>
+/// Request DTO for login.
+/// </summary>
+public record LoginRequest(string UsuarioNombre, [MinLength(6)] string Password);
+
+/// <summary>
+/// Request DTO for creating a user.
+/// </summary>
+public record CreateUserRequest(string UsuarioNombre, [MinLength(6)] string Password, int RolId);
+
+/// <summary>
+/// Request DTO for updating a user. All fields are optional (partial update).
+/// </summary>
+public record UpdateUserRequest(string? UsuarioNombre, [MinLength(6)] string? Password, int? RolId, bool? Disponible);

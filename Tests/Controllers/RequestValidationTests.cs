@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using ApiGastronomia.Controllers;
+using ApiGastronomia.Domain.DTOs;
 
 namespace ApiGastronomia.Tests.Controllers;
 
