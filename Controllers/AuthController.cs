@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using ApiGastronomia.Domain.DTOs;
@@ -22,6 +23,7 @@ public class AuthController : ControllerBase
     /// Rate-limited to 10 requests per minute per IP.
     /// </summary>
     [EnableRateLimiting("LoginPolicy")]
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
