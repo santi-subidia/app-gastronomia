@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Enums;
@@ -8,8 +9,10 @@ namespace ApiGastronomia.Services.Hubs;
 /// <summary>
 /// Hub de SignalR para comunicación en tiempo real entre cocina, repartidores y clientes.
 /// Requiere autenticación JWT para todas las conexiones.
+/// Excluido del rate limiting global — las conexiones WebSocket no deben ser limitadas.
 /// </summary>
 [Authorize]
+[DisableRateLimiting]
 public class LogisticaHub : Hub
 {
     private readonly ILogger<LogisticaHub> _logger;

@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using ApiGastronomia.Infrastructure.Data;
 using ApiGastronomia.Infrastructure.Data.Seeds;
@@ -11,6 +13,7 @@ using ApiGastronomia.Services.Interfaces;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -150,6 +153,65 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // =============================================
+// 4c. Rate Limiting — protección contra abuso
+// =============================================
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+    {
+        if (HttpMethods.IsOptions(ctx.Request.Method))
+            return RateLimitPartition.GetNoLimiter("OPTIONS");
+
+        var key = ctx.User.FindFirstValue("sub")
+            ?? ctx.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(key, _ =>
+            new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 2,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+
+    options.AddPolicy<string>("LoginPolicy", ctx =>
+    {
+        if (HttpMethods.IsOptions(ctx.Request.Method))
+            return RateLimitPartition.GetNoLimiter("OPTIONS");
+
+        var key = ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        context.HttpContext.Response.ContentType = "application/json";
+        var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var metadata)
+            ? metadata
+            : TimeSpan.FromMinutes(1);
+        context.HttpContext.Response.Headers.RetryAfter = retryAfter.TotalSeconds.ToString("F0");
+        var message = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            Mensaje = $"Demasiadas solicitudes. Intente nuevamente en {retryAfter.TotalSeconds:F0} segundos."
+        });
+        await context.HttpContext.Response.WriteAsync(message, cancellationToken);
+    };
+});
+
+// =============================================
 // 5. Inyección de Dependencias - Servicios
 // =============================================
 builder.Services.AddScoped<IPedidoService, PedidoService>();
@@ -233,6 +295,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRateLimiter();     // AFTER auth (needs sub claim), BEFORE authz (all requests must be rate-limited)
 app.UseAuthorization();
 
 // Mapeo de controladores REST
@@ -242,3 +305,6 @@ app.MapControllers();
 app.MapHub<LogisticaHub>("/hubs/logistica");
 
 app.Run();
+
+// Expone Program para WebApplicationFactory en tests de integración
+public partial class Program { }

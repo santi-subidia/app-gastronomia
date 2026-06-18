@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
 
@@ -18,7 +19,9 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Authenticates a user and returns a JWT token.
     /// Returns 401 if credentials are invalid or user is inactive.
+    /// Rate-limited to 10 requests per minute per IP.
     /// </summary>
+    [EnableRateLimiting("LoginPolicy")]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
