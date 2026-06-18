@@ -61,11 +61,7 @@ public class PedidosControllerTests
             EstadoId = estadoId,
             Estado = estado,
             MetodoVentaId = metodoVenta is not null ? 1 : default,
-            MetodoVenta = metodoPagoNombre is not null || metodoVentaNombre is not null
-                ? metodoVenta!
-                : null,
             MetodoPagoId = metodoPago is not null ? 1 : default,
-            MetodoPago = metodoPago,
             RepartidorId = repartidor is not null ? 10 : null,
             Repartidor = repartidor,
             CajaId = cajaId,
@@ -77,6 +73,10 @@ public class PedidosControllerTests
             FechaFinalizado = fechaFinalizado,
             DetallePedidos = detalles ?? new List<DetallePedido>()
         };
+
+        // Assign nullable navigations outside object initializer to avoid CS8601
+        if (metodoVenta is not null) pedido.MetodoVenta = metodoVenta;
+        if (metodoPago is not null) pedido.MetodoPago = metodoPago;
 
         // Wire up back-references for detalles
         foreach (var d in pedido.DetallePedidos)
