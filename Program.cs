@@ -152,6 +152,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Fallback policy: todas las rutas requieren autenticación por defecto.
+// Solo AuthController.Login se excluye con [AllowAnonymous].
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 // =============================================
 // 4c. Rate Limiting — protección contra abuso
 // =============================================
@@ -299,7 +308,7 @@ app.UseRateLimiter();     // AFTER auth (needs sub claim), BEFORE authz (all req
 app.UseAuthorization();
 
 // Mapeo de controladores REST
-app.MapControllers();
+app.MapControllers().RequireAuthorization();
 
 // Mapeo del Hub de SignalR
 app.MapHub<LogisticaHub>("/hubs/logistica");
