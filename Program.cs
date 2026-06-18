@@ -86,9 +86,16 @@ builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
 });
 
 // =============================================
-// 4. SignalR
+// 4. SignalR + Redis backplane
 // =============================================
-builder.Services.AddSignalR();
+var redisConnection = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException("Redis connection string no configurada.");
+
+builder.Services.AddSignalR()
+    .AddStackExchangeRedis(redisConnection, options =>
+    {
+        options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("SignalR");
+    });
 
 // =============================================
 // 4b. Autenticación JWT
@@ -110,6 +117,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+        };
+
+        // SignalR envía el JWT como query string ?access_token= porque
+        // los navegadores no soportan headers personalizados en WebSocket handshake
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
