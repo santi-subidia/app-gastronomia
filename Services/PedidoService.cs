@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
+using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Domain.Enums;
 using ApiGastronomia.Infrastructure.Data;
@@ -53,13 +54,11 @@ public class PedidoService : IPedidoService
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group("cocina").SendAsync("NuevoPedido", new
-        {
-            PedidoId = pedido.Id,
-            Cliente = pedido.ClienteNombre ?? "Desconocido",
-            Total = pedido.TotalEstimado,
-            Fecha = DateTime.UtcNow
-        });
+        await _hubContext.Clients.Group("cocina").SendAsync("NuevoPedido", new NuevoPedidoMessage(
+            pedido.Id,
+            pedido.ClienteNombre ?? "Desconocido",
+            pedido.TotalEstimado,
+            DateTime.UtcNow));
 
         _logger.LogInformation("Pedido #{PedidoId} creado con estado Pendiente", pedido.Id);
         return pedido;
@@ -133,20 +132,24 @@ public class PedidoService : IPedidoService
 
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("EstadoCambiado", new
-        {
-            PedidoId = pedidoId,
-            EstadoAnterior = estadoAnterior.ToString(),
-            EstadoNuevo = nuevoEstado.ToString(),
-            Fecha = DateTime.UtcNow
-        });
+        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("EstadoCambiado", new EstadoCambiadoMessage(
+            pedidoId,
+            estadoAnterior.ToString(),
+            nuevoEstado.ToString(),
+            DateTime.UtcNow));
 
-        await _hubContext.Clients.Group("cocina").SendAsync("PedidoActualizado", new
+        await _hubContext.Clients.Group("cocina").SendAsync("PedidoActualizado", new PedidoActualizadoMessage(
+            pedidoId,
+            nuevoEstado.ToString(),
+            DateTime.UtcNow));
+
+        // Send PedidoFinalizado event for terminal states
+        if (nuevoEstado is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado
+            or EstadoPedidoEnum.Cancelado or EstadoPedidoEnum.Devuelto)
         {
-            PedidoId = pedidoId,
-            Estado = nuevoEstado.ToString(),
-            Fecha = DateTime.UtcNow
-        });
+            await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("PedidoFinalizado",
+                new PedidoFinalizadoMessage(pedidoId, nuevoEstado.ToString(), DateTime.UtcNow));
+        }
 
         _logger.LogInformation("Pedido #{PedidoId}: {Anterior} -> {Nuevo}", pedidoId, estadoAnterior, nuevoEstado);
         return pedido;
@@ -176,13 +179,11 @@ public class PedidoService : IPedidoService
 
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("RepartidorAsignado", new
-        {
-            PedidoId = pedidoId,
-            RepartidorId = repartidorId,
-            NombreRepartidor = repartidor.UsuarioNombre,
-            Fecha = DateTime.UtcNow
-        });
+        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("RepartidorAsignado", new RepartidorAsignadoMessage(
+            pedidoId,
+            repartidorId,
+            repartidor.UsuarioNombre,
+            DateTime.UtcNow));
 
         _logger.LogInformation("Repartidor #{RepartidorId} asignado al pedido #{PedidoId}", repartidorId, pedidoId);
         return pedido;

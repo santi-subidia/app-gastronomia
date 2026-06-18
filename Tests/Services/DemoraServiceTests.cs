@@ -596,4 +596,64 @@ public class DemoraServiceTests
         await context.Database.EnsureDeletedAsync();
         context.Dispose();
     }
+
+    // ================================================================
+    // Task 4.4 — CrearAsync sends DemoraRegistradaMessage typed DTO
+    // ================================================================
+
+    [Fact]
+    public async Task CrearAsync_SendsDemoraRegistradaMessage_TypedDTO()
+    {
+        // Arrange
+        var context = CreateDbContext();
+        var (_, pedido, usuario) = SeedPedidoYUsuario(context);
+        var (service, mockProxy) = CreateService(context, userId: usuario.Id);
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("DemoraRegistrada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.CrearAsync(pedido.Id, 25, "reparto", "falta stock");
+
+        // Assert: DemoraRegistradaMessage typed DTO was sent
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<DemoraRegistradaMessage>(capturedArgs![0]);
+        Assert.Equal(pedido.Id, msg.PedidoId);
+        Assert.Equal("reparto", msg.Motivo);
+        Assert.Equal(25, msg.TiempoEstimadoMinutos);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task CrearAsync_NullSector_SendsNoEspecificado()
+    {
+        // Arrange: null sector should default to "No especificado"
+        var context = CreateDbContext();
+        var (_, pedido, usuario) = SeedPedidoYUsuario(context);
+        var (service, mockProxy) = CreateService(context, userId: usuario.Id);
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("DemoraRegistrada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.CrearAsync(pedido.Id, 10, null, null);
+
+        // Assert: Motivo defaults to "No especificado"
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<DemoraRegistradaMessage>(capturedArgs![0]);
+        Assert.Equal("No especificado", msg.Motivo);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
 }
