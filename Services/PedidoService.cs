@@ -23,6 +23,30 @@ public class PedidoService : IPedidoService
 
     public async Task<Pedido> CrearPedidoAsync(Pedido pedido)
     {
+        // Task 2.3: Validate DetallePedidos is not null or empty
+        if (pedido.DetallePedidos == null || pedido.DetallePedidos.Count == 0)
+            throw new InvalidOperationException("El pedido debe contener al menos un producto.");
+
+        // Task 2.2: FK existence validation
+        if (pedido.CajaId.HasValue && !await _context.Cajas.AnyAsync(c => c.Id == pedido.CajaId.Value))
+            throw new InvalidOperationException($"Caja #{pedido.CajaId.Value} no encontrada.");
+
+        if (!await _context.MetodoPago.AnyAsync(mp => mp.Id == pedido.MetodoPagoId))
+            throw new InvalidOperationException($"Método de pago #{pedido.MetodoPagoId} no encontrado.");
+
+        if (!await _context.MetodosVenta.AnyAsync(mv => mv.Id == pedido.MetodoVentaId))
+            throw new InvalidOperationException($"Método de venta #{pedido.MetodoVentaId} no encontrado.");
+
+        var productoIds = pedido.DetallePedidos.Select(d => d.ProductoId).Distinct().ToList();
+        var existingProductoIds = await _context.Productos
+            .Where(p => productoIds.Contains(p.Id))
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        var missingProductoIds = productoIds.Except(existingProductoIds).ToList();
+        if (missingProductoIds.Count > 0)
+            throw new InvalidOperationException($"Producto(s) no encontrado(s): {string.Join(", ", missingProductoIds)}.");
+
         pedido.EstadoId = (int)EstadoPedidoEnum.Pendiente;
         pedido.FechaIngreso = DateTime.UtcNow;
 
@@ -85,7 +109,7 @@ public class PedidoService : IPedidoService
 
         var estadoAnterior = (EstadoPedidoEnum)pedido.EstadoId;
 
-        if (estadoAnterior is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado or EstadoPedidoEnum.Cancelado)
+        if (estadoAnterior is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado or EstadoPedidoEnum.Cancelado or EstadoPedidoEnum.Devuelto)
         {
             throw new InvalidOperationException(
                 $"No se puede cambiar el estado de un pedido en estado '{estadoAnterior}'.");
@@ -102,6 +126,7 @@ public class PedidoService : IPedidoService
             case EstadoPedidoEnum.Entregado:
             case EstadoPedidoEnum.Retirado:
             case EstadoPedidoEnum.Cancelado:
+            case EstadoPedidoEnum.Devuelto:
                 pedido.FechaFinalizado = DateTime.UtcNow;
                 break;
         }
@@ -132,8 +157,19 @@ public class PedidoService : IPedidoService
         var pedido = await _context.Pedidos.FindAsync(pedidoId)
             ?? throw new KeyNotFoundException($"Pedido #{pedidoId} no encontrado.");
 
-        var repartidor = await _context.Usuarios.FindAsync(repartidorId)
+        var repartidor = await _context.Usuarios
+            .Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Id == repartidorId)
             ?? throw new KeyNotFoundException($"Repartidor #{repartidorId} no encontrado.");
+
+        if (repartidor.Rol.Nombre != "Repartidor")
+            throw new InvalidOperationException($"El usuario #{repartidorId} no tiene rol de repartidor.");
+
+        if (!repartidor.Disponible)
+            throw new InvalidOperationException($"El repartidor #{repartidorId} no está disponible.");
+
+        if (!repartidor.Activo)
+            throw new InvalidOperationException($"El usuario #{repartidorId} no está activo.");
 
         pedido.RepartidorId = repartidorId;
         pedido.FechaAsignado = DateTime.UtcNow;
