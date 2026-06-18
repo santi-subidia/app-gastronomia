@@ -132,6 +132,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     context.Token = accessToken;
                 }
                 return Task.CompletedTask;
+            },
+
+            // Evita redirect 302 en rutas SignalR — devuelve 401 directo
+            // sin interferir con el comportamiento de los controllers REST
+            OnChallenge = context =>
+            {
+                if (context.Request.Path.StartsWithSegments("/hubs"))
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "application/json";
+                }
+                return Task.CompletedTask;
             }
         };
     });
