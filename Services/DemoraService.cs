@@ -74,13 +74,11 @@ public class DemoraService : IDemoraService
         _context.Demoras.Add(demora);
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("DemoraRegistrada", new
-        {
-            PedidoId = pedidoId,
-            Motivo = sector ?? "No especificado",
-            TiempoEstimadoMinutos = demoraMinutos,
-            Fecha = DateTime.UtcNow
-        });
+        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("DemoraRegistrada", new DemoraRegistradaMessage(
+            pedidoId,
+            sector ?? "No especificado",
+            demoraMinutos,
+            DateTime.UtcNow));
 
         _logger.LogInformation("Demora registrada en pedido #{PedidoId}: {Minutos}min (sector: {Sector})",
             pedidoId, demoraMinutos, sector);

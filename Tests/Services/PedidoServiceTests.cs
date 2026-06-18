@@ -1,3 +1,4 @@
+using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Domain.Enums;
 using ApiGastronomia.Infrastructure.Data;
@@ -756,6 +757,273 @@ public class PedidoServiceTests
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.AsignarRepartidorAsync(pedido.Id, repartidor.Id));
         Assert.Contains("no está activo", ex.Message.ToLower());
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    // ================================================================
+    // Task 4.1 — CrearPedidoAsync sends NuevoPedidoMessage typed DTO
+    // ================================================================
+
+    [Fact]
+    public async Task CrearPedidoAsync_SendsNuevoPedidoMessage_TypedDTO()
+    {
+        // Arrange
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, metodoPago, metodoVenta, producto) = SeedFkData(context);
+        var (service, mockProxy) = CreateService(context);
+
+        var pedido = new Pedido
+        {
+            ClienteNombre = "Juan",
+            MetodoPagoId = metodoPago.Id,
+            MetodoVentaId = metodoVenta.Id,
+            TotalEstimado = 1500.0,
+            DetallePedidos = new List<DetallePedido>
+            {
+                new() { ProductoId = producto.Id, Nombre = "Pizza", Precio = 1500.0, Cantidad = 1 }
+            }
+        };
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("NuevoPedido", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.CrearPedidoAsync(pedido);
+
+        // Assert: NuevoPedidoMessage typed DTO was sent
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<NuevoPedidoMessage>(capturedArgs![0]);
+        Assert.Equal(pedido.Id, msg.PedidoId);
+        Assert.Equal("Juan", msg.Cliente);
+        Assert.Equal(1500.0, msg.Total);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task CrearPedidoAsync_NullClienteNombre_SendsDesconocido()
+    {
+        // Arrange: ClienteNombre is null → should send "Desconocido"
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, metodoPago, metodoVenta, producto) = SeedFkData(context);
+        var (service, mockProxy) = CreateService(context);
+
+        var pedido = new Pedido
+        {
+            ClienteNombre = null,
+            MetodoPagoId = metodoPago.Id,
+            MetodoVentaId = metodoVenta.Id,
+            TotalEstimado = 3000.0,
+            DetallePedidos = new List<DetallePedido>
+            {
+                new() { ProductoId = producto.Id, Nombre = "Empanada", Precio = 3000.0, Cantidad = 1 }
+            }
+        };
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("NuevoPedido", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.CrearPedidoAsync(pedido);
+
+        // Assert: Cliente field defaults to "Desconocido"
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<NuevoPedidoMessage>(capturedArgs![0]);
+        Assert.Equal("Desconocido", msg.Cliente);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    // ================================================================
+    // Task 4.2 — CambiarEstadoAsync sends typed DTOs
+    // ================================================================
+
+    [Fact]
+    public async Task CambiarEstadoAsync_SendsEstadoCambiadoMessage_TypedDTO()
+    {
+        // Arrange: transition from Pendiente to EnPreparacion
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, pedido) = SeedPedido(context, EstadoPedidoEnum.Pendiente);
+        var (service, mockProxy) = CreateService(context);
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("EstadoCambiado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.CambiarEstadoAsync(pedido.Id, EstadoPedidoEnum.EnPreparacion);
+
+        // Assert: EstadoCambiadoMessage typed DTO was sent
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<EstadoCambiadoMessage>(capturedArgs![0]);
+        Assert.Equal(pedido.Id, msg.PedidoId);
+        Assert.Equal("Pendiente", msg.EstadoAnterior);
+        Assert.Equal("EnPreparacion", msg.EstadoNuevo);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task CambiarEstadoAsync_SendsPedidoActualizadoMessage_TypedDTO()
+    {
+        // Arrange: transition from Pendiente to EnPreparacion
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, pedido) = SeedPedido(context, EstadoPedidoEnum.Pendiente);
+        var (service, mockProxy) = CreateService(context);
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("PedidoActualizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.CambiarEstadoAsync(pedido.Id, EstadoPedidoEnum.EnPreparacion);
+
+        // Assert: PedidoActualizadoMessage typed DTO was sent to "cocina"
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<PedidoActualizadoMessage>(capturedArgs![0]);
+        Assert.Equal(pedido.Id, msg.PedidoId);
+        Assert.Equal("EnPreparacion", msg.Estado);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    // ================================================================
+    // Task 4.3 — AsignarRepartidorAsync sends RepartidorAsignadoMessage typed DTO
+    // ================================================================
+
+    [Fact]
+    public async Task AsignarRepartidorAsync_SendsRepartidorAsignadoMessage_TypedDTO()
+    {
+        // Arrange: seed a valid repartidor
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, metodoPago, metodoVenta, producto) = SeedFkData(context);
+        var (_, repartidor) = SeedUsuario(context, rolNombre: "Repartidor", disponible: true, activo: true);
+
+        var pedido = new Pedido
+        {
+            EstadoId = (int)EstadoPedidoEnum.Pendiente,
+            Estado = context.EstadosPedidos.First(e => e.Id == (int)EstadoPedidoEnum.Pendiente),
+            MetodoPagoId = metodoPago.Id,
+            MetodoPago = metodoPago,
+            MetodoVentaId = metodoVenta.Id,
+            MetodoVenta = metodoVenta,
+            TotalEstimado = 5000.0,
+            DetallePedidos = new List<DetallePedido>
+            {
+                new() { ProductoId = producto.Id, Nombre = "Pizza", Precio = 5000.0, Cantidad = 1 }
+            }
+        };
+        context.Pedidos.Add(pedido);
+        context.SaveChanges();
+
+        var (service, mockProxy) = CreateService(context);
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("RepartidorAsignado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await service.AsignarRepartidorAsync(pedido.Id, repartidor.Id);
+
+        // Assert: RepartidorAsignadoMessage typed DTO was sent
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<RepartidorAsignadoMessage>(capturedArgs![0]);
+        Assert.Equal(pedido.Id, msg.PedidoId);
+        Assert.Equal(repartidor.Id, msg.RepartidorId);
+        Assert.Equal(repartidor.UsuarioNombre, msg.NombreRepartidor);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    // ================================================================
+    // Task 5.3 — PedidoFinalizadoMessage sent on terminal states
+    // ================================================================
+
+    [Theory]
+    [InlineData(EstadoPedidoEnum.Entregado)]
+    [InlineData(EstadoPedidoEnum.Retirado)]
+    [InlineData(EstadoPedidoEnum.Cancelado)]
+    [InlineData(EstadoPedidoEnum.Devuelto)]
+    public async Task CambiarEstadoAsync_TerminalState_SendsPedidoFinalizadoMessage(EstadoPedidoEnum terminalEstado)
+    {
+        // Arrange: seed a pedido in EnCamino (or Pendiente for Cancelado)
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, pedido) = SeedPedido(context, EstadoPedidoEnum.EnCamino);
+        var (service, mockProxy) = CreateService(context);
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("PedidoFinalizado", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act: transition to terminal state
+        await service.CambiarEstadoAsync(pedido.Id, terminalEstado);
+
+        // Assert: PedidoFinalizadoMessage was sent
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<PedidoFinalizadoMessage>(capturedArgs![0]);
+        Assert.Equal(pedido.Id, msg.PedidoId);
+        Assert.Equal(terminalEstado.ToString(), msg.EstadoFinal);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Theory]
+    [InlineData(EstadoPedidoEnum.EnPreparacion)]
+    [InlineData(EstadoPedidoEnum.ListoParaRetirar)]
+    [InlineData(EstadoPedidoEnum.EnCamino)]
+    public async Task CambiarEstadoAsync_NonTerminalState_DoesNotSendPedidoFinalizadoMessage(EstadoPedidoEnum nonTerminalEstado)
+    {
+        // Arrange: seed a pedido in Pendiente, transition to non-terminal state
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, pedido) = SeedPedido(context, EstadoPedidoEnum.Pendiente);
+        var (service, mockProxy) = CreateService(context);
+
+        // Act
+        await service.CambiarEstadoAsync(pedido.Id, nonTerminalEstado);
+
+        // Assert: PedidoFinalizadoMessage was NOT sent
+        mockProxy.Verify(
+            proxy => proxy.SendCoreAsync(
+                "PedidoFinalizado",
+                It.IsAny<object?[]>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never());
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
