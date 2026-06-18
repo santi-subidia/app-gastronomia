@@ -199,10 +199,10 @@ builder.Services.AddRateLimiter(options =>
     {
         context.HttpContext.Response.StatusCode = 429;
         context.HttpContext.Response.ContentType = "application/json";
-        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-        {
-            context.HttpContext.Response.Headers["Retry-After"] = retryAfter.TotalSeconds.ToString("F0");
-        }
+        var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var metadata)
+            ? metadata
+            : TimeSpan.FromMinutes(1);
+        context.HttpContext.Response.Headers.RetryAfter = retryAfter.TotalSeconds.ToString("F0");
         var message = System.Text.Json.JsonSerializer.Serialize(new
         {
             Mensaje = $"Demasiadas solicitudes. Intente nuevamente en {retryAfter.TotalSeconds:F0} segundos."
@@ -295,8 +295,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRateLimiter();     // AFTER auth (needs sub claim), BEFORE authz (all requests must be rate-limited)
 app.UseAuthorization();
-app.UseRateLimiter();
 
 // Mapeo de controladores REST
 app.MapControllers();
