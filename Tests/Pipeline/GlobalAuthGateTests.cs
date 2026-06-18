@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using ApiGastronomia.Tests.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -121,8 +122,11 @@ public class GlobalAuthGateTests
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         var response = await client.SendAsync(request);
 
-        // Assert: authenticated request should pass the fallback policy (not 401)
-        Assert.NotEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+        // Assert: controller executed and returned success — not just "not blocked by auth gate"
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(body);
+        Assert.Equal(JsonValueKind.Array, json.RootElement.ValueKind);
     }
 
     // =========================================================
@@ -144,6 +148,74 @@ public class GlobalAuthGateTests
 
         // Assert: authenticated but wrong role → 403 Forbidden (not 401)
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // =========================================================
+    // Scenario: Wrong role receives 403 on Demoras POST (requires Cajero)
+    // =========================================================
+    [Fact]
+    public async Task WrongRole_DemorasPost_Returns403()
+    {
+        // Arrange
+        using var factory = new AuthGateWebApplicationFactory();
+        var client = factory.CreateClient();
+        // Cajero role required on Demoras POST — Repartidor should be forbidden
+        var token = GenerateJwtToken($"user-repartidor-{Guid.NewGuid():N}", "Repartidor");
+
+        // Act: POST /api/demoras with Repartidor-role JWT
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/demoras");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        request.Content = JsonContent.Create(new { });
+        var response = await client.SendAsync(request);
+
+        // Assert: authenticated but wrong role → 403 Forbidden
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // =========================================================
+    // Scenario: Wrong role receives 403 on Productos POST (requires Cajero)
+    // =========================================================
+    [Fact]
+    public async Task WrongRole_ProductosPost_Returns403()
+    {
+        // Arrange
+        using var factory = new AuthGateWebApplicationFactory();
+        var client = factory.CreateClient();
+        // Cajero role required on Productos POST — Repartidor should be forbidden
+        var token = GenerateJwtToken($"user-repartidor-{Guid.NewGuid():N}", "Repartidor");
+
+        // Act: POST /api/productos with Repartidor-role JWT
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/productos");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        request.Content = JsonContent.Create(new { });
+        var response = await client.SendAsync(request);
+
+        // Assert: authenticated but wrong role → 403 Forbidden
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // =========================================================
+    // Scenario: Authenticated user accesses Cajas (auth only, no role restriction)
+    // =========================================================
+    [Fact]
+    public async Task Authenticated_GetCajas_Returns200()
+    {
+        // Arrange
+        using var factory = new AuthGateWebApplicationFactory();
+        var client = factory.CreateClient();
+        // Cajas only requires authentication — any role should work
+        var token = GenerateJwtToken($"user-auth-{Guid.NewGuid():N}", "Cocina");
+
+        // Act: GET /api/cajas with valid JWT
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/cajas");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var response = await client.SendAsync(request);
+
+        // Assert: Cajas has class-level [Authorize] but no role restriction → 200
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        using var json = JsonDocument.Parse(body);
+        Assert.Equal(JsonValueKind.Array, json.RootElement.ValueKind);
     }
 
     // =========================================================
