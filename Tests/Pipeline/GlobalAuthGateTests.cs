@@ -22,7 +22,7 @@ public class GlobalAuthGateTests
     /// <summary>
     /// Generates a valid JWT token for testing authenticated scenarios.
     /// </summary>
-    private static string GenerateJwtToken(string userId, string role)
+    private static string GenerateJwtToken(string userId, string role, DateTime? expires = null)
     {
         var claims = new List<Claim>
         {
@@ -39,7 +39,7 @@ public class GlobalAuthGateTests
             issuer: "ApiGastronomia",
             audience: "ApiGastronomiaClients",
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: expires ?? DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials
         );
 
@@ -144,6 +144,31 @@ public class GlobalAuthGateTests
 
         // Assert: authenticated but wrong role → 403 Forbidden (not 401)
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // =========================================================
+    // Scenario: Expired JWT receives 401 (issue #11)
+    // =========================================================
+    [Fact]
+    public async Task ExpiredJwt_Returns401()
+    {
+        // Arrange
+        using var factory = new AuthGateWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        // Generate a JWT that expired 1 hour ago
+        var expiredToken = GenerateJwtToken(
+            $"user-expired-{Guid.NewGuid():N}",
+            "Cocina",
+            expires: DateTime.UtcNow.AddHours(-1));
+
+        // Act: request to a protected endpoint with the expired token
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/pedidos");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", expiredToken);
+        var response = await client.SendAsync(request);
+
+        // Assert: expired token must be rejected by JWT middleware (ValidateLifetime=true)
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }
 
