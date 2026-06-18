@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Enums;
 
 namespace ApiGastronomia.Services.Hubs;
@@ -82,48 +83,6 @@ public class LogisticaHub : Hub
 
     #endregion
 
-    #region Eventos de Pedido
-
-    /// <summary>
-    /// Notifica un cambio de estado en un pedido a todos los clientes suscritos a ese pedido
-    /// y al grupo de cocina.
-    /// </summary>
-    public async Task NotificarCambioEstado(int pedidoId, EstadoPedidoEnum estadoAnterior, EstadoPedidoEnum estadoNuevo)
-    {
-        await Clients.Group($"pedido_{pedidoId}").SendAsync("EstadoCambiado", new
-        {
-            PedidoId = pedidoId,
-            EstadoAnterior = estadoAnterior.ToString(),
-            EstadoNuevo = estadoNuevo.ToString(),
-            Fecha = DateTime.UtcNow
-        });
-
-        // También notificar a cocina para que actualice su panel
-        await Clients.Group("cocina").SendAsync("PedidoActualizado", new
-        {
-            PedidoId = pedidoId,
-            Estado = estadoNuevo.ToString(),
-            Fecha = DateTime.UtcNow
-        });
-    }
-
-    /// <summary>
-    /// Notifica un nuevo pedido entrante al grupo de cocina.
-    /// Invocado desde el controller cuando se crea un pedido.
-    /// </summary>
-    public async Task NotificarNuevoPedido(int pedidoId, string cliente, decimal total)
-    {
-        await Clients.Group("cocina").SendAsync("NuevoPedido", new
-        {
-            PedidoId = pedidoId,
-            Cliente = cliente,
-            Total = total,
-            Fecha = DateTime.UtcNow
-        });
-    }
-
-    #endregion
-
     #region Eventos de Repartidor
 
     /// <summary>
@@ -135,45 +94,8 @@ public class LogisticaHub : Hub
         if (!Context.User!.IsInRole("Repartidor"))
             throw new HubException("Solo repartidores pueden enviar posición GPS.");
 
-        await Clients.Group($"pedido_repartidor_{repartidorId}").SendAsync("PosicionGPSActualizada", new
-        {
-            RepartidorId = repartidorId,
-            Latitud = latitud,
-            Longitud = longitud,
-            Fecha = DateTime.UtcNow
-        });
-    }
-
-    /// <summary>
-    /// Notifica a los clientes suscritos que el repartidor ha sido asignado al pedido.
-    /// </summary>
-    public async Task NotificarRepartidorAsignado(int pedidoId, int repartidorId, string nombreRepartidor)
-    {
-        await Clients.Group($"pedido_{pedidoId}").SendAsync("RepartidorAsignado", new
-        {
-            PedidoId = pedidoId,
-            RepartidorId = repartidorId,
-            NombreRepartidor = nombreRepartidor,
-            Fecha = DateTime.UtcNow
-        });
-    }
-
-    #endregion
-
-    #region Eventos de Demora
-
-    /// <summary>
-    /// Notifica una demora registrada en un pedido.
-    /// </summary>
-    public async Task NotificarDemora(int pedidoId, string motivo, int tiempoEstimadoMinutos)
-    {
-        await Clients.Group($"pedido_{pedidoId}").SendAsync("DemoraRegistrada", new
-        {
-            PedidoId = pedidoId,
-            Motivo = motivo,
-            TiempoEstimadoMinutos = tiempoEstimadoMinutos,
-            Fecha = DateTime.UtcNow
-        });
+        await Clients.Group($"pedido_repartidor_{repartidorId}").SendAsync("PosicionGPSActualizada", new PosicionGPSMessage(
+            repartidorId, latitud, longitud, DateTime.UtcNow));
     }
 
     #endregion

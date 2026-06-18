@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Claims;
+using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -54,6 +55,25 @@ public class LogisticaHubTests
         hub.Clients = mockClients.Object;
 
         return hub;
+    }
+
+    /// <summary>
+    /// Creates a LogisticaHub with mocked dependencies and IClientProxy for verification.
+    /// </summary>
+    private static (LogisticaHub Hub, Mock<IClientProxy> MockProxy) CreateHubWithProxy(params string[] roles)
+    {
+        var hub = CreateHubWithRoles(roles);
+
+        var mockProxy = new Mock<IClientProxy>();
+        mockProxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var mockClients = new Mock<IHubCallerClients>();
+        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockProxy.Object);
+        hub.Clients = mockClients.Object;
+
+        return (hub, mockProxy);
     }
 
     // ================================================================
@@ -172,5 +192,69 @@ public class LogisticaHubTests
 
         var ex = await Assert.ThrowsAsync<HubException>(() => hub.EnviarPosicionGPS(1, -34.6, -58.4));
         Assert.Contains("repartidor", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ================================================================
+    // Task 5.1: Removed Notificar* methods — verify they don't exist
+    // ================================================================
+
+    [Fact]
+    public void LogisticaHub_DoesNotHave_NotificarCambioEstado()
+    {
+        // Assert: NotificarCambioEstado should NOT exist as a public method
+        var method = typeof(LogisticaHub).GetMethod("NotificarCambioEstado",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.Null(method);
+    }
+
+    [Fact]
+    public void LogisticaHub_DoesNotHave_NotificarNuevoPedido()
+    {
+        var method = typeof(LogisticaHub).GetMethod("NotificarNuevoPedido",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.Null(method);
+    }
+
+    [Fact]
+    public void LogisticaHub_DoesNotHave_NotificarRepartidorAsignado()
+    {
+        var method = typeof(LogisticaHub).GetMethod("NotificarRepartidorAsignado",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.Null(method);
+    }
+
+    [Fact]
+    public void LogisticaHub_DoesNotHave_NotificarDemora()
+    {
+        var method = typeof(LogisticaHub).GetMethod("NotificarDemora",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.Null(method);
+    }
+
+    // ================================================================
+    // Task 5.2: EnviarPosicionGPS sends PosicionGPSMessage typed DTO
+    // ================================================================
+
+    [Fact]
+    public async Task EnviarPosicionGPS_SendsPosicionGPSMessage_TypedDTO()
+    {
+        // Arrange
+        var (hub, mockProxy) = CreateHubWithProxy("Repartidor");
+
+        object?[]? capturedArgs = null;
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("PosicionGPSActualizada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) => capturedArgs = args)
+            .Returns(Task.CompletedTask);
+
+        // Act: invoke GPS position
+        await hub.EnviarPosicionGPS(5, -34.6037, -58.3816);
+
+        // Assert: PosicionGPSMessage typed DTO was sent
+        Assert.NotNull(capturedArgs);
+        var msg = Assert.IsType<PosicionGPSMessage>(capturedArgs![0]);
+        Assert.Equal(5, msg.RepartidorId);
+        Assert.Equal(-34.6037, msg.Latitud);
+        Assert.Equal(-58.3816, msg.Longitud);
     }
 }
