@@ -43,12 +43,33 @@ public record CrearPedidoRequest(
     List<CrearDetalleRequest> Detalles
 );
 
+public record PedidoDetalleDTO(
+    int Id,
+    string Estado,
+    string? ClienteNombre,
+    string? ClienteDireccion,
+    string? MetodoVenta,
+    string? MetodoPago,
+    double TotalEstimado,
+    int? DemoraAprox,
+    double? LatitudDestino,
+    double? LongitudDestino,
+    DateTime FechaIngreso,
+    DateTime? FechaEstimadoFin,
+    DateTime? FechaAsignado,
+    DateTime? FechaEnCamino,
+    DateTime? FechaFinalizado,
+    string? RepartidorNombre,
+    int? CajaId,
+    int EstadoId,
+    List<DetallePedidoDTO> DetallePedidos
+);
+
 public record CrearDetalleRequest(
     int ProductoId,
     string Nombre,
     double Precio,
-    int Cantidad,
-    int TiempoMaquina
+    int Cantidad
 );
 
 public record CambiarEstadoRequest(EstadoPedidoEnum NuevoEstado);

@@ -23,32 +23,32 @@ public class PedidosController : ControllerBase
     /// Obtiene todos los pedidos.
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Pedido>>> GetPedidos()
+    public async Task<ActionResult<IEnumerable<PedidoResumenDTO>>> GetPedidos()
     {
         var pedidos = await _pedidoService.ObtenerPedidosAsync();
-        return Ok(pedidos);
+        return Ok(pedidos.Select(MapToResumen));
     }
 
     /// <summary>
     /// Obtiene un pedido por su ID.
     /// </summary>
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Pedido>> GetPedido(int id)
+    public async Task<ActionResult<PedidoDetalleDTO>> GetPedido(int id)
     {
         var pedido = await _pedidoService.ObtenerPedidoPorIdAsync(id);
         return pedido is null
             ? NotFound(new { Mensaje = $"Pedido #{id} no encontrado." })
-            : Ok(pedido);
+            : Ok(MapToDetalle(pedido));
     }
 
     /// <summary>
     /// Obtiene pedidos filtrados por estado.
     /// </summary>
     [HttpGet("estado/{estado}")]
-    public async Task<ActionResult<IEnumerable<Pedido>>> GetPedidosPorEstado(EstadoPedidoEnum estado)
+    public async Task<ActionResult<IEnumerable<PedidoResumenDTO>>> GetPedidosPorEstado(EstadoPedidoEnum estado)
     {
         var pedidos = await _pedidoService.ObtenerPedidosPorEstadoAsync(estado);
-        return Ok(pedidos);
+        return Ok(pedidos.Select(MapToResumen));
     }
 
     /// <summary>
@@ -81,6 +81,11 @@ public class PedidosController : ControllerBase
 
             var creado = await _pedidoService.CrearPedidoAsync(pedido);
             return CreatedAtAction(nameof(GetPedido), new { id = creado.Id }, creado);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error creating pedido");
+            return BadRequest(new { Mensaje = ex.Message });
         }
         catch (Exception ex)
         {
@@ -125,5 +130,50 @@ public class PedidosController : ControllerBase
         {
             return NotFound(new { Mensaje = ex.Message });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Mensaje = ex.Message });
+        }
     }
+
+    // ================================================================
+    // Private mapping helpers — entity → DTO
+    // ================================================================
+
+    private static PedidoResumenDTO MapToResumen(Pedido p) => new(
+        Id: p.Id,
+        Estado: p.Estado.Nombre,
+        ClienteNombre: p.ClienteNombre,
+        MetodoVenta: p.MetodoVenta?.Nombre,
+        TotalEstimado: p.TotalEstimado,
+        FechaIngreso: p.FechaIngreso
+    );
+
+    private static PedidoDetalleDTO MapToDetalle(Pedido p) => new(
+        Id: p.Id,
+        Estado: p.Estado.Nombre,
+        ClienteNombre: p.ClienteNombre,
+        ClienteDireccion: p.ClienteDireccion,
+        MetodoVenta: p.MetodoVenta?.Nombre,
+        MetodoPago: p.MetodoPago?.Nombre,
+        TotalEstimado: p.TotalEstimado,
+        DemoraAprox: p.DemoraAprox,
+        LatitudDestino: p.LatitudDestino,
+        LongitudDestino: p.LongitudDestino,
+        FechaIngreso: p.FechaIngreso,
+        FechaEstimadoFin: p.FechaEstimadoFin,
+        FechaAsignado: p.FechaAsignado,
+        FechaEnCamino: p.FechaEnCamino,
+        FechaFinalizado: p.FechaFinalizado,
+        RepartidorNombre: p.Repartidor?.UsuarioNombre,
+        CajaId: p.CajaId,
+        EstadoId: p.EstadoId,
+        DetallePedidos: p.DetallePedidos.Select(d => new DetallePedidoDTO(
+            ProductoId: d.ProductoId,
+            Nombre: d.Nombre,
+            Cantidad: d.Cantidad,
+            Precio: d.Precio,
+            TiempoMaquina: d.Producto?.Demora ?? 0
+        )).ToList()
+    );
 }
