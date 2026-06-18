@@ -407,6 +407,44 @@ public class PedidosControllerTests
     }
 
     // ================================================================
+    // POST /api/pedidos — InvalidOperationException → BadRequest
+    // ================================================================
+
+    [Fact]
+    public async Task CrearPedido_InvalidOperation_ReturnsBadRequest()
+    {
+        // Arrange: service throws InvalidOperationException (e.g., empty detalles)
+        var mockService = new Mock<IPedidoService>();
+        mockService
+            .Setup(s => s.CrearPedidoAsync(It.IsAny<Pedido>()))
+            .ThrowsAsync(new InvalidOperationException("El pedido debe contener al menos un producto."));
+
+        var controller = CreateController(mockService.Object);
+        var request = new CrearPedidoRequest(
+            CajaId: null,
+            MetodoPagoId: 1,
+            MetodoVentaId: 1,
+            ClienteNombre: "Test",
+            ClienteDireccion: null,
+            LatitudDestino: null,
+            LongitudDestino: null,
+            TotalEstimado: 5000.0,
+            DemoraAprox: null,
+            Detalles: []
+        );
+
+        // Act
+        var result = await controller.CrearPedido(request);
+
+        // Assert: 400 BadRequest with validation message
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var value = badRequestResult.Value!;
+        var mensajeProp = value.GetType().GetProperty("Mensaje");
+        Assert.NotNull(mensajeProp);
+        Assert.Equal("El pedido debe contener al menos un producto.", mensajeProp!.GetValue(value));
+    }
+
+    // ================================================================
     // Triangulation: different data for GetPedido detail mapping
     // ================================================================
 

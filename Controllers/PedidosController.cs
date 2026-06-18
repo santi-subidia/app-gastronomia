@@ -82,6 +82,11 @@ public class PedidosController : ControllerBase
             var creado = await _pedidoService.CrearPedidoAsync(pedido);
             return CreatedAtAction(nameof(GetPedido), new { id = creado.Id }, creado);
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error creating pedido");
+            return BadRequest(new { Mensaje = ex.Message });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al crear pedido");
