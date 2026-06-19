@@ -14,4 +14,10 @@
     <string name="error_generic">Error del servidor, intente m\u00e1s tarde</string>
     <string name="retry">Reintentar</string>
     <string name="fab_content_description">Action</string>
+
+    <!-- Template leftovers (still referenced by nav header and transform layouts) -->
+    <string name="image_view_item_transform_content_description">Item image</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
 </resources>

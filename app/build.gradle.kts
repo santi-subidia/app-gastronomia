@@ -1,21 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.kapt)
 }
 
 android {
     namespace = "com.example.app_movil_gastronomia"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.app_movil_gastronomia"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -43,10 +38,6 @@ android {
     }
 }
 
-kapt {
-    correctErrorTypes = true
-}
-
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.constraintlayout)
@@ -57,7 +48,7 @@ dependencies {
     implementation(libs.navigation.ui)
     implementation(libs.recyclerview)
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    annotationProcessor(libs.hilt.compiler)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
