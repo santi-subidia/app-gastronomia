@@ -14,7 +14,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.app_movil_gastronomia.HiltTestRunner"
 
         buildConfigField("String", "API_BASE_URL", "\"https://tu-api-url/\"")
     }
@@ -64,4 +64,5 @@ dependencies {
     testImplementation(libs.arch.core.testing)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.hilt.android.testing)
 }
