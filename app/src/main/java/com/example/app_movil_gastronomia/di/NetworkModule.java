@@ -7,6 +7,7 @@ import com.example.app_movil_gastronomia.core.AuthInterceptor;
 import com.example.app_movil_gastronomia.core.SessionManager;
 import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.data.api.AuthApi;
+import com.example.app_movil_gastronomia.data.api.CajaApi;
 import com.example.app_movil_gastronomia.data.api.PedidoApi;
 import com.example.app_movil_gastronomia.data.api.ProductoApi;
 import com.google.gson.Gson;
@@ -91,5 +92,11 @@ public class NetworkModule {
     @Singleton
     public PedidoApi providePedidoApi(Retrofit retrofit) {
         return retrofit.create(PedidoApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public CajaApi provideCajaApi(Retrofit retrofit) {
+        return retrofit.create(CajaApi.class);
     }
 }
