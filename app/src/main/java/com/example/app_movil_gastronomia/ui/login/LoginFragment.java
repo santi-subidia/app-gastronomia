@@ -1,6 +1,7 @@
 package com.example.app_movil_gastronomia.ui.login;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,14 +13,26 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.example.app_movil_gastronomia.R;
+import com.example.app_movil_gastronomia.core.SignalRService;
+import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.auth.LoginResponse;
 import com.example.app_movil_gastronomia.databinding.FragmentLoginBinding;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class LoginFragment extends Fragment {
+
+    private static final String TAG = "LoginFragment";
+
+    @Inject
+    SignalRService signalRService;
+
+    @Inject
+    TokenManager tokenManager;
 
     private FragmentLoginBinding binding;
     private LoginViewModel viewModel;
@@ -62,12 +75,23 @@ public class LoginFragment extends Fragment {
                 break;
             case SUCCESS:
                 showLoading(false);
+                connectSignalR();
                 navigateByRole(state.getData().getRolNombre());
                 break;
             case ERROR:
                 showLoading(false);
                 showError(state.getError());
                 break;
+        }
+    }
+
+    private void connectSignalR() {
+        String token = tokenManager.getToken();
+        if (token != null && !token.isEmpty()) {
+            signalRService.connect(token);
+            Log.d(TAG, "SignalR connection initiated");
+        } else {
+            Log.w(TAG, "SignalR connect skipped — no token available");
         }
     }
 
