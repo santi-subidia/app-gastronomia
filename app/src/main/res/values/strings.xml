@@ -65,4 +65,29 @@
     <string name="go_to_caja">Caja</string>
     <string name="go_to_config">Configuraci\u00f3n</string>
     <string name="coming_soon">Pr\u00f3ximamente</string>
+    <string name="go_to_create_order">Crear Pedido</string>
+
+    <!-- Crear pedido form -->
+    <string name="create_order_title">Crear Pedido</string>
+    <string name="customer_name_hint">Nombre del Cliente</string>
+    <string name="sale_method_hint">M\u00e9todo de Venta</string>
+    <string name="payment_method_hint">M\u00e9todo de Pago</string>
+    <string name="delivery_address_hint">Direcci\u00f3n de Entrega</string>
+    <string name="latitude_hint">Latitud</string>
+    <string name="longitude_hint">Longitud</string>
+    <string name="add_product">Agregar Producto</string>
+    <string name="select_product">Seleccionar Producto</string>
+    <string name="quantity_label">Cantidad</string>
+    <string name="create_order_button">Crear Pedido</string>
+    <string name="order_created">Pedido creado exitosamente</string>
+    <string name="validation_customer_required">El nombre del cliente es requerido</string>
+    <string name="validation_details_required">Agreg\u00e1 al menos un producto</string>
+    <string name="validation_delivery_required">Direcci\u00f3n y coordenadas requeridas para Delivery</string>
+    <string name="option_pickup">Retiro en local</string>
+    <string name="option_delivery">Delivery</string>
+    <string name="option_cash">Efectivo</string>
+    <string name="option_card">Tarjeta</string>
+    <string name="option_transfer">Transferencia</string>
+    <string name="no_products_in_order">A\u00fan no agregaste productos</string>
+    <string name="delete_detalle">Eliminar l\u00ednea</string>
 </resources>

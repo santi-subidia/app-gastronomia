@@ -35,6 +35,9 @@
         <action
             android:id="@+id/action_nav_cajero_home_to_nav_cajero_productos"
             app:destination="@id/nav_cajero_productos" />
+        <action
+            android:id="@+id/action_nav_cajero_home_to_nav_crear_pedido"
+            app:destination="@id/nav_crear_pedido" />
     </fragment>
 
     <fragment
@@ -77,5 +80,10 @@
             android:name="pedidoId"
             app:argType="integer" />
     </fragment>
+
+    <fragment
+        android:id="@+id/nav_crear_pedido"
+        android:name="com.example.app_movil_gastronomia.ui.pedido.CrearPedidoFragment"
+        android:label="Crear Pedido" />
 
 </navigation>

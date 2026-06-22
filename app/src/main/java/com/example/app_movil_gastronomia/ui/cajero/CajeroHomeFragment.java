@@ -83,6 +83,7 @@ public class CajeroHomeFragment extends Fragment {
 
         binding.buttonPedidos.setOnClickListener(v -> navigateToPedidos());
         binding.buttonProductos.setOnClickListener(v -> navigateToProductos());
+        binding.buttonCrearPedido.setOnClickListener(v -> navigateToCrearPedido());
         binding.buttonCaja.setOnClickListener(v -> showComingSoon());
         binding.buttonConfig.setOnClickListener(v -> showComingSoon());
     }
@@ -160,6 +161,11 @@ public class CajeroHomeFragment extends Fragment {
     private void navigateToProductos() {
         NavController controller = Navigation.findNavController(requireView());
         controller.navigate(R.id.action_nav_cajero_home_to_nav_cajero_productos);
+    }
+
+    private void navigateToCrearPedido() {
+        NavController controller = Navigation.findNavController(requireView());
+        controller.navigate(R.id.action_nav_cajero_home_to_nav_crear_pedido);
     }
 
     private void showComingSoon() {
