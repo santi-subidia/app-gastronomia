@@ -27,6 +27,18 @@
 
     <fragment
         android:id="@+id/nav_cajero_home"
+        android:name="com.example.app_movil_gastronomia.ui.cajero.CajeroHomeFragment"
+        android:label="Cajero">
+        <action
+            android:id="@+id/action_nav_cajero_home_to_nav_pedido_list"
+            app:destination="@id/nav_pedido_list" />
+        <action
+            android:id="@+id/action_nav_cajero_home_to_nav_cajero_productos"
+            app:destination="@id/nav_cajero_productos" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_cajero_productos"
         android:name="com.example.app_movil_gastronomia.ui.cajero.ProductListFragment"
         android:label="Productos" />
 

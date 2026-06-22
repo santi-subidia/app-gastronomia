@@ -53,4 +53,16 @@
     <string name="no_deliveries_assigned">No hay entregas asignadas</string>
     <string name="waiting_assignments">Esperando nuevas asignaciones...</string>
     <string name="delivery_completed">Entrega completada</string>
+
+    <!-- Cajero home -->
+    <string name="cajero_title">Cajero</string>
+    <string name="active_orders_count">Pedidos activos: %d</string>
+    <string name="caja_status">Caja: %s</string>
+    <string name="caja_open">Abierta</string>
+    <string name="caja_closed">Cerrada</string>
+    <string name="go_to_orders">Pedidos</string>
+    <string name="go_to_products">Productos</string>
+    <string name="go_to_caja">Caja</string>
+    <string name="go_to_config">Configuraci\u00f3n</string>
+    <string name="coming_soon">Pr\u00f3ximamente</string>
 </resources>
