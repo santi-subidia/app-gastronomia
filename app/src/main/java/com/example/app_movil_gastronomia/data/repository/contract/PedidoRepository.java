@@ -80,11 +80,14 @@ public interface PedidoRepository {
     LiveData<UiState<PedidoDetalleDto>> getCrearState();
 
     /**
-     * PATCH the estado of an existing pedido. The enum is converted to
-     * its API value via {@link EstadoPedidoEnum#getApiValue()} and
-     * wrapped in a {@code CambiarEstadoRequest} body. Each call resets
-     * the dedicated {@link #getCambiarEstadoState()} instance to LOADING
-     * and posts SUCCESS (with the updated dto) or ERROR.
+     * PATCH the estado of an existing pedido. The enum is resolved to
+     * its catalog ID via {@code CatalogoRepository.resolveEstadoId()}
+     * <b>before</b> the network call — the v2 endpoint accepts a raw
+     * {@code int} body (no wrapper object). Each call resets the
+     * dedicated {@link #getCambiarEstadoState()} instance to LOADING
+     * and posts SUCCESS (with the updated dto) or ERROR. If the
+     * catalog is not yet loaded, the call short-circuits with an
+     * ERROR and never reaches the API.
      */
     LiveData<UiState<PedidoDetalleDto>> cambiarEstado(int id, EstadoPedidoEnum estado);
 

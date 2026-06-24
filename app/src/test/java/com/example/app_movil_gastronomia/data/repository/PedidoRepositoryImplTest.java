@@ -8,17 +8,19 @@ import static org.junit.Assert.assertTrue;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.api.PedidoApi;
+import com.example.app_movil_gastronomia.data.dto.catalogo.CatalogoItemDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.AsignarRepartidorRequest;
-import com.example.app_movil_gastronomia.data.dto.pedido.CambiarEstadoRequest;
 import com.example.app_movil_gastronomia.data.dto.pedido.CrearDetalleRequest;
 import com.example.app_movil_gastronomia.data.dto.pedido.CrearPedidoRequest;
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.repository.contract.CatalogoRepository;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,7 +28,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.MediaType;
@@ -50,7 +54,8 @@ import retrofit2.Response;
  *  - PED-VAL-002: crearPedido rejects metodoVentaId=1 without coords BEFORE any API call
  *  - PED-VAL-003: valid crearPedido still calls the API
  *  - PED-ENUM-001: getByEstado uses EstadoPedidoEnum.getApiValue() in the path
- *  - PED-ENUM-002: cambiarEstado wraps the new estado in a CambiarEstadoRequest body
+ *  - PED-ENUM-002 (v2): cambiarEstado resolves the enum via CatalogoRepository and
+ *                       sends a RAW int body (no CambiarEstadoRequest wrapper)
  */
 public class PedidoRepositoryImplTest {
 
@@ -68,7 +73,7 @@ public class PedidoRepositoryImplTest {
         PedidoResumenDto r = new PedidoResumenDto();
         r.setId(1);
         api.getPedidosResponse = Response.success(data);
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> state = repo.getPedidosState();
         EmissionRecorder<UiState<List<PedidoResumenDto>>> recorder = recordEmissions(state);
@@ -88,7 +93,7 @@ public class PedidoRepositoryImplTest {
     public void getPedidosEmitsErrorWithParsedMensajeOn500() {
         FakePedidoApi api = new FakePedidoApi();
         api.getPedidosResponse = errorResponse(500, "{\"mensaje\":\"Falla interna del servidor\"}");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> state = repo.getPedidosState();
         AtomicReference<UiState<List<PedidoResumenDto>>> latest = new AtomicReference<>();
@@ -110,7 +115,7 @@ public class PedidoRepositoryImplTest {
     public void getPedidosEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.getPedidosFailure = new IOException("boom");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> state = repo.getPedidosState();
         AtomicReference<UiState<List<PedidoResumenDto>>> latest = new AtomicReference<>();
@@ -132,7 +137,7 @@ public class PedidoRepositoryImplTest {
     public void getPedidosStateReturnsSameInstanceAcrossCalls() {
         FakePedidoApi api = new FakePedidoApi();
         api.getPedidosResponse = Response.success(new ArrayList<>());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> first = repo.getPedidosState();
         LiveData<UiState<List<PedidoResumenDto>>> second = repo.getPedidosState();
@@ -152,7 +157,7 @@ public class PedidoRepositoryImplTest {
         PedidoDetalleDto dto = new PedidoDetalleDto();
         dto.setId(7);
         api.getPedidoResponse = Response.success(dto);
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getPedidoState();
         EmissionRecorder<UiState<PedidoDetalleDto>> recorder = recordEmissions(state);
@@ -173,7 +178,7 @@ public class PedidoRepositoryImplTest {
     public void getPedidoEmitsErrorWithParsedMensajeOn404() {
         FakePedidoApi api = new FakePedidoApi();
         api.getPedidoResponse = errorResponse(404, "{\"mensaje\":\"Pedido no encontrado\"}");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getPedidoState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -195,7 +200,7 @@ public class PedidoRepositoryImplTest {
     public void getPedidoEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.getPedidoFailure = new IOException("boom");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getPedidoState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -217,7 +222,7 @@ public class PedidoRepositoryImplTest {
     public void getPedidoStateReturnsSameInstanceAcrossCalls() {
         FakePedidoApi api = new FakePedidoApi();
         api.getPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> first = repo.getPedidoState();
         LiveData<UiState<PedidoDetalleDto>> second = repo.getPedidoState();
@@ -235,7 +240,7 @@ public class PedidoRepositoryImplTest {
     public void getByEstadoEmitsLoadingThenSuccessOn2xx() {
         FakePedidoApi api = new FakePedidoApi();
         api.getByEstadoResponse = Response.success(new ArrayList<>());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> state = repo.getByEstadoState();
         EmissionRecorder<UiState<List<PedidoResumenDto>>> recorder = recordEmissions(state);
@@ -257,7 +262,7 @@ public class PedidoRepositoryImplTest {
     public void getByEstadoEmitsErrorWithParsedMensajeOn500() {
         FakePedidoApi api = new FakePedidoApi();
         api.getByEstadoResponse = errorResponse(500, "{\"mensaje\":\"No se pudo filtrar\"}");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> state = repo.getByEstadoState();
         AtomicReference<UiState<List<PedidoResumenDto>>> latest = new AtomicReference<>();
@@ -279,7 +284,7 @@ public class PedidoRepositoryImplTest {
     public void getByEstadoEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.getByEstadoFailure = new IOException("boom");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> state = repo.getByEstadoState();
         AtomicReference<UiState<List<PedidoResumenDto>>> latest = new AtomicReference<>();
@@ -301,7 +306,7 @@ public class PedidoRepositoryImplTest {
     public void getByEstadoStateReturnsSameInstanceAcrossCalls() {
         FakePedidoApi api = new FakePedidoApi();
         api.getByEstadoResponse = Response.success(new ArrayList<>());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<List<PedidoResumenDto>>> first = repo.getByEstadoState();
         LiveData<UiState<List<PedidoResumenDto>>> second = repo.getByEstadoState();
@@ -321,7 +326,7 @@ public class PedidoRepositoryImplTest {
         PedidoDetalleDto created = new PedidoDetalleDto();
         created.setId(42);
         api.crearPedidoResponse = Response.success(created);
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
         LiveData<UiState<PedidoDetalleDto>> state = repo.getCrearState();
@@ -343,7 +348,7 @@ public class PedidoRepositoryImplTest {
     public void crearPedidoEmitsErrorWithParsedMensajeOn400() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = errorResponse(400, "{\"mensaje\":\"Caja no valida\"}");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getCrearState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -365,7 +370,7 @@ public class PedidoRepositoryImplTest {
     public void crearPedidoEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoFailure = new IOException("boom");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getCrearState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -387,7 +392,7 @@ public class PedidoRepositoryImplTest {
     public void crearPedidoRejectsNullDetallesBeforeApiCall() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
         req.setDetalles(null);
@@ -413,7 +418,7 @@ public class PedidoRepositoryImplTest {
     public void crearPedidoRejectsEmptyDetallesBeforeApiCall() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
         req.setDetalles(new ArrayList<>());
@@ -439,7 +444,7 @@ public class PedidoRepositoryImplTest {
     public void crearPedidoRejectsDeliveryWithoutLatitud() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
         req.setLatitudDestino(null);
@@ -465,7 +470,7 @@ public class PedidoRepositoryImplTest {
     public void crearPedidoRejectsDeliveryWithoutLongitud() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
         req.setLongitudDestino(null);
@@ -492,7 +497,7 @@ public class PedidoRepositoryImplTest {
         // metodoVentaId != 1 -> validation guard for delivery coords must NOT trigger
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
         req.setMetodoVentaId(2); // take-away / salon — no coords required
@@ -509,7 +514,7 @@ public class PedidoRepositoryImplTest {
     public void crearStateReturnsSameInstanceAcrossCalls() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> first = repo.getCrearState();
         LiveData<UiState<PedidoDetalleDto>> second = repo.getCrearState();
@@ -520,8 +525,28 @@ public class PedidoRepositoryImplTest {
     }
 
     // ------------------------------------------------------------------
-    // cambiarEstado(id, estado)
+    // cambiarEstado(id, estado) — v2 contract
     // ------------------------------------------------------------------
+
+    /**
+     * The v2 test catalog wires every EstadoPedidoEnum apiValue to a
+     * deterministic, distinct catalog ID so the resolver has something
+     * to return. The IDs are intentionally NOT 1:1 with the enum order
+     * to make any accidental "we sent the index instead of the id"
+     * regression obvious.
+     */
+    private static FakeCatalogoRepository readyCatalog() {
+        Map<String, Integer> estados = new HashMap<>();
+        estados.put("Pendiente", 100);
+        estados.put("EnPreparacion", 200);
+        estados.put("ListoParaRetirar", 300);
+        estados.put("EnCamino", 400);
+        estados.put("Entregado", 500);
+        estados.put("Retirado", 550);
+        estados.put("Cancelado", 600);
+        estados.put("Devuelto", 700);
+        return new FakeCatalogoRepository(estados, true);
+    }
 
     @Test
     public void cambiarEstadoEmitsLoadingThenSuccessOn2xx() {
@@ -529,7 +554,7 @@ public class PedidoRepositoryImplTest {
         PedidoDetalleDto updated = new PedidoDetalleDto();
         updated.setId(3);
         api.cambiarEstadoResponse = Response.success(updated);
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getCambiarEstadoState();
         EmissionRecorder<UiState<PedidoDetalleDto>> recorder = recordEmissions(state);
@@ -541,11 +566,26 @@ public class PedidoRepositoryImplTest {
             assertEquals(UiState.Status.LOADING, recorder.seen.get(0));
             assertEquals(UiState.Status.SUCCESS, recorder.seen.get(recorder.seen.size() - 1));
             assertEquals(3, api.lastCambiarEstadoId);
-            // PED-ENUM-002: body must wrap the apiValue in nuevoEstado
-            assertNotNull(api.lastCambiarEstadoRequest);
-            assertEquals("ListoParaRetirar", api.lastCambiarEstadoRequest.getNuevoEstado());
+            // PED-ENUM-002 (v2): body is the catalog-resolved int, not a wrapper object.
+            assertEquals(300, api.lastCambiarEstadoBody);
         } finally {
             recorder.cleanup(state);
+        }
+    }
+
+    @Test
+    public void cambiarEstadoResolvesEachEnumToItsOwnCatalogId() {
+        // Triangulation: every enum hits the API with a different int.
+        for (EstadoPedidoEnum e : EstadoPedidoEnum.values()) {
+            FakePedidoApi api = new FakePedidoApi();
+            api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
+            PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
+
+            repo.cambiarEstado(1, e);
+
+            int expected = readyCatalog().resolveEstadoId(e.getApiValue());
+            assertEquals("enum " + e.name() + " must resolve to its catalog id",
+                    expected, api.lastCambiarEstadoBody);
         }
     }
 
@@ -553,7 +593,7 @@ public class PedidoRepositoryImplTest {
     public void cambiarEstadoEmitsErrorWithParsedMensajeOn409() {
         FakePedidoApi api = new FakePedidoApi();
         api.cambiarEstadoResponse = errorResponse(409, "{\"mensaje\":\"Transicion de estado invalida\"}");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getCambiarEstadoState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -575,7 +615,7 @@ public class PedidoRepositoryImplTest {
     public void cambiarEstadoEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.cambiarEstadoFailure = new IOException("boom");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getCambiarEstadoState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -594,10 +634,39 @@ public class PedidoRepositoryImplTest {
     }
 
     @Test
+    public void cambiarEstadoEmitsErrorWhenCatalogNotReady() {
+        // Spec: when the catalog is not yet loaded the repo must NOT
+        // call the API and must surface a clear error.
+        FakePedidoApi api = new FakePedidoApi();
+        api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
+        FakeCatalogoRepository notReady = new FakeCatalogoRepository(
+                Collections.<String, Integer>emptyMap(), false);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, notReady);
+
+        LiveData<UiState<PedidoDetalleDto>> state = repo.getCambiarEstadoState();
+        AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
+        Observer<UiState<PedidoDetalleDto>> observer = latest::set;
+        state.observeForever(observer);
+        try {
+            repo.cambiarEstado(1, EstadoPedidoEnum.EN_PREPARACION);
+
+            UiState<PedidoDetalleDto> after = latest.get();
+            assertNotNull(after);
+            assertEquals(UiState.Status.ERROR, after.getStatus());
+            assertNotNull(after.getError());
+            assertTrue("error must mention catalog, got: " + after.getError(),
+                    after.getError().toLowerCase().contains("cat"));
+            assertEquals(-1, api.lastCambiarEstadoId);
+        } finally {
+            state.removeObserver(observer);
+        }
+    }
+
+    @Test
     public void cambiarEstadoStateReturnsSameInstanceAcrossCalls() {
         FakePedidoApi api = new FakePedidoApi();
         api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> first = repo.getCambiarEstadoState();
         LiveData<UiState<PedidoDetalleDto>> second = repo.getCambiarEstadoState();
@@ -617,7 +686,7 @@ public class PedidoRepositoryImplTest {
         PedidoDetalleDto updated = new PedidoDetalleDto();
         updated.setId(3);
         api.asignarRepartidorResponse = Response.success(updated);
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getAsignarRepartidorState();
         EmissionRecorder<UiState<PedidoDetalleDto>> recorder = recordEmissions(state);
@@ -640,7 +709,7 @@ public class PedidoRepositoryImplTest {
     public void asignarRepartidorEmitsErrorWithParsedMensajeOn404() {
         FakePedidoApi api = new FakePedidoApi();
         api.asignarRepartidorResponse = errorResponse(404, "{\"mensaje\":\"Repartidor no encontrado\"}");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getAsignarRepartidorState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -662,7 +731,7 @@ public class PedidoRepositoryImplTest {
     public void asignarRepartidorEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.asignarRepartidorFailure = new IOException("boom");
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> state = repo.getAsignarRepartidorState();
         AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
@@ -684,7 +753,7 @@ public class PedidoRepositoryImplTest {
     public void asignarRepartidorStateReturnsSameInstanceAcrossCalls() {
         FakePedidoApi api = new FakePedidoApi();
         api.asignarRepartidorResponse = Response.success(new PedidoDetalleDto());
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         LiveData<UiState<PedidoDetalleDto>> first = repo.getAsignarRepartidorState();
         LiveData<UiState<PedidoDetalleDto>> second = repo.getAsignarRepartidorState();
@@ -701,7 +770,7 @@ public class PedidoRepositoryImplTest {
     @Test
     public void allSixStateInstancesArePairwiseDistinct() {
         FakePedidoApi api = new FakePedidoApi();
-        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api);
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         List<LiveData<?>> all = new ArrayList<>();
         all.add(repo.getPedidosState());
@@ -798,11 +867,11 @@ public class PedidoRepositoryImplTest {
         Response<PedidoDetalleDto> cambiarEstadoResponse;
         Throwable cambiarEstadoFailure;
         int lastCambiarEstadoId = -1;
-        CambiarEstadoRequest lastCambiarEstadoRequest;
+        int lastCambiarEstadoBody = Integer.MIN_VALUE;
         @Override
-        public Call<PedidoDetalleDto> cambiarEstado(int id, CambiarEstadoRequest request) {
+        public Call<PedidoDetalleDto> cambiarEstado(int id, int nuevoEstadoId) {
             this.lastCambiarEstadoId = id;
-            this.lastCambiarEstadoRequest = request;
+            this.lastCambiarEstadoBody = nuevoEstadoId;
             return new FakeCall<>(cambiarEstadoResponse, cambiarEstadoFailure);
         }
 
@@ -815,6 +884,67 @@ public class PedidoRepositoryImplTest {
             this.lastAsignarRepartidorId = id;
             this.lastAsignarRepartidorRequest = request;
             return new FakeCall<>(asignarRepartidorResponse, asignarRepartidorFailure);
+        }
+    }
+
+    /**
+     * Minimal in-memory {@link CatalogoRepository} for unit tests.
+     * Holds a name->id map for estados and a flag for {@link #isReady()}.
+     * The other two catalogs are unused by the pedidos tests, so they
+     * return empty lists / -1 / false.
+     */
+    static final class FakeCatalogoRepository implements CatalogoRepository {
+        private final Map<String, Integer> estadoIds;
+        private final boolean ready;
+
+        FakeCatalogoRepository(Map<String, Integer> estadoIds, boolean ready) {
+            this.estadoIds = estadoIds;
+            this.ready = ready;
+        }
+
+        @Override
+        public LiveData<List<CatalogoItemDto>> getEstadosPedido() {
+            MutableLiveData<List<CatalogoItemDto>> live = new MutableLiveData<>();
+            live.setValue(Collections.<CatalogoItemDto>emptyList());
+            return live;
+        }
+
+        @Override
+        public LiveData<List<CatalogoItemDto>> getMetodosPago() {
+            MutableLiveData<List<CatalogoItemDto>> live = new MutableLiveData<>();
+            live.setValue(Collections.<CatalogoItemDto>emptyList());
+            return live;
+        }
+
+        @Override
+        public LiveData<List<CatalogoItemDto>> getMetodosVenta() {
+            MutableLiveData<List<CatalogoItemDto>> live = new MutableLiveData<>();
+            live.setValue(Collections.<CatalogoItemDto>emptyList());
+            return live;
+        }
+
+        @Override
+        public int resolveEstadoId(String nombre) {
+            if (!ready) {
+                throw new IllegalStateException("catalog not ready");
+            }
+            Integer id = estadoIds.get(nombre);
+            return id == null ? -1 : id;
+        }
+
+        @Override
+        public int resolveMetodoPagoId(String nombre) {
+            return -1;
+        }
+
+        @Override
+        public int resolveMetodoVentaId(String nombre) {
+            return -1;
+        }
+
+        @Override
+        public boolean isReady() {
+            return ready;
         }
     }
 

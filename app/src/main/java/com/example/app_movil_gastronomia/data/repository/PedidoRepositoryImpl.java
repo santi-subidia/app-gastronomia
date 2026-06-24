@@ -10,11 +10,11 @@ import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.api.PedidoApi;
 import com.example.app_movil_gastronomia.data.dto.ErrorResponse;
 import com.example.app_movil_gastronomia.data.dto.pedido.AsignarRepartidorRequest;
-import com.example.app_movil_gastronomia.data.dto.pedido.CambiarEstadoRequest;
 import com.example.app_movil_gastronomia.data.dto.pedido.CrearPedidoRequest;
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.repository.contract.CatalogoRepository;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 import com.google.gson.Gson;
 
@@ -40,6 +40,14 @@ import retrofit2.Response;
  * performs client-side validation (non-empty detalles, delivery coords
  * when {@code metodoVentaId == 1}) BEFORE any network call and emits
  * ERROR directly without going through Retrofit.</p>
+ *
+ * <p>Spec PED-ENUM-002 (v2): {@link #cambiarEstado(int, EstadoPedidoEnum)}
+ * resolves the enum to a catalog ID via {@link CatalogoRepository}
+ * <b>before</b> hitting the API. The v2 backend expects a raw int
+ * body, so the resolution has to happen on the client side. The
+ * {@link CatalogoRepository} is injected so the dependency is
+ * explicit and the repo can fail fast (clear error, no API call)
+ * if the catalog is not yet loaded.</p>
  */
 @Singleton
 public class PedidoRepositoryImpl implements PedidoRepository {
@@ -54,6 +62,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
     private static final int DELIVERY_ID = 1;
 
     private final PedidoApi pedidoApi;
+    private final CatalogoRepository catalogoRepository;
 
     private final MutableLiveData<UiState<List<PedidoResumenDto>>> _pedidosState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> _pedidoState = new MutableLiveData<>();
@@ -63,8 +72,9 @@ public class PedidoRepositoryImpl implements PedidoRepository {
     private final MutableLiveData<UiState<PedidoDetalleDto>> _asignarRepartidorState = new MutableLiveData<>();
 
     @Inject
-    public PedidoRepositoryImpl(PedidoApi pedidoApi) {
+    public PedidoRepositoryImpl(PedidoApi pedidoApi, CatalogoRepository catalogoRepository) {
         this.pedidoApi = pedidoApi;
+        this.catalogoRepository = catalogoRepository;
     }
 
     // ------------------------------------------------------------------
@@ -231,13 +241,24 @@ public class PedidoRepositoryImpl implements PedidoRepository {
 
     @Override
     public LiveData<UiState<PedidoDetalleDto>> cambiarEstado(int id, EstadoPedidoEnum estado) {
+        // Spec PED-ENUM-002 (v2): the backend wants a raw int body.
+        // Resolve the enum via the catalog BEFORE any network call so
+        // a missing / unloaded cache fails fast with a clear error.
+        if (!catalogoRepository.isReady()) {
+            _cambiarEstadoState.setValue(UiState.error(
+                    "El catálogo de estados aún no está disponible, intente nuevamente"));
+            return getCambiarEstadoState();
+        }
+        final int nuevoEstadoId = catalogoRepository.resolveEstadoId(estado.getApiValue());
+        if (nuevoEstadoId <= 0) {
+            _cambiarEstadoState.setValue(UiState.error(
+                    "Estado no reconocido por el catálogo: " + estado.getApiValue()));
+            return getCambiarEstadoState();
+        }
+
         _cambiarEstadoState.setValue(UiState.loading());
 
-        // Wrap the API string in a request DTO so the body is explicit
-        // and the PedidoApi interface stays free of generic converters.
-        final CambiarEstadoRequest body = new CambiarEstadoRequest(estado.getApiValue());
-
-        pedidoApi.cambiarEstado(id, body).enqueue(new Callback<PedidoDetalleDto>() {
+        pedidoApi.cambiarEstado(id, nuevoEstadoId).enqueue(new Callback<PedidoDetalleDto>() {
             @Override
             public void onResponse(@NonNull Call<PedidoDetalleDto> call,
                                    @NonNull Response<PedidoDetalleDto> response) {
