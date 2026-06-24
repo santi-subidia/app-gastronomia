@@ -5,31 +5,19 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Request body for {@code POST /api/cajas/apertura}.
  *
- * <p>Spec CAJ-DTO-001: serialized JSON must contain exactly the
- * keys {@code usuarioAperturaId} and {@code montoApertura}. Both
- * fields are required by the server, so they are kept as
- * primitives — same null-omit convention as
- * {@code CrearProductoRequest} / {@code CrearPedidoRequest}.</p>
+ * <p>Spec CAJ-DTO-001 (v2): serialized JSON must contain exactly
+ * the key {@code montoApertura}. The {@code usuarioAperturaId}
+ * field was removed in the v2 contract — the server derives the
+ * user from the auth token. The single field is required by the
+ * server, so it is kept as a primitive.</p>
  */
 public class AbrirCajaRequest {
-
-    @SerializedName("usuarioAperturaId")
-    private int usuarioAperturaId;
 
     @SerializedName("montoApertura")
     private double montoApertura;
 
-    public AbrirCajaRequest(int usuarioAperturaId, double montoApertura) {
-        this.usuarioAperturaId = usuarioAperturaId;
+    public AbrirCajaRequest(double montoApertura) {
         this.montoApertura = montoApertura;
-    }
-
-    public int getUsuarioAperturaId() {
-        return usuarioAperturaId;
-    }
-
-    public void setUsuarioAperturaId(int usuarioAperturaId) {
-        this.usuarioAperturaId = usuarioAperturaId;
     }
 
     public double getMontoApertura() {

@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
-import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.caja.AbrirCajaRequest;
 import com.example.app_movil_gastronomia.data.dto.caja.CajaDto;
@@ -43,7 +42,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class CajaViewModel extends ViewModel {
 
     private final CajaRepository cajaRepository;
-    private final TokenManager tokenManager;
 
     private final MutableLiveData<UiState<CajaDto>> cajaState = new MutableLiveData<>();
     private final MutableLiveData<UiState<CajaDto>> abrirState = new MutableLiveData<>();
@@ -56,9 +54,8 @@ public class CajaViewModel extends ViewModel {
     private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
-    public CajaViewModel(CajaRepository cajaRepository, TokenManager tokenManager) {
+    public CajaViewModel(CajaRepository cajaRepository) {
         this.cajaRepository = cajaRepository;
-        this.tokenManager = tokenManager;
 
         // ---- Caja status: bridge getCajas("abierta") into a single CajaDto stream ----
         // SUCCESS with a non-empty list means there is one open caja;
@@ -134,32 +131,30 @@ public class CajaViewModel extends ViewModel {
     }
 
     /**
-     * Opens a caja with the current user as the apertura user. The
-     * server enforces that at most one caja is open at a time (409 if
-     * violated); that error is surfaced through the repository's
-     * standard error envelope.
+     * Opens a caja with the given apertura amount. The server
+     * derives the apertura user from the auth token (v2 contract);
+     * the server also enforces that at most one caja is open at a
+     * time (409 if violated) — that error is surfaced through the
+     * repository's standard error envelope.
      */
     public void abrirCaja(double montoApertura) {
-        AbrirCajaRequest request = new AbrirCajaRequest(
-                tokenManager.getUserId(), montoApertura);
+        AbrirCajaRequest request = new AbrirCajaRequest(montoApertura);
         cajaRepository.abrirCaja(request);
     }
 
     /**
-     * Closes the given caja as the current user.
-     *
-     * <p>The {@link CerrarCajaRequest} DTO requires three fields
-     * (per spec CAJ-DTO-001): {@code usuarioCierreId},
-     * {@code montoCierreTeorico}, {@code montoCierreReal}. The
-     * theoretical close is not directly user-entered — for this slice
-     * we pass {@code caja.montoApertura} as a placeholder. A future
-     * sales-aggregated value (apertura + cash sales - refunds) would
-     * replace it.</p>
+     * Closes the given caja with the supplied cierre real. The
+     * {@link CerrarCajaRequest} DTO (v2) requires two fields:
+     * {@code montoCierreTeorico} and {@code montoCierreReal} — the
+     * cierre user is derived from the auth token server-side. The
+     * theoretical close is not directly user-entered — for this
+     * slice we pass {@code caja.montoApertura} as a placeholder. A
+     * future sales-aggregated value (apertura + cash sales - refunds)
+     * would replace it.
      */
     public void cerrarCaja(CajaDto caja, double montoCierreReal) {
         if (caja == null) return;
         CerrarCajaRequest request = new CerrarCajaRequest(
-                tokenManager.getUserId(),
                 caja.getMontoApertura(),
                 montoCierreReal
         );

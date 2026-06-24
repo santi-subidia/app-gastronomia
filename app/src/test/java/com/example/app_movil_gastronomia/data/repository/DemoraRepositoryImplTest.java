@@ -186,7 +186,7 @@ public class DemoraRepositoryImplTest {
         LiveData<UiState<DemoraDto>> state = repo.getCrearState();
         EmissionRecorder<UiState<DemoraDto>> recorder = recordEmissions(state);
         try {
-            repo.crearDemora(new CrearDemoraRequest(20, 15, "cocina", "sin papas"));
+            repo.crearDemora(new CrearDemoraRequest(20, 15, "sin papas"));
 
             assertTrue(recorder.seen.contains(UiState.Status.LOADING));
             assertTrue(recorder.seen.contains(UiState.Status.SUCCESS));
@@ -208,7 +208,7 @@ public class DemoraRepositoryImplTest {
         Observer<UiState<DemoraDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            repo.crearDemora(new CrearDemoraRequest(20, 0, "cocina", ""));
+            repo.crearDemora(new CrearDemoraRequest(20, 0, ""));
 
             UiState<DemoraDto> after = latest.get();
             assertNotNull(after);
@@ -230,7 +230,7 @@ public class DemoraRepositoryImplTest {
         Observer<UiState<DemoraDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            repo.crearDemora(new CrearDemoraRequest(20, 15, "cocina", ""));
+            repo.crearDemora(new CrearDemoraRequest(20, 15, ""));
 
             UiState<DemoraDto> after = latest.get();
             assertNotNull(after);
@@ -251,7 +251,7 @@ public class DemoraRepositoryImplTest {
         LiveData<UiState<DemoraDto>> second = repo.getCrearState();
         assertSame(first, second);
 
-        repo.crearDemora(new CrearDemoraRequest(1, 5, "x", ""));
+        repo.crearDemora(new CrearDemoraRequest(1, 5, ""));
         assertSame(first, repo.getCrearState());
     }
 

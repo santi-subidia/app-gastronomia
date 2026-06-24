@@ -5,15 +5,12 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Request body for {@code POST /api/demoras}.
  *
- * <p>Spec DEM-DTO-001: serialized JSON must contain exactly the keys
- * {@code pedidoId}, {@code demoraMinutos}, {@code sector},
- * {@code observaciones} — matching the server's contract. All four
- * fields are required by the server, so they are kept as primitives
- * or {@code String}.
- *
- * <p>{@code usuarioId} is intentionally absent: the server derives the
- * caller from the auth token (see design decision in
- * {@code sdd/entidad-demoras/design}).
+ * <p>Spec DEM-DTO-001 (v2): serialized JSON must contain exactly the
+ * keys {@code pedidoId}, {@code demoraMinutos} and {@code observaciones}
+ * — the {@code sector} field was removed because the server derives
+ * sector from the auth token / business rules. All three fields are
+ * required by the server, so they are kept as primitives or
+ * {@code String}.</p>
  */
 public class CrearDemoraRequest {
 
@@ -23,16 +20,12 @@ public class CrearDemoraRequest {
     @SerializedName("demoraMinutos")
     private int demoraMinutos;
 
-    @SerializedName("sector")
-    private String sector;
-
     @SerializedName("observaciones")
     private String observaciones;
 
-    public CrearDemoraRequest(int pedidoId, int demoraMinutos, String sector, String observaciones) {
+    public CrearDemoraRequest(int pedidoId, int demoraMinutos, String observaciones) {
         this.pedidoId = pedidoId;
         this.demoraMinutos = demoraMinutos;
-        this.sector = sector;
         this.observaciones = observaciones;
     }
 
@@ -50,14 +43,6 @@ public class CrearDemoraRequest {
 
     public void setDemoraMinutos(int demoraMinutos) {
         this.demoraMinutos = demoraMinutos;
-    }
-
-    public String getSector() {
-        return sector;
-    }
-
-    public void setSector(String sector) {
-        this.sector = sector;
     }
 
     public String getObservaciones() {

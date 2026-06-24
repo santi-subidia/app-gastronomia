@@ -7,28 +7,24 @@ import com.google.gson.annotations.SerializedName;
  * {@code /api/cajas} endpoints (list, get-by-id, apertura and
  * cierre responses).
  *
- * <p>Spec CAJ-DTO-001: the 11 fields map 1:1 to the JSON
- * contract in {@code doc/API_REFERENCIA.md} §3.4. Cierre-related
- * fields ({@code usuarioCierreId}, {@code usuarioCierreNombre},
- * {@code fechaCierre}, {@code montoCierreTeorico},
+ * <p>Spec CAJ-DTO-001 (v2): the 9 remaining fields map 1:1 to
+ * the v2 JSON contract in {@code doc/API_REFERENCIA.md} §3.4.
+ * The v2 server no longer includes {@code usuarioAperturaId} or
+ * {@code usuarioCierreId} — the caller derives them from the auth
+ * token. The display-only name fields ({@code usuarioAperturaNombre},
+ * {@code usuarioCierreNombre}) are kept. Cierre-related fields
+ * ({@code fechaCierre}, {@code montoCierreTeorico},
  * {@code montoCierreReal}) are typed as boxed wrappers so Gson
  * keeps them {@code null} for an open caja that has no cierre
- * data yet — open cajas never have cierre values, so a primitive
- * default would silently corrupt the deserialized state.</p>
+ * data yet.</p>
  */
 public class CajaDto {
 
     @SerializedName("id")
     private int id;
 
-    @SerializedName("usuarioAperturaId")
-    private int usuarioAperturaId;
-
     @SerializedName("usuarioAperturaNombre")
     private String usuarioAperturaNombre;
-
-    @SerializedName("usuarioCierreId")
-    private Integer usuarioCierreId;
 
     @SerializedName("usuarioCierreNombre")
     private String usuarioCierreNombre;
@@ -59,28 +55,12 @@ public class CajaDto {
         this.id = id;
     }
 
-    public int getUsuarioAperturaId() {
-        return usuarioAperturaId;
-    }
-
-    public void setUsuarioAperturaId(int usuarioAperturaId) {
-        this.usuarioAperturaId = usuarioAperturaId;
-    }
-
     public String getUsuarioAperturaNombre() {
         return usuarioAperturaNombre;
     }
 
     public void setUsuarioAperturaNombre(String usuarioAperturaNombre) {
         this.usuarioAperturaNombre = usuarioAperturaNombre;
-    }
-
-    public Integer getUsuarioCierreId() {
-        return usuarioCierreId;
-    }
-
-    public void setUsuarioCierreId(Integer usuarioCierreId) {
-        this.usuarioCierreId = usuarioCierreId;
     }
 
     public String getUsuarioCierreNombre() {

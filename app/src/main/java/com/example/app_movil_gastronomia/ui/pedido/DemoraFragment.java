@@ -100,7 +100,6 @@ public class DemoraFragment extends Fragment {
 
     private void submit() {
         String minutosStr = textOf(binding.inputMinutos);
-        String sector = textOf(binding.inputSector);
         String observaciones = textOf(binding.inputObservaciones);
 
         if (TextUtils.isEmpty(minutosStr)) {
@@ -123,14 +122,10 @@ public class DemoraFragment extends Fragment {
         }
         binding.inputMinutosLayout.setError(null);
 
-        if (TextUtils.isEmpty(sector)) {
-            binding.inputSectorLayout.setError(getString(R.string.demora_sector_hint));
-            binding.inputSector.requestFocus();
-            return;
-        }
-        binding.inputSectorLayout.setError(null);
-
-        viewModel.registrarDemora(pedidoId, minutos, sector, observaciones);
+        // v2: the sector field is no longer sent in the wire body. The
+        // inputSector EditText is still rendered in the layout for a
+        // future UX cleanup; its value is intentionally ignored here.
+        viewModel.registrarDemora(pedidoId, minutos, observaciones);
     }
 
     private void navigateBack() {

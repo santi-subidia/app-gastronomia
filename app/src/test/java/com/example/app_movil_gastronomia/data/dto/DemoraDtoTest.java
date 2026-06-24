@@ -9,10 +9,11 @@ import com.google.gson.Gson;
 import org.junit.Test;
 
 /**
- * Spec DEM-DTO-001: the response body for {@code GET/POST/PUT /api/demoras}
+ * Spec DEM-DTO-001 (v2): the response body for {@code GET/POST/PUT /api/demoras}
  * must serialize to/from a JSON object with exactly the keys
- * {@code id}, {@code pedidoId}, {@code usuarioId}, {@code demoraMinutos},
- * {@code sector}, {@code observaciones} — matching the server's contract.
+ * {@code id}, {@code pedidoId}, {@code usuarioId}, {@code demoraMinutos}
+ * and {@code observaciones} — the {@code sector} field was removed in
+ * the v2 backend contract.
  */
 public class DemoraDtoTest {
 
@@ -25,7 +26,6 @@ public class DemoraDtoTest {
         dto.setPedidoId(7);
         dto.setUsuarioId(3);
         dto.setDemoraMinutos(15);
-        dto.setSector("cocina");
         dto.setObservaciones("sin papas");
 
         String json = gson.toJson(dto);
@@ -36,7 +36,6 @@ public class DemoraDtoTest {
         assertEquals(7, parsed.getPedidoId());
         assertEquals(3, parsed.getUsuarioId());
         assertEquals(15, parsed.getDemoraMinutos());
-        assertEquals("cocina", parsed.getSector());
         assertEquals("sin papas", parsed.getObservaciones());
 
         // String-level: every required key MUST be present.
@@ -44,8 +43,10 @@ public class DemoraDtoTest {
         assertTrue("json must contain 'pedidoId', got: " + json, json.contains("\"pedidoId\""));
         assertTrue("json must contain 'usuarioId', got: " + json, json.contains("\"usuarioId\""));
         assertTrue("json must contain 'demoraMinutos', got: " + json, json.contains("\"demoraMinutos\""));
-        assertTrue("json must contain 'sector', got: " + json, json.contains("\"sector\""));
         assertTrue("json must contain 'observaciones', got: " + json, json.contains("\"observaciones\""));
+        // v2 contract: sector MUST NOT be present.
+        assertTrue("json must NOT contain 'sector' (removed in v2), got: " + json,
+                !json.contains("\"sector\""));
     }
 
     @Test
@@ -55,14 +56,12 @@ public class DemoraDtoTest {
         dto.setPedidoId(2);
         dto.setUsuarioId(3);
         dto.setDemoraMinutos(20);
-        dto.setSector("barra");
         dto.setObservaciones("urgente");
 
         assertEquals(1, dto.getId());
         assertEquals(2, dto.getPedidoId());
         assertEquals(3, dto.getUsuarioId());
         assertEquals(20, dto.getDemoraMinutos());
-        assertEquals("barra", dto.getSector());
         assertEquals("urgente", dto.getObservaciones());
     }
 
@@ -73,7 +72,6 @@ public class DemoraDtoTest {
                 + "\"pedidoId\":20,"
                 + "\"usuarioId\":30,"
                 + "\"demoraMinutos\":45,"
-                + "\"sector\":\"cocina\","
                 + "\"observaciones\":\"esperar\""
                 + "}";
 
@@ -83,7 +81,6 @@ public class DemoraDtoTest {
         assertEquals(20, parsed.getPedidoId());
         assertEquals(30, parsed.getUsuarioId());
         assertEquals(45, parsed.getDemoraMinutos());
-        assertEquals("cocina", parsed.getSector());
         assertEquals("esperar", parsed.getObservaciones());
     }
 }

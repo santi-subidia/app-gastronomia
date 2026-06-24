@@ -9,11 +9,11 @@ import com.google.gson.Gson;
 import org.junit.Test;
 
 /**
- * Spec DEM-DTO-001: the request body for {@code POST /api/demoras} must
+ * Spec DEM-DTO-001 (v2): the request body for {@code POST /api/demoras} must
  * serialize to a JSON object with exactly the keys {@code pedidoId},
- * {@code demoraMinutos}, {@code sector}, {@code observaciones} — matching
- * the server's contract. All four fields are required, so they are kept
- * as primitives or {@code String} (no boxing).
+ * {@code demoraMinutos} and {@code observaciones} — the {@code sector}
+ * field was removed in the v2 backend contract. The server derives the
+ * sector from the auth token / business rules.
  */
 public class CrearDemoraRequestTest {
 
@@ -21,7 +21,7 @@ public class CrearDemoraRequestTest {
 
     @Test
     public void serializesAllFieldsWithExpectedKeys() {
-        CrearDemoraRequest request = new CrearDemoraRequest(7, 15, "cocina", "sin papas");
+        CrearDemoraRequest request = new CrearDemoraRequest(7, 15, "sin papas");
 
         String json = gson.toJson(request);
 
@@ -29,37 +29,35 @@ public class CrearDemoraRequestTest {
         CrearDemoraRequest parsed = gson.fromJson(json, CrearDemoraRequest.class);
         assertEquals(7, parsed.getPedidoId());
         assertEquals(15, parsed.getDemoraMinutos());
-        assertEquals("cocina", parsed.getSector());
         assertEquals("sin papas", parsed.getObservaciones());
 
-        // String-level: the four required keys MUST be present.
+        // String-level: the three required keys MUST be present.
         assertTrue("json must contain 'pedidoId', got: " + json, json.contains("\"pedidoId\""));
         assertTrue("json must contain 'demoraMinutos', got: " + json, json.contains("\"demoraMinutos\""));
-        assertTrue("json must contain 'sector', got: " + json, json.contains("\"sector\""));
         assertTrue("json must contain 'observaciones', got: " + json, json.contains("\"observaciones\""));
+        // v2 contract: sector MUST NOT be present.
+        assertTrue("json must NOT contain 'sector' (removed in v2), got: " + json,
+                !json.contains("\"sector\""));
     }
 
     @Test
     public void gettersReturnConstructorValues() {
-        CrearDemoraRequest request = new CrearDemoraRequest(20, 45, "barra", "urgente");
+        CrearDemoraRequest request = new CrearDemoraRequest(20, 45, "urgente");
 
         assertEquals(20, request.getPedidoId());
         assertEquals(45, request.getDemoraMinutos());
-        assertEquals("barra", request.getSector());
         assertEquals("urgente", request.getObservaciones());
     }
 
     @Test
     public void settersUpdateFieldValues() {
-        CrearDemoraRequest request = new CrearDemoraRequest(1, 1, "x", "x");
+        CrearDemoraRequest request = new CrearDemoraRequest(1, 1, "x");
         request.setPedidoId(99);
         request.setDemoraMinutos(120);
-        request.setSector("cocina");
         request.setObservaciones("rehacer");
 
         assertEquals(99, request.getPedidoId());
         assertEquals(120, request.getDemoraMinutos());
-        assertEquals("cocina", request.getSector());
         assertEquals("rehacer", request.getObservaciones());
     }
 }

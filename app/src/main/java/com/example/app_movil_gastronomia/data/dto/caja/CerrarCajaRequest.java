@@ -5,15 +5,13 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Request body for {@code POST /api/cajas/{id}/cierre}.
  *
- * <p>Spec CAJ-DTO-001: serialized JSON must contain exactly the
- * keys {@code usuarioCierreId}, {@code montoCierreTeorico} and
- * {@code montoCierreReal}. All three fields are required by the
- * server, so they are kept as primitives.</p>
+ * <p>Spec CAJ-DTO-001 (v2): serialized JSON must contain exactly
+ * the keys {@code montoCierreTeorico} and {@code montoCierreReal}.
+ * The {@code usuarioCierreId} field was removed in the v2 contract
+ * — the server derives the user from the auth token. Both fields
+ * are required by the server, so they are kept as primitives.</p>
  */
 public class CerrarCajaRequest {
-
-    @SerializedName("usuarioCierreId")
-    private int usuarioCierreId;
 
     @SerializedName("montoCierreTeorico")
     private double montoCierreTeorico;
@@ -21,18 +19,9 @@ public class CerrarCajaRequest {
     @SerializedName("montoCierreReal")
     private double montoCierreReal;
 
-    public CerrarCajaRequest(int usuarioCierreId, double montoCierreTeorico, double montoCierreReal) {
-        this.usuarioCierreId = usuarioCierreId;
+    public CerrarCajaRequest(double montoCierreTeorico, double montoCierreReal) {
         this.montoCierreTeorico = montoCierreTeorico;
         this.montoCierreReal = montoCierreReal;
-    }
-
-    public int getUsuarioCierreId() {
-        return usuarioCierreId;
-    }
-
-    public void setUsuarioCierreId(int usuarioCierreId) {
-        this.usuarioCierreId = usuarioCierreId;
     }
 
     public double getMontoCierreTeorico() {

@@ -10,63 +10,58 @@ import com.google.gson.Gson;
 import org.junit.Test;
 
 /**
- * Spec CAJ-DTO-001: the request body for
+ * Spec CAJ-DTO-001 (v2): the request body for
  * {@code POST /api/cajas/apertura} must serialize to a JSON
- * object with exactly the keys {@code usuarioAperturaId} and
- * {@code montoApertura}, matching the server contract in
- * {@code doc/API_REFERENCIA.md} §3.4. Both fields are required,
- * so they are kept as primitives.
+ * object with exactly the key {@code montoApertura}, matching
+ * the v2 server contract in {@code doc/API_REFERENCIA.md} §3.4.
+ * The {@code usuarioAperturaId} field was removed — the server
+ * derives the user from the auth token.
  */
 public class AbrirCajaRequestTest {
 
     private final Gson gson = new Gson();
 
     @Test
-    public void serializesAllFieldsWithExpectedKeys() {
-        AbrirCajaRequest request = new AbrirCajaRequest(1, 5000.0);
+    public void serializesOnlyMontoWithExpectedKeys() {
+        AbrirCajaRequest request = new AbrirCajaRequest(5000.0);
 
         String json = gson.toJson(request);
 
         AbrirCajaRequest parsed = gson.fromJson(json, AbrirCajaRequest.class);
-        assertEquals(1, parsed.getUsuarioAperturaId());
         assertEquals(5000.0, parsed.getMontoApertura(), 0.0001);
 
-        assertTrue("json must contain 'usuarioAperturaId', got: " + json,
-                json.contains("\"usuarioAperturaId\""));
         assertTrue("json must contain 'montoApertura', got: " + json,
                 json.contains("\"montoApertura\""));
+        // v2 contract: usuarioAperturaId MUST NOT be present.
+        assertTrue("json must NOT contain 'usuarioAperturaId' (removed in v2), got: " + json,
+                !json.contains("\"usuarioAperturaId\""));
     }
 
     @Test
     public void roundTripsSampleJsonFromApiReference() {
-        // Exact body from doc/API_REFERENCIA.md §3.4 POST /api/cajas/apertura
+        // Exact body from doc/API_REFERENCIA.md §3.4 POST /api/cajas/apertura (v2)
         String sample = "{"
-                + "\"usuarioAperturaId\": 1,"
                 + "\"montoApertura\": 5000.00"
                 + "}";
 
         AbrirCajaRequest parsed = gson.fromJson(sample, AbrirCajaRequest.class);
 
         assertNotNull(parsed);
-        assertEquals(1, parsed.getUsuarioAperturaId());
         assertEquals(5000.0, parsed.getMontoApertura(), 0.0001);
     }
 
     @Test
     public void gettersReturnConstructorValues() {
-        AbrirCajaRequest request = new AbrirCajaRequest(7, 1234.56);
+        AbrirCajaRequest request = new AbrirCajaRequest(1234.56);
 
-        assertEquals(7, request.getUsuarioAperturaId());
         assertEquals(1234.56, request.getMontoApertura(), 0.0001);
     }
 
     @Test
     public void settersUpdateFieldValues() {
-        AbrirCajaRequest request = new AbrirCajaRequest(1, 100.0);
-        request.setUsuarioAperturaId(2);
+        AbrirCajaRequest request = new AbrirCajaRequest(100.0);
         request.setMontoApertura(200.0);
 
-        assertEquals(2, request.getUsuarioAperturaId());
         assertEquals(200.0, request.getMontoApertura(), 0.0001);
     }
 }

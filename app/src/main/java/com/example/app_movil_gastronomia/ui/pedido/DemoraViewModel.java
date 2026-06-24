@@ -65,21 +65,22 @@ public class DemoraViewModel extends ViewModel {
      * result (LOADING / SUCCESS / ERROR) is mirrored on
      * {@link #getCrearState()}.
      *
+     * <p>v2: the {@code sector} field was removed from the wire
+     * contract — the server derives it from the auth token. Only
+     * the minutes of delay and optional observaciones are sent.</p>
+     *
      * @param pedidoId      target pedido id
      * @param demoraMinutos positive minutes of delay
-     * @param sector        free-text sector label (e.g. "Cocina")
      * @param observaciones free-text notes (optional, pass empty string if none)
      */
     public void registrarDemora(
             int pedidoId,
             int demoraMinutos,
-            String sector,
             String observaciones
     ) {
         CrearDemoraRequest request = new CrearDemoraRequest(
                 pedidoId,
                 demoraMinutos,
-                sector,
                 observaciones != null ? observaciones : ""
         );
         demoraRepository.crearDemora(request);

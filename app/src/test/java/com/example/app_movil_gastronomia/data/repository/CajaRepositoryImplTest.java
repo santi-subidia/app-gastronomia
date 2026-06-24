@@ -272,7 +272,7 @@ public class CajaRepositoryImplTest {
         api.abrirCajaResponse = Response.success(created);
         CajaRepositoryImpl repo = new CajaRepositoryImpl(api);
 
-        AbrirCajaRequest req = new AbrirCajaRequest(1, 1000.0);
+        AbrirCajaRequest req = new AbrirCajaRequest(1000.0);
         LiveData<UiState<CajaDto>> state = repo.getAbrirState();
         EmissionRecorder<UiState<CajaDto>> recorder = recordEmissions(state);
         try {
@@ -283,7 +283,6 @@ public class CajaRepositoryImplTest {
             assertEquals(UiState.Status.LOADING, recorder.seen.get(0));
             assertEquals(UiState.Status.SUCCESS, recorder.seen.get(recorder.seen.size() - 1));
             assertNotNull("API must have been called", api.lastAbrirCajaRequest);
-            assertEquals(1, api.lastAbrirCajaRequest.getUsuarioAperturaId());
             assertEquals(1000.0, api.lastAbrirCajaRequest.getMontoApertura(), 0.0);
         } finally {
             recorder.cleanup(state);
@@ -301,7 +300,7 @@ public class CajaRepositoryImplTest {
         Observer<UiState<CajaDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            repo.abrirCaja(new AbrirCajaRequest(1, 1000.0));
+            repo.abrirCaja(new AbrirCajaRequest(1000.0));
 
             UiState<CajaDto> after = latest.get();
             assertNotNull(after);
@@ -323,7 +322,7 @@ public class CajaRepositoryImplTest {
         Observer<UiState<CajaDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            repo.abrirCaja(new AbrirCajaRequest(1, 1000.0));
+            repo.abrirCaja(new AbrirCajaRequest(1000.0));
 
             UiState<CajaDto> after = latest.get();
             assertNotNull(after);
@@ -344,7 +343,7 @@ public class CajaRepositoryImplTest {
         LiveData<UiState<CajaDto>> second = repo.getAbrirState();
         assertSame(first, second);
 
-        repo.abrirCaja(new AbrirCajaRequest(1, 1000.0));
+        repo.abrirCaja(new AbrirCajaRequest(1000.0));
         assertSame(first, repo.getAbrirState());
     }
 
@@ -361,7 +360,7 @@ public class CajaRepositoryImplTest {
         api.cerrarCajaResponse = Response.success(closed);
         CajaRepositoryImpl repo = new CajaRepositoryImpl(api);
 
-        CerrarCajaRequest req = new CerrarCajaRequest(2, 1500.0, 1480.0);
+        CerrarCajaRequest req = new CerrarCajaRequest(1500.0, 1480.0);
         LiveData<UiState<CajaDto>> state = repo.getCerrarState();
         EmissionRecorder<UiState<CajaDto>> recorder = recordEmissions(state);
         try {
@@ -373,7 +372,6 @@ public class CajaRepositoryImplTest {
             assertEquals(UiState.Status.SUCCESS, recorder.seen.get(recorder.seen.size() - 1));
             assertEquals(11, api.lastCerrarCajaId);
             assertNotNull(api.lastCerrarCajaRequest);
-            assertEquals(2, api.lastCerrarCajaRequest.getUsuarioCierreId());
             assertEquals(1500.0, api.lastCerrarCajaRequest.getMontoCierreTeorico(), 0.0);
             assertEquals(1480.0, api.lastCerrarCajaRequest.getMontoCierreReal(), 0.0);
         } finally {
@@ -392,7 +390,7 @@ public class CajaRepositoryImplTest {
         Observer<UiState<CajaDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            repo.cerrarCaja(11, new CerrarCajaRequest(2, 1500.0, 1480.0));
+            repo.cerrarCaja(11, new CerrarCajaRequest(1500.0, 1480.0));
 
             UiState<CajaDto> after = latest.get();
             assertNotNull(after);
@@ -414,7 +412,7 @@ public class CajaRepositoryImplTest {
         Observer<UiState<CajaDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            repo.cerrarCaja(11, new CerrarCajaRequest(2, 1500.0, 1480.0));
+            repo.cerrarCaja(11, new CerrarCajaRequest(1500.0, 1480.0));
 
             UiState<CajaDto> after = latest.get();
             assertNotNull(after);
@@ -435,7 +433,7 @@ public class CajaRepositoryImplTest {
         LiveData<UiState<CajaDto>> second = repo.getCerrarState();
         assertSame(first, second);
 
-        repo.cerrarCaja(11, new CerrarCajaRequest(2, 1500.0, 1480.0));
+        repo.cerrarCaja(11, new CerrarCajaRequest(1500.0, 1480.0));
         assertSame(first, repo.getCerrarState());
     }
 
