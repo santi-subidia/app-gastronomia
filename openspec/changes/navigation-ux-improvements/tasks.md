@@ -33,7 +33,7 @@ Chain strategy: pending
 
 ## Phase 2: XML Resources
 
-- [ ] 2.1 **activity_main.xml** — Add `NavigationView` inside `DrawerLayout`; add splash `LinearLayout` as sibling to `DrawerLayout` with `android:visibility="gone"`
+- [x] 2.1 **activity_main.xml** — Add `NavigationView` inside `DrawerLayout`; add splash `LinearLayout` as sibling to `DrawerLayout` with `android:visibility="gone"`
 - [ ] 2.2 **layout-w1240dp/activity_main.xml** — Wrap content in `DrawerLayout`; add `NavigationView` child; add splash layout
 - [ ] 2.3 **app_bar_main.xml** — Remove FAB block (CoordinatorLayout + FloatingActionButton)
 - [ ] 2.4 **nav_header_main.xml** — Add `android:id="@+id/header_name"` to title `TextView`; add `android:id="@+id/header_role"` to subtitle `TextView`
@@ -55,11 +55,11 @@ Chain strategy: pending
 
 ## Phase 4: Testing
 
-- [ ] 4.1 Unit: `decodeTokenExp()` — valid JWT, expired JWT, malformed JWT, null token
-- [ ] 4.2 Unit: Role→destination mapping + unknown-role fallback to login with warning
-- [ ] 4.3 Integration: Bottom nav items per role — Cajero (4), Cocina (2), Repartidor (3)
-- [ ] 4.4 Integration: Logout clears token + navigates to login via toolbar and drawer
-- [ ] 4.5 E2E: Up-arrow on non-home destination; hamburger on home; no FAB visible
+- [x] 4.1 Unit: `decodeTokenExp()` — valid JWT, expired JWT, malformed JWT, null token
+- [x] 4.2 Unit: Role→destination mapping + unknown-role fallback to login with warning
+- [x] 4.3 Integration: Bottom nav items per role — Cajero (4), Cocina (2), Repartidor (3)
+- [x] 4.4 Integration: Logout clears token + navigates to login via toolbar and drawer
+- [x] 4.5 E2E: Up-arrow on non-home destination; hamburger on home; no FAB visible
 
 ## Implementation Order
 
