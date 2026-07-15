@@ -92,6 +92,14 @@ public class CrearPedidoViewModel extends ViewModel {
         return crearState;
     }
 
+    /** Returns whether the create-order error should offer the caja shortcut. */
+    @VisibleForTesting
+    static boolean shouldOfferOpenRegister(UiState<PedidoDetalleDto> state) {
+        return state != null
+                && state.getStatus() == UiState.Status.ERROR
+                && "NO_OPEN_REGISTER".equalsIgnoreCase(state.getErrorCode());
+    }
+
     /**
      * One-shot validation error message for the form. The fragment
      * consumes it on emission (e.g. via a Snackbar) and can call

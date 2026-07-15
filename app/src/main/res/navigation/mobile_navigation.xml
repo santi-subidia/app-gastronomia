@@ -120,6 +120,10 @@
     <fragment
         android:id="@+id/nav_crear_pedido"
         android:name="com.example.app_movil_gastronomia.ui.pedido.CrearPedidoFragment"
-        android:label="Crear Pedido" />
+        android:label="Crear Pedido">
+        <action
+            android:id="@+id/action_nav_crear_pedido_to_nav_caja"
+            app:destination="@id/nav_caja" />
+    </fragment>
 
 </navigation>

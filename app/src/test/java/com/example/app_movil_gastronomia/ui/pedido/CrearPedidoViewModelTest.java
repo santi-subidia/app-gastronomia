@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.CrearDetalleRequest;
+import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
 
 import org.junit.Test;
 
@@ -24,6 +26,17 @@ import java.util.List;
  * pure wire contract and the UI layer never imports the DTO.</p>
  */
 public class CrearPedidoViewModelTest {
+
+    @Test
+    public void shouldOfferOpenRegisterOnlyForMissingRegisterError() {
+        UiState<PedidoDetalleDto> missingRegister = UiState.error(
+                "Abrí una caja antes de crear un pedido", "NO_OPEN_REGISTER");
+        UiState<PedidoDetalleDto> otherError = UiState.error(
+                "No hay conexión a internet", null);
+
+        assertTrue(CrearPedidoViewModel.shouldOfferOpenRegister(missingRegister));
+        assertTrue(!CrearPedidoViewModel.shouldOfferOpenRegister(otherError));
+    }
 
     /**
      * Single-line happy path: a DetalleLine with non-trivial values

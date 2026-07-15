@@ -215,8 +215,8 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     _crearState.setValue(UiState.success(response.body()));
                 } else {
-                    _crearState.setValue(UiState.error(
-                            parseMensaje(response, "Error del servidor, intente más tarde")));
+                    ParsedError error = parseCrearError(response);
+                    _crearState.setValue(UiState.error(error.message, error.code));
                 }
             }
 
@@ -344,5 +344,37 @@ public class PedidoRepositoryImpl implements PedidoRepository {
             Log.e(TAG, "Error parsing error body", e);
         }
         return fallback;
+    }
+
+    private static ParsedError parseCrearError(Response<?> response) {
+        final String fallback = "Error del servidor, intente más tarde";
+        try {
+            if (response.errorBody() != null) {
+                String errorBody = response.errorBody().string();
+                ErrorResponse errorResponse = new Gson().fromJson(errorBody, ErrorResponse.class);
+                if (errorResponse != null) {
+                    String code = errorResponse.getCodigo();
+                    if ("NO_OPEN_REGISTER".equalsIgnoreCase(code)) {
+                        return new ParsedError(code, "Abrí una caja antes de crear un pedido");
+                    }
+                    if (errorResponse.getMensaje() != null) {
+                        return new ParsedError(code, errorResponse.getMensaje());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error parsing create-order error body", e);
+        }
+        return new ParsedError(null, fallback);
+    }
+
+    private static final class ParsedError {
+        private final String code;
+        private final String message;
+
+        private ParsedError(String code, String message) {
+            this.code = code;
+            this.message = message;
+        }
     }
 }

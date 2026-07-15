@@ -367,6 +367,29 @@ public class PedidoRepositoryImplTest {
     }
 
     @Test
+    public void crearPedidoNoOpenRegisterExposesStableCodeAndFriendlyMessage() {
+        FakePedidoApi api = new FakePedidoApi();
+        api.crearPedidoResponse = errorResponse(409,
+                "{\"Codigo\":\"NO_OPEN_REGISTER\",\"Mensaje\":\"No hay una caja abierta\"}");
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
+
+        LiveData<UiState<PedidoDetalleDto>> state = repo.getCrearState();
+        AtomicReference<UiState<PedidoDetalleDto>> latest = new AtomicReference<>();
+        Observer<UiState<PedidoDetalleDto>> observer = latest::set;
+        state.observeForever(observer);
+        try {
+            repo.crearPedido(validDeliveryRequest());
+
+            UiState<PedidoDetalleDto> after = latest.get();
+            assertEquals(UiState.Status.ERROR, after.getStatus());
+            assertEquals("NO_OPEN_REGISTER", after.getErrorCode());
+            assertEquals("Abrí una caja antes de crear un pedido", after.getError());
+        } finally {
+            state.removeObserver(observer);
+        }
+    }
+
+    @Test
     public void crearPedidoEmitsNetworkErrorOnIOException() {
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoFailure = new IOException("boom");
@@ -587,6 +610,18 @@ public class PedidoRepositoryImplTest {
             assertEquals("enum " + e.name() + " must resolve to its catalog id",
                     expected, api.lastCambiarEstadoBody);
         }
+    }
+
+    @Test
+    public void cambiarEstadoCanceladoUsesExistingStateEndpoint() {
+        FakePedidoApi api = new FakePedidoApi();
+        api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
+        PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
+
+        repo.cambiarEstado(17, EstadoPedidoEnum.CANCELADO);
+
+        assertEquals(17, api.lastCambiarEstadoId);
+        assertEquals(600, api.lastCambiarEstadoBody);
     }
 
     @Test
