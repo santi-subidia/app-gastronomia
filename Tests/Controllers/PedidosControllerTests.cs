@@ -1,4 +1,5 @@
 using ApiGastronomia.Controllers;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Domain.Enums;
@@ -442,6 +443,40 @@ public class PedidosControllerTests
         var mensajeProp = value.GetType().GetProperty("Mensaje");
         Assert.NotNull(mensajeProp);
         Assert.Equal("El pedido debe contener al menos un producto.", mensajeProp!.GetValue(value));
+    }
+
+    [Fact]
+    public async Task CrearPedido_WithoutOpenCaja_ReturnsConflictWithStableCode()
+    {
+        // Arrange
+        var mockService = new Mock<IPedidoService>();
+        mockService
+            .Setup(s => s.CrearPedidoAsync(It.IsAny<Pedido>()))
+            .ThrowsAsync(new BusinessRuleException(
+                "NO_OPEN_REGISTER",
+                "No hay una caja abierta para registrar el pedido."));
+
+        var controller = CreateController(mockService.Object);
+        var request = new CrearPedidoRequest(
+            CajaId: null,
+            MetodoPagoId: 1,
+            MetodoVentaId: 1,
+            ClienteNombre: "Test",
+            ClienteDireccion: null,
+            LatitudDestino: null,
+            LongitudDestino: null,
+            TotalEstimado: 5000.0,
+            DemoraAprox: null,
+            Detalles: [new CrearDetalleRequest(1, "Pizza", 5000.0, 1)]
+        );
+
+        // Act
+        var result = await controller.CrearPedido(request);
+
+        // Assert
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        var value = conflictResult.Value!;
+        Assert.Equal("NO_OPEN_REGISTER", value.GetType().GetProperty("Codigo")!.GetValue(value));
     }
 
     // ================================================================

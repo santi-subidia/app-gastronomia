@@ -1,4 +1,5 @@
 using ApiGastronomia.Controllers;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -177,6 +178,29 @@ public class CajasControllerTests
 
         // Assert: 409 Conflict
         Assert.IsType<ConflictObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Cerrar_PendingOrders_ReturnsConflictWithStableCode()
+    {
+        // Arrange
+        var mockService = new Mock<ICajaService>();
+        mockService
+            .Setup(s => s.CierreAsync(1, 2, 5500m, 5450m))
+            .ThrowsAsync(new BusinessRuleException(
+                "PENDING_ORDERS_ON_CLOSE",
+                "No se puede cerrar la caja porque tiene 1 pedido(s) pendiente(s)."));
+
+        var controller = CreateController(mockService.Object);
+        var request = new CierreRequest(UsuarioCierreId: 2, MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
+
+        // Act
+        var result = await controller.Cerrar(1, request);
+
+        // Assert
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        var value = conflictResult.Value!;
+        Assert.Equal("PENDING_ORDERS_ON_CLOSE", value.GetType().GetProperty("Codigo")!.GetValue(value));
     }
 
     [Fact]

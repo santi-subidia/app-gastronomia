@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Domain.Enums;
@@ -28,9 +29,16 @@ public class PedidoService : IPedidoService
         if (pedido.DetallePedidos == null || pedido.DetallePedidos.Count == 0)
             throw new InvalidOperationException("El pedido debe contener al menos un producto.");
 
-        // Task 2.2: FK existence validation
-        if (pedido.CajaId.HasValue && !await _context.Cajas.AnyAsync(c => c.Id == pedido.CajaId.Value))
-            throw new InvalidOperationException($"Caja #{pedido.CajaId.Value} no encontrada.");
+        var cajaAbierta = await _context.Cajas
+            .Where(c => c.FechaCierre == null)
+            .OrderByDescending(c => c.FechaApertura)
+            .FirstOrDefaultAsync()
+            ?? throw new BusinessRuleException(
+                "NO_OPEN_REGISTER",
+                "No hay una caja abierta para registrar el pedido.");
+
+        // The active caja is resolved by the backend; the client cannot choose a historical session.
+        pedido.CajaId = cajaAbierta.Id;
 
         if (!await _context.MetodoPago.AnyAsync(mp => mp.Id == pedido.MetodoPagoId))
             throw new InvalidOperationException($"Método de pago #{pedido.MetodoPagoId} no encontrado.");
@@ -80,23 +88,41 @@ public class PedidoService : IPedidoService
 
     public async Task<IEnumerable<Pedido>> ObtenerPedidosAsync()
     {
+        var cajaId = await ObtenerCajaAbiertaIdAsync();
+        if (cajaId is null)
+            return Array.Empty<Pedido>();
+
         return await _context.Pedidos
             .Include(p => p.Estado)
             .Include(p => p.MetodoVenta)
             .Include(p => p.Repartidor)
+            .Where(p => p.CajaId == cajaId)
             .OrderByDescending(p => p.FechaIngreso)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Pedido>> ObtenerPedidosPorEstadoAsync(EstadoPedidoEnum estado)
     {
+        var cajaId = await ObtenerCajaAbiertaIdAsync();
+        if (cajaId is null)
+            return Array.Empty<Pedido>();
+
         return await _context.Pedidos
             .Include(p => p.Estado)
             .Include(p => p.MetodoVenta)
             .Include(p => p.Repartidor)
-            .Where(p => p.EstadoId == (int)estado)
+            .Where(p => p.CajaId == cajaId && p.EstadoId == (int)estado)
             .OrderBy(p => p.FechaIngreso)
             .ToListAsync();
+    }
+
+    private async Task<int?> ObtenerCajaAbiertaIdAsync()
+    {
+        return await _context.Cajas
+            .Where(c => c.FechaCierre == null)
+            .OrderByDescending(c => c.FechaApertura)
+            .Select(c => (int?)c.Id)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Pedido> CambiarEstadoAsync(int pedidoId, EstadoPedidoEnum nuevoEstado)
