@@ -26,7 +26,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
  *   <li>{@link #getCajaState()} — the current open caja, or {@code null}
  *       on SUCCESS when no caja is currently open. Sourced from
  *       {@link CajaRepository#getCajas(String)} filtered by
- *       {@code "abierta"}; the first list element is taken as the open
+ *       {@code "abiertas"}; the first list element is taken as the open
  *       caja (the server returns at most one).</li>
  *   <li>{@link #getAbrirState()} — last result of an open call.</li>
  *   <li>{@link #getCerrarState()} — last result of a close call.</li>
@@ -57,7 +57,7 @@ public class CajaViewModel extends ViewModel {
     public CajaViewModel(CajaRepository cajaRepository) {
         this.cajaRepository = cajaRepository;
 
-        // ---- Caja status: bridge getCajas("abierta") into a single CajaDto stream ----
+        // ---- Caja status: bridge getCajas("abiertas") into a single CajaDto stream ----
         // SUCCESS with a non-empty list means there is one open caja;
         // SUCCESS with an empty list means no caja is currently open.
         this.cajasRepositoryObserver = upstream -> {
@@ -122,7 +122,7 @@ public class CajaViewModel extends ViewModel {
 
     /** Reloads the open-caja status. */
     public void loadCajaStatus() {
-        cajaRepository.getCajas("abierta");
+        cajaRepository.getCajas("abiertas");
     }
 
     /** Reload entry point wired to the retry button. */

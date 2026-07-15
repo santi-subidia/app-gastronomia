@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
+using System.Security.Claims;
 
 namespace ApiGastronomia.Controllers;
 
@@ -28,7 +29,11 @@ public class CajasController : ControllerBase
     {
         try
         {
-            var result = await _cajaService.AperturaAsync(request.UsuarioAperturaId, request.MontoApertura);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId))
+                return Unauthorized(new { Mensaje = "Usuario inválido en el token." });
+
+            var result = await _cajaService.AperturaAsync(userId, request.MontoApertura);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
         catch (BusinessRuleException ex)
@@ -53,8 +58,12 @@ public class CajasController : ControllerBase
     {
         try
         {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId))
+                return Unauthorized(new { Mensaje = "Usuario inválido en el token." });
+
             var result = await _cajaService.CierreAsync(
-                id, request.UsuarioCierreId, request.MontoCierreTeorico, request.MontoCierreReal);
+                id, userId, request.MontoCierreTeorico, request.MontoCierreReal);
             return Ok(result);
         }
         catch (BusinessRuleException ex)

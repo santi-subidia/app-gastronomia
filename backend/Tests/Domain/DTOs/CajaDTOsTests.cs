@@ -176,10 +176,9 @@ public class CajaDTOsTests
     public void AperturaRequest_Stores_All_Properties()
     {
         // Act
-        var request = new AperturaRequest(UsuarioAperturaId: 5, MontoApertura: 50000m);
+        var request = new AperturaRequest(MontoApertura: 50000m);
 
         // Assert
-        Assert.Equal(5, request.UsuarioAperturaId);
         Assert.Equal(50000m, request.MontoApertura);
     }
 
@@ -187,17 +186,16 @@ public class CajaDTOsTests
     public void AperturaRequest_With_Different_Values()
     {
         // Triangulation: different values
-        var request = new AperturaRequest(UsuarioAperturaId: 99, MontoApertura: 100000m);
+        var request = new AperturaRequest(MontoApertura: 100000m);
 
-        Assert.Equal(99, request.UsuarioAperturaId);
         Assert.Equal(100000m, request.MontoApertura);
     }
 
     [Fact]
     public void AperturaRequest_Equality_By_Value()
     {
-        var r1 = new AperturaRequest(5, 50000m);
-        var r2 = new AperturaRequest(5, 50000m);
+        var r1 = new AperturaRequest(50000m);
+        var r2 = new AperturaRequest(50000m);
 
         Assert.Equal(r1, r2);
     }
@@ -210,10 +208,9 @@ public class CajaDTOsTests
     public void CierreRequest_Stores_All_Properties()
     {
         // Act
-        var request = new CierreRequest(UsuarioCierreId: 7, MontoCierreTeorico: 55000m, MontoCierreReal: 54800m);
+        var request = new CierreRequest(MontoCierreTeorico: 55000m, MontoCierreReal: 54800m);
 
         // Assert
-        Assert.Equal(7, request.UsuarioCierreId);
         Assert.Equal(55000m, request.MontoCierreTeorico);
         Assert.Equal(54800m, request.MontoCierreReal);
     }
@@ -222,9 +219,8 @@ public class CajaDTOsTests
     public void CierreRequest_With_Different_Values()
     {
         // Triangulation: different values
-        var request = new CierreRequest(UsuarioCierreId: 42, MontoCierreTeorico: 98000m, MontoCierreReal: 97500m);
+        var request = new CierreRequest(MontoCierreTeorico: 98000m, MontoCierreReal: 97500m);
 
-        Assert.Equal(42, request.UsuarioCierreId);
         Assert.Equal(98000m, request.MontoCierreTeorico);
         Assert.Equal(97500m, request.MontoCierreReal);
     }
@@ -232,8 +228,8 @@ public class CajaDTOsTests
     [Fact]
     public void CierreRequest_Equality_By_Value()
     {
-        var r1 = new CierreRequest(7, 55000m, 54800m);
-        var r2 = new CierreRequest(7, 55000m, 54800m);
+        var r1 = new CierreRequest(55000m, 54800m);
+        var r2 = new CierreRequest(55000m, 54800m);
 
         Assert.Equal(r1, r2);
     }

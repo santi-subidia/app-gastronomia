@@ -25,9 +25,9 @@ public record CajaResponse(
 /// <summary>
 /// Request DTO for opening a new caja (apertura).
 /// </summary>
-public record AperturaRequest(int UsuarioAperturaId, decimal MontoApertura);
+public record AperturaRequest(decimal MontoApertura);
 
 /// <summary>
 /// Request DTO for closing an existing caja (cierre).
 /// </summary>
-public record CierreRequest(int UsuarioCierreId, decimal MontoCierreTeorico, decimal MontoCierreReal);
+public record CierreRequest(decimal MontoCierreTeorico, decimal MontoCierreReal);

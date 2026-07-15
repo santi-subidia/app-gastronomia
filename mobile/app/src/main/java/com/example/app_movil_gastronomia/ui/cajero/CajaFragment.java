@@ -19,6 +19,12 @@ import com.example.app_movil_gastronomia.databinding.FragmentCajaBinding;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 /**
@@ -128,17 +134,42 @@ public class CajaFragment extends Fragment {
         binding.groupNoCaja.setVisibility(View.GONE);
         binding.groupCajaAbierta.setVisibility(View.VISIBLE);
 
+        String fechaFormateada = formatIsoDate(caja.getFechaApertura());
         binding.textCajaFecha.setText(getString(
                 R.string.caja_label_fecha_apertura,
-                caja.getFechaApertura() != null ? caja.getFechaApertura() : ""));
+                fechaFormateada));
+                
+        String montoFormateado = formatCurrency(caja.getMontoApertura());
         binding.textCajaMontoApertura.setText(getString(
-                R.string.caja_label_monto_apertura, caja.getMontoApertura()));
+                R.string.caja_label_monto_apertura, montoFormateado));
+                
         binding.textCajaUsuario.setText(getString(
                 R.string.caja_label_usuario_apertura,
                 caja.getUsuarioAperturaNombre() != null ? caja.getUsuarioAperturaNombre() : ""));
 
         binding.inputMontoCierre.setText("");
         binding.buttonCerrar.setEnabled(true);
+    }
+
+    private String formatIsoDate(String isoString) {
+        if (isoString == null || isoString.isEmpty()) return "";
+        try {
+            String trimmed = isoString.replaceAll("\\.\\d+Z$", "Z");
+            SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date date = parser.parse(trimmed);
+            if (date == null) return isoString;
+            
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            return formatter.format(date);
+        } catch (Exception e) {
+            return isoString;
+        }
+    }
+
+    private String formatCurrency(double amount) {
+        NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("es", "AR"));
+        return format.format(amount);
     }
 
     private void showError(String message) {

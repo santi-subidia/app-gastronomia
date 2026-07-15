@@ -2,8 +2,10 @@ using ApiGastronomia.Controllers;
 using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using System.Security.Claims;
 
 namespace ApiGastronomia.Tests.Controllers;
 
@@ -42,10 +44,21 @@ public class CajasControllerTests
     /// <summary>
     /// Creates a CajasController with mocked service and logger.
     /// </summary>
-    private static CajasController CreateController(ICajaService service)
+    private static CajasController CreateController(ICajaService service, int userId = 1)
     {
         var logger = Mock.Of<Microsoft.Extensions.Logging.ILogger<CajasController>>();
-        return new CajasController(service, logger);
+        var controller = new CajasController(service, logger);
+
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
+
+        return controller;
     }
 
     // ================================================================
@@ -61,8 +74,8 @@ public class CajasControllerTests
             .Setup(s => s.AperturaAsync(1, 5000m))
             .ReturnsAsync(CajaAbiertaResponse);
 
-        var controller = CreateController(mockService.Object);
-        var request = new AperturaRequest(UsuarioAperturaId: 1, MontoApertura: 5000m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new AperturaRequest(MontoApertura: 5000m);
 
         // Act
         var result = await controller.Apertura(request);
@@ -86,8 +99,8 @@ public class CajasControllerTests
             .Setup(s => s.AperturaAsync(1, 5000m))
             .ThrowsAsync(new InvalidOperationException("Ya existe una caja abierta."));
 
-        var controller = CreateController(mockService.Object);
-        var request = new AperturaRequest(UsuarioAperturaId: 1, MontoApertura: 5000m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new AperturaRequest(MontoApertura: 5000m);
 
         // Act
         var result = await controller.Apertura(request);
@@ -103,11 +116,11 @@ public class CajasControllerTests
         // Arrange
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.AperturaAsync(999, 5000m))
+            .Setup(s => s.AperturaAsync(1, 5000m))
             .ThrowsAsync(new KeyNotFoundException("Usuario no encontrado."));
 
-        var controller = CreateController(mockService.Object);
-        var request = new AperturaRequest(UsuarioAperturaId: 999, MontoApertura: 5000m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new AperturaRequest(MontoApertura: 5000m);
 
         // Act
         var result = await controller.Apertura(request);
@@ -126,11 +139,11 @@ public class CajasControllerTests
         // Arrange
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.CierreAsync(1, 2, 5500m, 5450m))
+            .Setup(s => s.CierreAsync(1, 1, 5500m, 5450m))
             .ReturnsAsync(CajaCerradaResponse);
 
-        var controller = CreateController(mockService.Object);
-        var request = new CierreRequest(UsuarioCierreId: 2, MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new CierreRequest(MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
 
         // Act
         var result = await controller.Cerrar(1, request);
@@ -148,11 +161,11 @@ public class CajasControllerTests
         // Arrange
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.CierreAsync(999, 2, 5500m, 5450m))
+            .Setup(s => s.CierreAsync(999, 1, 5500m, 5450m))
             .ThrowsAsync(new KeyNotFoundException("Caja no encontrada."));
 
-        var controller = CreateController(mockService.Object);
-        var request = new CierreRequest(UsuarioCierreId: 2, MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new CierreRequest(MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
 
         // Act
         var result = await controller.Cerrar(999, request);
@@ -167,11 +180,11 @@ public class CajasControllerTests
         // Arrange
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.CierreAsync(1, 2, 5500m, 5450m))
+            .Setup(s => s.CierreAsync(1, 1, 5500m, 5450m))
             .ThrowsAsync(new InvalidOperationException("La caja ya se encuentra cerrada."));
 
-        var controller = CreateController(mockService.Object);
-        var request = new CierreRequest(UsuarioCierreId: 2, MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new CierreRequest(MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
 
         // Act
         var result = await controller.Cerrar(1, request);
@@ -186,13 +199,13 @@ public class CajasControllerTests
         // Arrange
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.CierreAsync(1, 2, 5500m, 5450m))
+            .Setup(s => s.CierreAsync(1, 1, 5500m, 5450m))
             .ThrowsAsync(new BusinessRuleException(
                 "PENDING_ORDERS_ON_CLOSE",
                 "No se puede cerrar la caja porque tiene 1 pedido(s) pendiente(s)."));
 
-        var controller = CreateController(mockService.Object);
-        var request = new CierreRequest(UsuarioCierreId: 2, MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new CierreRequest(MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
 
         // Act
         var result = await controller.Cerrar(1, request);
@@ -209,11 +222,11 @@ public class CajasControllerTests
         // Arrange
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.CierreAsync(1, 999, 5500m, 5450m))
+            .Setup(s => s.CierreAsync(1, 1, 5500m, 5450m))
             .ThrowsAsync(new KeyNotFoundException("Usuario no encontrado."));
 
-        var controller = CreateController(mockService.Object);
-        var request = new CierreRequest(UsuarioCierreId: 999, MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new CierreRequest(MontoCierreTeorico: 5500m, MontoCierreReal: 5450m);
 
         // Act
         var result = await controller.Cerrar(1, request);
@@ -235,7 +248,7 @@ public class CajasControllerTests
             .Setup(s => s.ObtenerTodasAsync(null))
             .ReturnsAsync([CajaAbiertaResponse, CajaCerradaResponse]);
 
-        var controller = CreateController(mockService.Object);
+        var controller = CreateController(mockService.Object, 1);
 
         // Act
         var result = await controller.GetAll();
@@ -255,7 +268,7 @@ public class CajasControllerTests
             .Setup(s => s.ObtenerTodasAsync(null))
             .ReturnsAsync([]);
 
-        var controller = CreateController(mockService.Object);
+        var controller = CreateController(mockService.Object, 1);
 
         // Act
         var result = await controller.GetAll();
@@ -279,7 +292,7 @@ public class CajasControllerTests
             .Setup(s => s.ObtenerPorIdAsync(1))
             .ReturnsAsync(CajaAbiertaResponse);
 
-        var controller = CreateController(mockService.Object);
+        var controller = CreateController(mockService.Object, 1);
 
         // Act
         var result = await controller.GetById(1);
@@ -300,7 +313,7 @@ public class CajasControllerTests
             .Setup(s => s.ObtenerPorIdAsync(999))
             .ReturnsAsync((CajaResponse?)null);
 
-        var controller = CreateController(mockService.Object);
+        var controller = CreateController(mockService.Object, 1);
 
         // Act
         var result = await controller.GetById(999);
@@ -327,11 +340,11 @@ public class CajasControllerTests
 
         var mockService = new Mock<ICajaService>();
         mockService
-            .Setup(s => s.AperturaAsync(3, 2500m))
+            .Setup(s => s.AperturaAsync(1, 2500m))
             .ReturnsAsync(response2500);
 
-        var controller = CreateController(mockService.Object);
-        var request = new AperturaRequest(UsuarioAperturaId: 3, MontoApertura: 2500m);
+        var controller = CreateController(mockService.Object, 1);
+        var request = new AperturaRequest(MontoApertura: 2500m);
 
         // Act
         var result = await controller.Apertura(request);
