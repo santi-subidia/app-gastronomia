@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    android:background="@color/surface_container"
+    android:paddingStart="0dp"
+    android:paddingEnd="16dp"
+    android:paddingVertical="12dp">
+
+    <!-- Left accent border colored by status, 4dp wide. -->
+    <View
+        android:id="@+id/pedido_accent_border"
+        android:layout_width="4dp"
+        android:layout_height="0dp"
+        android:background="@color/chip_unselected_bg"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Row 1: pedido id + status chip -->
+    <TextView
+        android:id="@+id/pedido_id"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/pedido_status_chip"
+        app:layout_constraintStart_toEndOf="@id/pedido_accent_border"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="#42" />
+
+    <TextView
+        android:id="@+id/pedido_status_chip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/chip_unselected_bg"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="En Preparación" />
+
+    <!-- Row 2: customer name -->
+    <TextView
+        android:id="@+id/pedido_cliente_nombre"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:textAppearance="?attr/textAppearanceSubtitle1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/pedido_accent_border"
+        app:layout_constraintTop_toBottomOf="@id/pedido_id"
+        tools:text="Juan Pérez" />
+
+    <!-- Row 3: method + total -->
+    <TextView
+        android:id="@+id/pedido_metodo_venta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBody2"
+        app:layout_constraintStart_toEndOf="@id/pedido_accent_border"
+        app:layout_constraintTop_toBottomOf="@id/pedido_cliente_nombre"
+        tools:text="Delivery" />
+
+    <TextView
+        android:id="@+id/pedido_total"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="?attr/textAppearanceBody2"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pedido_cliente_nombre"
+        tools:text="$1500" />
+
+    <!-- Row 4: timestamp -->
+    <TextView
+        android:id="@+id/pedido_fecha_ingreso"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textColor="@color/text_muted"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/pedido_accent_border"
+        app:layout_constraintTop_toBottomOf="@id/pedido_metodo_venta"
+        tools:text="2025-06-22T10:15:00" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,151 @@
+<resources>
+    <string name="app_name">app-movil-gastronomia</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Login -->
+    <string name="login_title">Iniciar sesi\u00f3n</string>
+    <string name="hint_username">Usuario</string>
+    <string name="hint_password">Contrase\u00f1a</string>
+    <string name="button_login">Ingresar</string>
+
+    <!-- Product list -->
+    <string name="no_products_available">No hay productos disponibles</string>
+    <string name="error_generic">Error del servidor, intente m\u00e1s tarde</string>
+    <string name="retry">Reintentar</string>
+    <string name="fab_content_description">Action</string>
+
+    <!-- Template leftovers (still referenced by nav header and transform layouts) -->
+    <string name="image_view_item_transform_content_description">Item image</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+
+    <!-- Pedido list / detail -->
+    <string name="all_orders">Todos</string>
+    <string name="status_pending">Pendiente</string>
+    <string name="status_preparing">En Preparaci\u00f3n</string>
+    <string name="status_ready">Listo</string>
+    <string name="status_delivering">En Camino</string>
+    <string name="status_delivered">Entregado</string>
+    <string name="no_orders">No hay pedidos</string>
+    <string name="no_orders_state">No hay pedidos %s</string>
+    <string name="order_detail_title">Pedido #%d</string>
+    <string name="change_status">Cambiar Estado</string>
+    <string name="cancel_order">Cancelar pedido</string>
+    <string name="confirm_cancel_order">¿Querés cancelar este pedido?</string>
+    <string name="order_cancelled">Pedido cancelado</string>
+    <string name="assign_driver">Asignar Repartidor</string>
+    <string name="register_delay">Registrar Demora</string>
+    <string name="label_customer">Cliente</string>
+    <string name="label_method">M\u00e9todo</string>
+    <string name="label_date">Fecha</string>
+    <string name="label_total">Total</string>
+    <string name="label_items">Productos</string>
+    <string name="action_confirm">Confirmar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="driver_id_hint">ID del Repartidor</string>
+
+    <!-- Cocina home -->
+    <string name="cocina_title">Cocina</string>
+    <string name="no_pending_orders">No hay pedidos pendientes</string>
+    <string name="all_orders_attended">Todos los clientes est\u00e1n siendo atendidos. \u00a1Buen trabajo!</string>
+
+    <!-- Repartidor home -->
+    <string name="repartidor_title">Repartidor</string>
+    <string name="no_deliveries_assigned">No hay entregas asignadas</string>
+    <string name="waiting_assignments">Esperando nuevas asignaciones...</string>
+    <string name="delivery_completed">Entrega completada</string>
+    <string name="view_map">Ver Mapa</string>
+
+    <!-- Mapa repartidor -->
+    <string name="mapa_title">Mapa de Entregas</string>
+    <string name="active_deliveries">Entregas Activas</string>
+    <string name="my_location">Mi Ubicación GPS</string>
+    <string name="auto_send_label">Envío automático cada 8s</string>
+    <string name="send_position_now">Enviar Posición Ahora</string>
+    <string name="last_sent">Último envío: %s</string>
+    <string name="waiting_gps">Esperando GPS...</string>
+    <string name="gps_unavailable">GPS no disponible</string>
+
+    <!-- Cajero home -->
+    <string name="cajero_title">Cajero</string>
+    <string name="active_orders_count">Pedidos activos: %d</string>
+    <string name="caja_status">Caja: %s</string>
+    <string name="caja_open">Abierta</string>
+    <string name="caja_closed">Cerrada</string>
+    <string name="go_to_orders">Pedidos</string>
+    <string name="go_to_products">Productos</string>
+    <string name="go_to_caja">Caja</string>
+    <string name="go_to_config">Configuraci\u00f3n</string>
+    <string name="coming_soon">Pr\u00f3ximamente</string>
+    <string name="go_to_create_order">Crear Pedido</string>
+
+    <!-- Crear pedido form -->
+    <string name="create_order_title">Crear Pedido</string>
+    <string name="customer_name_hint">Nombre del Cliente</string>
+    <string name="sale_method_hint">M\u00e9todo de Venta</string>
+    <string name="payment_method_hint">M\u00e9todo de Pago</string>
+    <string name="delivery_address_hint">Direcci\u00f3n de Entrega</string>
+    <string name="latitude_hint">Latitud</string>
+    <string name="longitude_hint">Longitud</string>
+    <string name="add_product">Agregar Producto</string>
+    <string name="select_product">Seleccionar Producto</string>
+    <string name="quantity_label">Cantidad</string>
+    <string name="create_order_button">Crear Pedido</string>
+    <string name="order_created">Pedido creado exitosamente</string>
+    <string name="validation_customer_required">El nombre del cliente es requerido</string>
+    <string name="validation_details_required">Agreg\u00e1 al menos un producto</string>
+    <string name="validation_delivery_required">Direcci\u00f3n y coordenadas requeridas para Delivery</string>
+    <string name="option_pickup">Retiro en local</string>
+    <string name="option_delivery">Delivery</string>
+    <string name="option_cash">Efectivo</string>
+    <string name="option_card">Tarjeta</string>
+    <string name="option_transfer">Transferencia</string>
+    <string name="no_products_in_order">A\u00fan no agregaste productos</string>
+    <string name="delete_detalle">Eliminar l\u00ednea</string>
+
+    <!-- Caja open/close screen -->
+    <string name="caja_title">Caja</string>
+    <string name="no_open_caja">No hay caja abierta</string>
+    <string name="open_amount_hint">Monto de Apertura</string>
+    <string name="close_amount_hint">Monto de Cierre Real</string>
+    <string name="open_caja_button">Abrir Caja</string>
+    <string name="close_caja_button">Cerrar Caja</string>
+    <string name="caja_opened">Caja abierta exitosamente</string>
+    <string name="caja_close_success">Caja cerrada exitosamente</string>
+    <string name="caja_label_fecha_apertura">Fecha de apertura: %s</string>
+    <string name="caja_label_monto_apertura">Monto de apertura: $%1$.0f</string>
+    <string name="caja_label_usuario_apertura">Abierta por: %s</string>
+    <string name="validation_amount_required">Ingres\u00e1 un monto v\u00e1lido</string>
+
+    <!-- Demora form -->
+    <string name="demora_title">Registrar Demora</string>
+    <string name="demora_minutes_hint">Minutos de demora</string>
+    <string name="demora_sector_hint">Sector</string>
+    <string name="demora_observations_hint">Observaciones</string>
+    <string name="register_delay_button">Registrar Demora</string>
+    <string name="delay_registered">Demora registrada exitosamente</string>
+    <string name="demora_for_order">Registrar Demora para Pedido #%d</string>
+
+    <!-- Configuracion form (singleton CRUD) -->
+    <string name="config_title">Configuraci\u00f3n</string>
+    <string name="config_saved">Configuraci\u00f3n guardada exitosamente</string>
+    <string name="save_config">Guardar Configuraci\u00f3n</string>
+    <string name="update_config">Actualizar Configuraci\u00f3n</string>
+    <string name="config_nombre_hint">Nombre del gastron\u00f3mico</string>
+    <string name="config_metodo_pago_id_hint">ID m\u00e9todo de pago por defecto</string>
+    <string name="config_metodo_pago_nombre_hint">Nombre m\u00e9todo de pago por defecto</string>
+    <string name="config_latitud_hint">Latitud de partida</string>
+    <string name="config_longitud_hint">Longitud de partida</string>
+
+    <!-- Navigation UX: drawer, toolbar overflow, splash, role labels, header fallback -->
+    <string name="drawer_config">Configuraci\u00f3n</string>
+    <string name="drawer_logout">Cerrar sesi\u00f3n</string>
+    <string name="menu_logout">Cerrar sesi\u00f3n</string>
+    <string name="splash_title">Gastronom\u00eda</string>
+    <string name="role_cajero">Cajero</string>
+    <string name="role_cocina">Cocina</string>
+    <string name="role_repartidor">Repartidor</string>
+    <string name="header_fallback">Usuario</string>
+</resources>

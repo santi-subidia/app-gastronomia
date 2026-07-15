@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <!--
+        Placeholder pool of all possible bottom-nav destinations. MainActivity calls
+        configureBottomNav(role) which does menu.clear() then menu.add(id, title).setIcon()
+        for the role's allowed destinations, so only the relevant items end up visible
+        at runtime. IDs here MUST match the nav graph destination IDs.
+
+        IMPORTANT: BottomNavigationView enforces a hard max of 6 items at construction
+        time (before menu.clear() runs), so this pool is capped at 6. The Repartidor-only
+        nav_mapa item is added programmatically by configureBottomNav("repartidor")
+        and therefore does not need to live in the placeholder pool.
+    -->
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_cajero_home"
+            android:icon="@drawable/ic_home_24dp"
+            android:title="@string/cajero_title" />
+        <item
+            android:id="@+id/nav_cocina_home"
+            android:icon="@drawable/ic_home_24dp"
+            android:title="@string/cocina_title" />
+        <item
+            android:id="@+id/nav_repartidor_home"
+            android:icon="@drawable/ic_home_24dp"
+            android:title="@string/repartidor_title" />
+        <item
+            android:id="@+id/nav_pedido_list"
+            android:icon="@drawable/ic_pedidos_24dp"
+            android:title="@string/all_orders" />
+        <item
+            android:id="@+id/nav_cajero_productos"
+            android:icon="@drawable/ic_productos_24dp"
+            android:title="@string/no_products_available" />
+        <item
+            android:id="@+id/nav_caja"
+            android:icon="@drawable/ic_caja_24dp"
+            android:title="@string/caja_title" />
+    </group>
+</menu>
