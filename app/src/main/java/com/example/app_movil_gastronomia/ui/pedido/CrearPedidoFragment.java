@@ -217,13 +217,31 @@ public class CrearPedidoFragment extends Fragment {
                 break;
             case ERROR:
                 binding.buttonCrear.setEnabled(true);
-                Snackbar.make(
-                        binding.getRoot(),
-                        state.getError() != null ? state.getError() : getString(R.string.error_generic),
-                        Snackbar.LENGTH_LONG
-                ).show();
+                if (CrearPedidoViewModel.shouldOfferOpenRegister(state)) {
+                    showOpenRegisterDialog(state.getError());
+                } else {
+                    Snackbar.make(
+                            binding.getRoot(),
+                            state.getError() != null ? state.getError() : getString(R.string.error_generic),
+                            Snackbar.LENGTH_LONG
+                    ).show();
+                }
                 break;
         }
+    }
+
+    private void showOpenRegisterDialog(String message) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.no_open_caja)
+                .setMessage(message != null ? message : getString(R.string.error_generic))
+                .setPositiveButton(R.string.open_caja_button, (dialog, which) -> navigateToCaja())
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    private void navigateToCaja() {
+        NavController controller = Navigation.findNavController(requireView());
+        controller.navigate(R.id.action_nav_crear_pedido_to_nav_caja);
     }
 
     private void handleFormError(@Nullable String message) {

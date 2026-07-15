@@ -32,6 +32,9 @@
     <string name="no_orders_state">No hay pedidos %s</string>
     <string name="order_detail_title">Pedido #%d</string>
     <string name="change_status">Cambiar Estado</string>
+    <string name="cancel_order">Cancelar pedido</string>
+    <string name="confirm_cancel_order">¿Querés cancelar este pedido?</string>
+    <string name="order_cancelled">Pedido cancelado</string>
     <string name="assign_driver">Asignar Repartidor</string>
     <string name="register_delay">Registrar Demora</string>
     <string name="label_customer">Cliente</string>

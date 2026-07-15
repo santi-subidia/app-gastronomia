@@ -65,6 +65,7 @@ public class PedidoDetailFragment extends Fragment {
         viewModel.getAsignarRepartidorState().observe(getViewLifecycleOwner(), this::handleAsignarRepartidorResult);
 
         binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
+        binding.buttonCancelarPedido.setOnClickListener(v -> confirmCancelOrder());
         binding.buttonAsignarRepartidor.setOnClickListener(v -> showAsignarRepartidorDialog());
         binding.buttonRegistrarDemora.setOnClickListener(v -> {
             // Navigate to the Demora form, passing the current pedidoId
@@ -80,6 +81,17 @@ public class PedidoDetailFragment extends Fragment {
         if (pedidoId > 0) {
             viewModel.loadPedido(pedidoId);
         }
+    }
+
+    private void confirmCancelOrder() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.cancel_order)
+                .setMessage(R.string.confirm_cancel_order)
+                .setPositiveButton(R.string.action_confirm,
+                        (dialog, which) -> viewModel.cambiarEstado(
+                                pedidoId, EstadoPedidoEnum.CANCELADO))
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
     }
 
     private void handleDetailState(UiState<PedidoDetalleDto> state) {
@@ -107,7 +119,8 @@ public class PedidoDetailFragment extends Fragment {
                 // Refresh the detail from the server so the banner / fields reflect
                 // the new estado.
                 Toast.makeText(requireContext(),
-                        R.string.change_status,
+                        state.getData() != null && EstadoPedidoEnum.fromApiValue(state.getData().getEstado()) == EstadoPedidoEnum.CANCELADO
+                                ? R.string.order_cancelled : R.string.change_status,
                         Toast.LENGTH_SHORT).show();
                 viewModel.loadPedido(pedidoId);
                 break;
@@ -181,6 +194,8 @@ public class PedidoDetailFragment extends Fragment {
         binding.fechaIngreso.setText(pedido.getFechaIngreso() != null
                 ? pedido.getFechaIngreso() : "");
         binding.total.setText(String.format(Locale.getDefault(), "$%.0f", pedido.getTotalEstimado()));
+        boolean canCancel = PedidoCancellationPolicy.isCancelable(estado);
+        binding.buttonCancelarPedido.setVisibility(canCancel ? View.VISIBLE : View.GONE);
 
         // Items list
         renderItems(pedido.getDetallePedidos());
