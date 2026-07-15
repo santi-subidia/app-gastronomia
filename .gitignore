@@ -1,0 +1,9 @@
+.vs/
+bin/
+obj/
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.codegraph/
