@@ -1,0 +1,30 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+*.vs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temp
+*.log
+*.tmp
