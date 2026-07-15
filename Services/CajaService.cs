@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
+using ApiGastronomia.Domain.Enums;
 using ApiGastronomia.Infrastructure.Data;
 using ApiGastronomia.Services.Interfaces;
 
@@ -63,6 +65,24 @@ public class CajaService : ICajaService
         var usuarioCierre = await _context.Usuarios.FindAsync(usuarioCierreId);
         if (usuarioCierre == null)
             throw new KeyNotFoundException("Usuario no encontrado.");
+
+        var estadosFinales = new[]
+        {
+            (int)EstadoPedidoEnum.Entregado,
+            (int)EstadoPedidoEnum.Retirado,
+            (int)EstadoPedidoEnum.Cancelado,
+            (int)EstadoPedidoEnum.Devuelto
+        };
+
+        var pedidosPendientes = await _context.Pedidos
+            .CountAsync(p => p.CajaId == cajaId && !estadosFinales.Contains(p.EstadoId));
+
+        if (pedidosPendientes > 0)
+        {
+            throw new BusinessRuleException(
+                "PENDING_ORDERS_ON_CLOSE",
+                $"No se puede cerrar la caja porque tiene {pedidosPendientes} pedido(s) pendiente(s). Resuelva todos los pedidos antes de cerrar.");
+        }
 
         caja.UsuarioCierreId = usuarioCierreId;
         caja.MontoCierreTeorico = montoCierreTeorico;

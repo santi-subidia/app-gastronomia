@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
 
@@ -30,6 +31,10 @@ public class CajasController : ControllerBase
             var result = await _cajaService.AperturaAsync(request.UsuarioAperturaId, request.MontoApertura);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
+        catch (BusinessRuleException ex)
+        {
+            return Conflict(new { Codigo = ex.Code, Mensaje = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return Conflict(new { Mensaje = ex.Message });
@@ -51,6 +56,10 @@ public class CajasController : ControllerBase
             var result = await _cajaService.CierreAsync(
                 id, request.UsuarioCierreId, request.MontoCierreTeorico, request.MontoCierreReal);
             return Ok(result);
+        }
+        catch (BusinessRuleException ex)
+        {
+            return Conflict(new { Codigo = ex.Code, Mensaje = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

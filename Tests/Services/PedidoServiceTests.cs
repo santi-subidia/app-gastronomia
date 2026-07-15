@@ -1,4 +1,5 @@
 using ApiGastronomia.Domain.DTOs;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Domain.Enums;
 using ApiGastronomia.Infrastructure.Data;
@@ -78,7 +79,8 @@ public class PedidoServiceTests
     private static (AppDbContext Context, Pedido Pedido) SeedPedido(
         AppDbContext context,
         EstadoPedidoEnum estado,
-        int id = 0)
+        int id = 0,
+        int? cajaId = null)
     {
         var estadoEntity = context.EstadosPedidos.First(e => e.Id == (int)estado);
 
@@ -86,6 +88,7 @@ public class PedidoServiceTests
         {
             EstadoId = (int)estado,
             Estado = estadoEntity,
+            CajaId = cajaId,
             MetodoPagoId = 1,
             MetodoPago = new MetodoPago { Nombre = "Efectivo" },
             MetodoVentaId = 1,
@@ -108,7 +111,8 @@ public class PedidoServiceTests
     /// Returns (context, metodoPago, metodoVenta, producto).
     /// </summary>
     private static (AppDbContext Context, MetodoPago MetodoPago, MetodoVenta MetodoVenta, Producto Producto) SeedFkData(
-        AppDbContext context)
+        AppDbContext context,
+        bool includeOpenCaja = true)
     {
         var metodoPago = new MetodoPago { Nombre = "Efectivo" };
         var metodoVenta = new MetodoVenta { Nombre = "Delivery" };
@@ -118,6 +122,34 @@ public class PedidoServiceTests
         context.MetodosVenta.Add(metodoVenta);
         context.Productos.Add(producto);
         context.SaveChanges();
+
+        if (includeOpenCaja)
+        {
+            var rol = new Rol { Nombre = $"Cajero_{Guid.NewGuid():N}" };
+            context.Roles.Add(rol);
+            context.SaveChanges();
+
+            var usuario = new Usuario
+            {
+                UsuarioNombre = $"CajaUser_{Guid.NewGuid():N}",
+                PasswordHash = "hash",
+                RolId = rol.Id,
+                Rol = rol,
+                Activo = true,
+                Disponible = true
+            };
+            context.Usuarios.Add(usuario);
+            context.SaveChanges();
+
+            context.Cajas.Add(new Caja
+            {
+                UsuarioAperturaId = usuario.Id,
+                UsuarioApertura = usuario,
+                MontoApertura = 1000m,
+                FechaApertura = DateTime.UtcNow
+            });
+            context.SaveChanges();
+        }
 
         return (context, metodoPago, metodoVenta, producto);
     }
@@ -284,9 +316,9 @@ public class PedidoServiceTests
     // ================================================================
 
     [Fact]
-    public async Task CrearPedidoAsync_InvalidCajaId_ThrowsInvalidOperationException()
+    public async Task CrearPedidoAsync_RequestedCajaIdIsIgnoredAndActiveCajaIsAssigned()
     {
-        // Arrange: seed FK data but use a non-existent CajaId
+        // Arrange: the backend must resolve the active caja instead of trusting the request
         var context = CreateDbContext();
         SeedEstados(context);
         var (_, metodoPago, metodoVenta, producto) = SeedFkData(context);
@@ -304,10 +336,12 @@ public class PedidoServiceTests
             }
         };
 
-        // Act + Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.CrearPedidoAsync(pedido));
-        Assert.Contains("Caja", ex.Message);
+        // Act
+        var result = await service.CrearPedidoAsync(pedido);
+
+        // Assert: the invalid client value is replaced by the open caja ID
+        Assert.NotEqual(999, result.CajaId);
+        Assert.Equal(context.Cajas.Single().Id, result.CajaId);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -315,12 +349,12 @@ public class PedidoServiceTests
     }
 
     [Fact]
-    public async Task CrearPedidoAsync_NullCajaId_IsAllowed()
+    public async Task CrearPedidoAsync_WithoutOpenCaja_ThrowsNoOpenRegisterRule()
     {
         // Arrange: CajaId is nullable, so null should work
         var context = CreateDbContext();
         SeedEstados(context);
-        var (_, metodoPago, metodoVenta, producto) = SeedFkData(context);
+        var (_, metodoPago, metodoVenta, producto) = SeedFkData(context, includeOpenCaja: false);
         var (service, _) = CreateService(context);
 
         var pedido = new Pedido
@@ -335,12 +369,11 @@ public class PedidoServiceTests
             }
         };
 
-        // Act
-        var result = await service.CrearPedidoAsync(pedido);
-
-        // Assert: pedido created with null CajaId
-        Assert.NotNull(result);
-        Assert.Null(result.CajaId);
+        // Act + Assert
+        var ex = await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.CrearPedidoAsync(pedido));
+        Assert.Equal("NO_OPEN_REGISTER", ex.Code);
+        Assert.Contains("caja abierta", ex.Message);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -463,10 +496,79 @@ public class PedidoServiceTests
         // Assert: pedido created with correct defaults
         Assert.NotNull(result);
         Assert.Equal((int)EstadoPedidoEnum.Pendiente, result.EstadoId);
+        Assert.Equal(context.Cajas.Single().Id, result.CajaId);
         Assert.NotEqual(default, result.FechaIngreso);
         Assert.True(result.Id > 0);
 
         // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task ObtenerPedidosAsync_ReturnsOnlyPedidosFromActiveCaja()
+    {
+        // Arrange: one active caja and one historical caja with an order each
+        var context = CreateDbContext();
+        SeedEstados(context);
+        SeedFkData(context);
+
+        var activeCaja = context.Cajas.Single();
+        var historicalCaja = new Caja
+        {
+            UsuarioAperturaId = activeCaja.UsuarioAperturaId,
+            MontoApertura = 500m,
+            FechaApertura = DateTime.UtcNow.AddDays(-1),
+            FechaCierre = DateTime.UtcNow.AddHours(-1)
+        };
+        context.Cajas.Add(historicalCaja);
+        context.SaveChanges();
+
+        SeedPedido(context, EstadoPedidoEnum.Pendiente, cajaId: activeCaja.Id);
+        SeedPedido(context, EstadoPedidoEnum.Pendiente, cajaId: historicalCaja.Id);
+        var (service, _) = CreateService(context);
+
+        // Act
+        var result = (await service.ObtenerPedidosAsync()).ToList();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal(activeCaja.Id, result[0].CajaId);
+
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task ObtenerPedidosPorEstadoAsync_ReturnsOnlyPedidosFromActiveCaja()
+    {
+        // Arrange: the same state exists in the active and historical sessions
+        var context = CreateDbContext();
+        SeedEstados(context);
+        SeedFkData(context);
+
+        var activeCaja = context.Cajas.Single();
+        var historicalCaja = new Caja
+        {
+            UsuarioAperturaId = activeCaja.UsuarioAperturaId,
+            MontoApertura = 500m,
+            FechaApertura = DateTime.UtcNow.AddDays(-1),
+            FechaCierre = DateTime.UtcNow.AddHours(-1)
+        };
+        context.Cajas.Add(historicalCaja);
+        context.SaveChanges();
+
+        SeedPedido(context, EstadoPedidoEnum.Pendiente, cajaId: activeCaja.Id);
+        SeedPedido(context, EstadoPedidoEnum.Pendiente, cajaId: historicalCaja.Id);
+        var (service, _) = CreateService(context);
+
+        // Act
+        var result = (await service.ObtenerPedidosPorEstadoAsync(EstadoPedidoEnum.Pendiente)).ToList();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal(activeCaja.Id, result[0].CajaId);
+
         await context.Database.EnsureDeletedAsync();
         context.Dispose();
     }

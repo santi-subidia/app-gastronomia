@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Domain.Enums;
@@ -81,6 +82,11 @@ public class PedidosController : ControllerBase
 
             var creado = await _pedidoService.CrearPedidoAsync(pedido);
             return CreatedAtAction(nameof(GetPedido), new { id = creado.Id }, creado);
+        }
+        catch (BusinessRuleException ex)
+        {
+            _logger.LogWarning(ex, "Business rule prevented pedido creation");
+            return Conflict(new { Codigo = ex.Code, Mensaje = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

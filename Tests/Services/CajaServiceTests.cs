@@ -1,5 +1,7 @@
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
+using ApiGastronomia.Domain.Enums;
+using ApiGastronomia.Domain;
 using ApiGastronomia.Infrastructure.Data;
 using ApiGastronomia.Services;
 using ApiGastronomia.Services.Interfaces;
@@ -213,6 +215,49 @@ public class CajaServiceTests
         Assert.Equal(10300m, result.MontoCierreReal);
 
         // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task CierreAsync_PendingPedido_ThrowsPendingOrdersRule()
+    {
+        // Arrange: an open caja with an unresolved order
+        var context = CreateDbContext();
+        var (_, usuarioApertura) = SeedUsuario(context, nombre: "Cajero Apertura");
+        var (_, usuarioCierre) = SeedUsuario(context, nombre: "Cajero Cierre");
+        var (_, caja) = SeedCaja(context, usuarioAperturaId: usuarioApertura.Id);
+
+        var estado = new EstadoPedido { Id = (int)EstadoPedidoEnum.Pendiente, Nombre = "Pendiente" };
+        var metodoPago = new MetodoPago { Nombre = "Efectivo" };
+        var metodoVenta = new MetodoVenta { Nombre = "Local" };
+        context.EstadosPedidos.Add(estado);
+        context.MetodoPago.Add(metodoPago);
+        context.MetodosVenta.Add(metodoVenta);
+        context.SaveChanges();
+
+        context.Pedidos.Add(new Pedido
+        {
+            CajaId = caja.Id,
+            EstadoId = (int)EstadoPedidoEnum.Pendiente,
+            Estado = estado,
+            MetodoPagoId = metodoPago.Id,
+            MetodoPago = metodoPago,
+            MetodoVentaId = metodoVenta.Id,
+            MetodoVenta = metodoVenta,
+            TotalEstimado = 1000
+        });
+        context.SaveChanges();
+
+        var service = new CajaService(context);
+
+        // Act + Assert
+        var ex = await Assert.ThrowsAsync<BusinessRuleException>(
+            () => service.CierreAsync(caja.Id, usuarioCierre.Id, 1000m, 1000m));
+        Assert.Equal("PENDING_ORDERS_ON_CLOSE", ex.Code);
+        Assert.Contains("pedido(s) pendiente(s)", ex.Message);
+        Assert.Null(context.Cajas.Single().FechaCierre);
+
         await context.Database.EnsureDeletedAsync();
         context.Dispose();
     }
