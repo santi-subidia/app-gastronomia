@@ -104,11 +104,12 @@ public class PedidosController : ControllerBase
     /// Cambia el estado de un pedido.
     /// </summary>
     [HttpPatch("{id:int}/estado")]
-    public async Task<ActionResult<Pedido>> CambiarEstado(int id, [FromBody] CambiarEstadoRequest request)
+    public async Task<ActionResult<Pedido>> CambiarEstado(int id, [FromBody] int nuevoEstadoId)
     {
         try
         {
-            var pedido = await _pedidoService.CambiarEstadoAsync(id, request.NuevoEstado);
+            var nuevoEstado = (EstadoPedidoEnum)nuevoEstadoId;
+            var pedido = await _pedidoService.CambiarEstadoAsync(id, nuevoEstado);
             return Ok(pedido);
         }
         catch (KeyNotFoundException ex)
