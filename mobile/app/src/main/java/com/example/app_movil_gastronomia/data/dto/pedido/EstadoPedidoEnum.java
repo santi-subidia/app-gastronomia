@@ -19,49 +19,53 @@ import com.google.gson.annotations.SerializedName;
 public enum EstadoPedidoEnum {
 
     @SerializedName("Pendiente")
-    PENDIENTE("Pendiente"),
+    PENDIENTE("Pendiente", "Pendiente"),
 
     @SerializedName("EnPreparacion")
-    EN_PREPARACION("EnPreparacion"),
+    EN_PREPARACION("En preparacion", "EnPreparacion"),
 
     @SerializedName("ListoParaRetirar")
-    LISTO_PARA_RETIRAR("ListoParaRetirar"),
+    LISTO_PARA_RETIRAR("Listo para retirar", "ListoParaRetirar"),
 
     @SerializedName("EnCamino")
-    EN_CAMINO("EnCamino"),
+    EN_CAMINO("En camino", "EnCamino"),
 
     @SerializedName("Entregado")
-    ENTREGADO("Entregado"),
+    ENTREGADO("Entregado", "Entregado"),
 
     @SerializedName("Retirado")
-    RETIRADO("Retirado"),
+    RETIRADO("Retirado", "Retirado"),
 
     @SerializedName("Cancelado")
-    CANCELADO("Cancelado"),
+    CANCELADO("Cancelado", "Cancelado"),
 
     @SerializedName("Devuelto")
-    DEVUELTO("Devuelto");
+    DEVUELTO("Devuelto", "Devuelto");
 
+    private final String dbValue;
     private final String apiValue;
 
-    EstadoPedidoEnum(String apiValue) {
+    EstadoPedidoEnum(String dbValue, String apiValue) {
+        this.dbValue = dbValue;
         this.apiValue = apiValue;
     }
 
+    /**
+     * Returns the exact PascalCase string the C# backend expects for URL parameters.
+     */
     public String getApiValue() {
         return apiValue;
     }
 
     /**
-     * Inverse of {@link #getApiValue()}. Returns {@code null} if no constant
-     * matches the provided API string.
+     * Inverse of database string (used for parsing if needed).
      */
-    public static EstadoPedidoEnum fromApiValue(String apiValue) {
-        if (apiValue == null) {
+    public static EstadoPedidoEnum fromApiValue(String value) {
+        if (value == null) {
             return null;
         }
         for (EstadoPedidoEnum estado : values()) {
-            if (estado.apiValue.equals(apiValue)) {
+            if (estado.dbValue.equals(value) || estado.apiValue.equals(value)) {
                 return estado;
             }
         }
