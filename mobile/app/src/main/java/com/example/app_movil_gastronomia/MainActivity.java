@@ -82,14 +82,6 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
 
-        // Drawer toggle: connects the hamburger icon to the drawer open/close
-        // gesture. Required for the icon to appear on the toolbar.
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, binding.drawerLayout, binding.appBarMain.toolbar,
-                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        binding.drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
-
         // Drawer item selection: handle logout + configuracion, then close
         // the drawer. We keep the listener attached for the whole activity
         // lifetime because the drawer's contents do not change at runtime.
@@ -121,6 +113,22 @@ public class MainActivity extends AppCompatActivity {
                     navController.navigate(R.id.nav_login);
                     sessionManager.consume();
                 }
+            }
+        });
+
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            boolean isLogin = destination.getId() == R.id.nav_login;
+            
+            if (binding.appBarMain.toolbar != null) {
+                binding.appBarMain.toolbar.setVisibility(isLogin ? View.GONE : View.VISIBLE);
+            }
+            if (binding.appBarMain.contentMain.bottomNavView != null) {
+                binding.appBarMain.contentMain.bottomNavView.setVisibility(isLogin ? View.GONE : View.VISIBLE);
+            }
+            if (binding.drawerLayout != null) {
+                binding.drawerLayout.setDrawerLockMode(
+                        isLogin ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED : DrawerLayout.LOCK_MODE_UNLOCKED
+                );
             }
         });
 
@@ -206,6 +214,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * Called by LoginFragment after a successful login to update the UI
+     * elements that depend on the authenticated user's role.
+     */
+    public void onLoginSuccess() {
+        if (tokenManager.hasToken()) {
+            configureBottomNav(tokenManager.getRole());
+            bindDrawerHeader();
+        }
+    }
+
+    /**
      * Replaces the bottom navigation menu with the items appropriate for the
      * given role. Items are added programmatically so the IDs always match
      * the nav-graph destinations and {@link NavigationUI} can wire the
@@ -232,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
                         .add(0, R.id.nav_pedido_list, 1, R.string.all_orders)
                         .setIcon(R.drawable.ic_pedidos_24dp);
                 bottomNav.getMenu()
-                        .add(0, R.id.nav_cajero_productos, 2, R.string.no_products_available)
+                        .add(0, R.id.nav_cajero_productos, 2, R.string.go_to_products)
                         .setIcon(R.drawable.ic_productos_24dp);
                 bottomNav.getMenu()
                         .add(0, R.id.nav_caja, 3, R.string.caja_title)

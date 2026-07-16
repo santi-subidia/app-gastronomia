@@ -76,6 +76,9 @@ public class LoginFragment extends Fragment {
             case SUCCESS:
                 showLoading(false);
                 connectSignalR();
+                if (getActivity() instanceof com.example.app_movil_gastronomia.MainActivity) {
+                    ((com.example.app_movil_gastronomia.MainActivity) getActivity()).onLoginSuccess();
+                }
                 navigateByRole(state.getData().getRolNombre());
                 break;
             case ERROR:

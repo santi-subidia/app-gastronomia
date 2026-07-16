@@ -69,10 +69,21 @@ public class AuthRepositoryImpl implements AuthRepository {
                     try {
                         if (response.errorBody() != null) {
                             String errorBody = response.errorBody().string();
-                            Gson gson = new Gson();
-                            ErrorResponse errorResponse = gson.fromJson(errorBody, ErrorResponse.class);
-                            if (errorResponse != null && errorResponse.getMensaje() != null) {
-                                errorMsg = errorResponse.getMensaje();
+                            try {
+                                Gson gson = new Gson();
+                                ErrorResponse errorResponse = gson.fromJson(errorBody, ErrorResponse.class);
+                                if (errorResponse != null && errorResponse.getMensaje() != null) {
+                                    errorMsg = errorResponse.getMensaje();
+                                }
+                            } catch (com.google.gson.JsonSyntaxException ignored) {
+                                // Fallback if backend returns plain text instead of JSON
+                                if (errorBody != null && !errorBody.trim().isEmpty()) {
+                                    errorMsg = errorBody.trim();
+                                    // Remove quotes if the string was serialized as a JSON string literal
+                                    if (errorMsg.startsWith("\"") && errorMsg.endsWith("\"") && errorMsg.length() >= 2) {
+                                        errorMsg = errorMsg.substring(1, errorMsg.length() - 1);
+                                    }
+                                }
                             }
                         }
                     } catch (IOException e) {
