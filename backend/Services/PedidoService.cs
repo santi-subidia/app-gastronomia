@@ -47,28 +47,34 @@ public class PedidoService : IPedidoService
             throw new InvalidOperationException($"Método de venta #{pedido.MetodoVentaId} no encontrado.");
 
         var productoIds = pedido.DetallePedidos.Select(d => d.ProductoId).Distinct().ToList();
-        var existingProductoIds = await _context.Productos
+        var existingProductos = await _context.Productos
             .Where(p => productoIds.Contains(p.Id))
-            .Select(p => p.Id)
             .ToListAsync();
+
+        var existingProductoIds = existingProductos.Select(p => p.Id).ToList();
 
         var missingProductoIds = productoIds.Except(existingProductoIds).ToList();
         if (missingProductoIds.Count > 0)
             throw new InvalidOperationException($"Producto(s) no encontrado(s): {string.Join(", ", missingProductoIds)}.");
 
-        pedido.EstadoId = (int)EstadoPedidoEnum.Pendiente;
+        // Determinar estado inicial según demora de productos (0 = sin cocina)
+        bool requiereCocina = existingProductos.Any(p => p.Demora > 0);
+        pedido.EstadoId = requiereCocina ? (int)EstadoPedidoEnum.Pendiente : (int)EstadoPedidoEnum.ListoParaRetirar;
         pedido.FechaIngreso = DateTime.UtcNow;
 
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group("cocina").SendAsync("NuevoPedido", new NuevoPedidoMessage(
-            pedido.Id,
-            pedido.ClienteNombre ?? "Desconocido",
-            pedido.TotalEstimado,
-            DateTime.UtcNow));
+        if (requiereCocina)
+        {
+            await _hubContext.Clients.Group("cocina").SendAsync("NuevoPedido", new NuevoPedidoMessage(
+                pedido.Id,
+                pedido.ClienteNombre ?? "Desconocido",
+                pedido.TotalEstimado,
+                DateTime.UtcNow));
+        }
 
-        _logger.LogInformation("Pedido #{PedidoId} creado con estado Pendiente", pedido.Id);
+        _logger.LogInformation("Pedido #{PedidoId} creado con estado {Estado}", pedido.Id, (EstadoPedidoEnum)pedido.EstadoId);
         return pedido;
     }
 
