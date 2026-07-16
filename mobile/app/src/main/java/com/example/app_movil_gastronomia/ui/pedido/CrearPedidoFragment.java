@@ -213,6 +213,7 @@ public class CrearPedidoFragment extends Fragment {
             case SUCCESS:
                 binding.buttonCrear.setEnabled(true);
                 Toast.makeText(requireContext(), R.string.order_created, Toast.LENGTH_SHORT).show();
+                viewModel.resetCrearState();
                 navigateBack();
                 break;
             case ERROR:

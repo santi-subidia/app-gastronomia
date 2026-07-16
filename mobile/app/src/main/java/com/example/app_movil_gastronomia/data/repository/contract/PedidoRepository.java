@@ -80,6 +80,12 @@ public interface PedidoRepository {
     LiveData<UiState<PedidoDetalleDto>> getCrearState();
 
     /**
+     * Resets the crearState LiveData so that observers don't re-trigger
+     * SUCCESS events when re-attaching.
+     */
+    void resetCrearState();
+
+    /**
      * PATCH the estado of an existing pedido. The enum is resolved to
      * its catalog ID via {@code CatalogoRepository.resolveEstadoId()}
      * <b>before</b> the network call — the v2 endpoint accepts a raw

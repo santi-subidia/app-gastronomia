@@ -138,6 +138,10 @@ public class CrearPedidoViewModel extends ViewModel {
         pedidoRepository.crearPedido(request);
     }
 
+    public void resetCrearState() {
+        pedidoRepository.resetCrearState();
+    }
+
     // ------------------------------------------------------------------
     // Validation
     // ------------------------------------------------------------------

@@ -235,6 +235,11 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _crearState;
     }
 
+    @Override
+    public void resetCrearState() {
+        _crearState.setValue(null);
+    }
+
     // ------------------------------------------------------------------
     // cambiarEstado
     // ------------------------------------------------------------------
