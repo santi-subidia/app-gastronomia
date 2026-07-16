@@ -1,7 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt)
 }
+
+// Load local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+val apiBaseUrl = localProperties.getProperty("API_BASE_URL") ?: "http://10.0.2.2:5000/"
 
 android {
     namespace = "com.example.app_movil_gastronomia"
@@ -16,7 +26,7 @@ android {
 
         testInstrumentationRunner = "com.example.app_movil_gastronomia.HiltTestRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"https://tu-api-url/\"")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {

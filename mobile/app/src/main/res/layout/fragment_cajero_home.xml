@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:visibility="gone"
-        app:cardBackgroundColor="@color/surface_container"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="16dp"
         app:cardElevation="4dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -43,7 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/active_orders_count"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="?attr/textAppearanceHeadline6"
                 android:textColor="?attr/colorOnSurface" />
 
             <TextView
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/caja_status"
-                android:textAppearance="?attr/textAppearanceBody1"
+                android:textAppearance="?attr/textAppearanceHeadline6"
                 android:textColor="?attr/colorOnSurface" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -95,7 +95,7 @@
             android:clickable="true"
             android:focusable="true"
             android:minHeight="48dp"
-            app:cardBackgroundColor="@color/surface_container"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:rippleColor="?attr/colorPrimary">
@@ -134,7 +134,7 @@
             android:clickable="true"
             android:focusable="true"
             android:minHeight="48dp"
-            app:cardBackgroundColor="@color/surface_container"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:rippleColor="?attr/colorPrimary">
@@ -173,7 +173,7 @@
             android:clickable="true"
             android:focusable="true"
             android:minHeight="48dp"
-            app:cardBackgroundColor="@color/surface_container"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:rippleColor="?attr/colorPrimary">
@@ -212,7 +212,7 @@
             android:clickable="true"
             android:focusable="true"
             android:minHeight="48dp"
-            app:cardBackgroundColor="@color/surface_container"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
             app:rippleColor="?attr/colorPrimary">
