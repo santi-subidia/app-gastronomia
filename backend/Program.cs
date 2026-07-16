@@ -267,13 +267,19 @@ var app = builder.Build();
 if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
 {
     using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    logger.LogInformation("Aplicando migraciones de base de datos...");
+    await dbContext.Database.MigrateAsync();
+    logger.LogInformation("Migraciones aplicadas.");
+
     var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeedService>();
     var userSeeder = scope.ServiceProvider.GetRequiredService<UserSeedService>();
     var metodoVentaSeeder = scope.ServiceProvider.GetRequiredService<MetodoVentaSeedService>();
     var metodoPagoSeeder = scope.ServiceProvider.GetRequiredService<MetodoPagoSeedService>();
     var estadoPedidoSeeder = scope.ServiceProvider.GetRequiredService<EstadoPedidoSeedService>();
     var productoSeeder = scope.ServiceProvider.GetRequiredService<ProductoSeedService>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     logger.LogInformation("Ejecutando seeds...");
     await roleSeeder.SeedAsync();
