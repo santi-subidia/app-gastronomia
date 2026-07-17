@@ -27,6 +27,7 @@ android {
         testInstrumentationRunner = "com.example.app_movil_gastronomia.HiltTestRunner"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "MAPTILER_KEY", "\"${localProperties.getProperty("MAPTILER_KEY", "")}\"")
     }
 
     buildTypes {
@@ -71,6 +72,7 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.security.crypto)
     implementation(libs.signalr)
+    implementation(libs.maplibre)
     testImplementation(libs.junit)
     testImplementation(libs.arch.core.testing)
     testImplementation(libs.org.json)
