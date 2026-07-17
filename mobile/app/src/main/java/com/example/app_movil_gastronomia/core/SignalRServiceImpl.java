@@ -159,7 +159,7 @@ public class SignalRServiceImpl implements SignalRService {
 
     @Override
     public void unirseACocina() {
-        invokeOnConnection("UnirseACocina");
+        invokeOnConnection("UnirseAGrupo", "cocina");
     }
 
     @Override

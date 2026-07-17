@@ -51,6 +51,13 @@ public enum EstadoPedidoEnum {
     }
 
     /**
+     * Returns the exact string used in the database catalog (e.g. "En preparacion").
+     */
+    public String getDbValue() {
+        return dbValue;
+    }
+
+    /**
      * Returns the exact PascalCase string the C# backend expects for URL parameters.
      */
     public String getApiValue() {

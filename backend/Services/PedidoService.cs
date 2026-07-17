@@ -67,7 +67,7 @@ public class PedidoService : IPedidoService
 
         if (requiereCocina)
         {
-            await _hubContext.Clients.Group("cocina").SendAsync("NuevoPedido", new NuevoPedidoMessage(
+            await _hubContext.Clients.All.SendAsync("NuevoPedido", new NuevoPedidoMessage(
                 pedido.Id,
                 pedido.ClienteNombre ?? "Desconocido",
                 pedido.TotalEstimado,
@@ -164,13 +164,13 @@ public class PedidoService : IPedidoService
 
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("EstadoCambiado", new EstadoCambiadoMessage(
+        await _hubContext.Clients.All.SendAsync("EstadoCambiado", new EstadoCambiadoMessage(
             pedidoId,
             estadoAnterior.ToString(),
             nuevoEstado.ToString(),
             DateTime.UtcNow));
 
-        await _hubContext.Clients.Group("cocina").SendAsync("PedidoActualizado", new PedidoActualizadoMessage(
+        await _hubContext.Clients.All.SendAsync("PedidoActualizado", new PedidoActualizadoMessage(
             pedidoId,
             nuevoEstado.ToString(),
             DateTime.UtcNow));
@@ -179,7 +179,7 @@ public class PedidoService : IPedidoService
         if (nuevoEstado is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado
             or EstadoPedidoEnum.Cancelado or EstadoPedidoEnum.Devuelto)
         {
-            await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("PedidoFinalizado",
+            await _hubContext.Clients.All.SendAsync("PedidoFinalizado",
                 new PedidoFinalizadoMessage(pedidoId, nuevoEstado.ToString(), DateTime.UtcNow));
         }
 
@@ -211,7 +211,7 @@ public class PedidoService : IPedidoService
 
         await _context.SaveChangesAsync();
 
-        await _hubContext.Clients.Group($"pedido_{pedidoId}").SendAsync("RepartidorAsignado", new RepartidorAsignadoMessage(
+        await _hubContext.Clients.All.SendAsync("RepartidorAsignado", new RepartidorAsignadoMessage(
             pedidoId,
             repartidorId,
             repartidor.UsuarioNombre,

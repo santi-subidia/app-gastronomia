@@ -254,7 +254,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     "El catálogo de estados aún no está disponible, intente nuevamente"));
             return getCambiarEstadoState();
         }
-        final int nuevoEstadoId = catalogoRepository.resolveEstadoId(estado.getApiValue());
+        final int nuevoEstadoId = catalogoRepository.resolveEstadoId(estado.getDbValue());
         if (nuevoEstadoId <= 0) {
             _cambiarEstadoState.setValue(UiState.error(
                     "Estado no reconocido por el catálogo: " + estado.getApiValue()));
@@ -288,6 +288,11 @@ public class PedidoRepositoryImpl implements PedidoRepository {
     @Override
     public LiveData<UiState<PedidoDetalleDto>> getCambiarEstadoState() {
         return _cambiarEstadoState;
+    }
+
+    @Override
+    public void resetCambiarEstadoState() {
+        _cambiarEstadoState.setValue(null);
     }
 
     // ------------------------------------------------------------------

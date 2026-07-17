@@ -104,6 +104,12 @@ public interface PedidoRepository {
     LiveData<UiState<PedidoDetalleDto>> getCambiarEstadoState();
 
     /**
+     * Resets the cambiarEstadoState LiveData so that observers don't re-trigger
+     * SUCCESS events when re-attaching.
+     */
+    void resetCambiarEstadoState();
+
+    /**
      * PATCH the repartidor of an existing pedido. Each call resets the
      * dedicated {@link #getAsignarRepartidorState()} instance to LOADING
      * and posts SUCCESS (with the updated dto) or ERROR.
