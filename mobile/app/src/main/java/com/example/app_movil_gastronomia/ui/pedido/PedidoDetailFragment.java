@@ -111,15 +111,22 @@ public class PedidoDetailFragment extends Fragment {
             case SUCCESS:
                 // Refresh the detail from the server so the banner / fields reflect
                 // the new estado.
-                Toast.makeText(requireContext(),
-                        isCanceled(state.getData()) ? R.string.order_cancelled : R.string.change_status,
-                        Toast.LENGTH_SHORT).show();
+                EstadoPedidoEnum nuevoEstado = EstadoPedidoEnum.fromApiValue(state.getData().getEstado());
+                String estadoStr = nuevoEstado != null ? PedidoAdapter.labelForEstado(nuevoEstado) : "";
+                
+                String mensaje = isCanceled(state.getData()) 
+                        ? getString(R.string.order_cancelled) 
+                        : "Pedido movido a: " + estadoStr;
+
+                Toast.makeText(requireContext(), mensaje, Toast.LENGTH_SHORT).show();
+                viewModel.consumeCambiarEstado();
                 viewModel.loadPedido(pedidoId);
                 break;
             case ERROR:
                 Toast.makeText(requireContext(),
                         state.getError() != null ? state.getError() : getString(R.string.error_generic),
                         Toast.LENGTH_LONG).show();
+                viewModel.consumeCambiarEstado();
                 break;
         }
     }
@@ -190,6 +197,7 @@ public class PedidoDetailFragment extends Fragment {
         // Configuración de botones de acción
         String role = tokenManager.getRole() != null ? tokenManager.getRole().toLowerCase(Locale.ROOT) : "";
         boolean isCajero = "cajero".equals(role);
+        boolean isCocina = "cocina".equals(role);
         
         if (isCajero) {
             // Lógica específica para el Cajero
@@ -214,8 +222,28 @@ public class PedidoDetailFragment extends Fragment {
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
                 binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             }
+        } else if (isCocina) {
+            // Lógica específica para Cocina
+            binding.buttonAsignarRepartidor.setVisibility(View.GONE);
+            binding.buttonRegistrarDemora.setVisibility(View.VISIBLE);
+
+            if (estado == EstadoPedidoEnum.PENDIENTE) {
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Comenzar Preparación");
+                binding.buttonCambiarEstado.setOnClickListener(v -> {
+                    viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.EN_PREPARACION);
+                });
+            } else if (estado == EstadoPedidoEnum.EN_PREPARACION) {
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Marcar como Listo");
+                binding.buttonCambiarEstado.setOnClickListener(v -> {
+                    viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.LISTO_PARA_RETIRAR);
+                });
+            } else {
+                binding.buttonCambiarEstado.setVisibility(View.GONE);
+            }
         } else {
-            // Lógica para Cocina / Repartidor (mantener comportamiento previo)
+            // Lógica para Repartidor
             binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
             binding.buttonCambiarEstado.setText(R.string.change_status);
             binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
@@ -223,7 +251,7 @@ public class PedidoDetailFragment extends Fragment {
             binding.buttonRegistrarDemora.setVisibility(View.VISIBLE);
         }
 
-        boolean canCancel = PedidoCancellationPolicy.isCancelable(estado);
+        boolean canCancel = isCajero && PedidoCancellationPolicy.isCancelable(estado);
         binding.buttonCancelarPedido.setVisibility(canCancel ? View.VISIBLE : View.GONE);
 
         // Items list
@@ -293,6 +321,15 @@ public class PedidoDetailFragment extends Fragment {
                 opciones = new EstadoPedidoEnum[]{ EstadoPedidoEnum.ENTREGADO };
             } else {
                 Toast.makeText(requireContext(), "El cajero solo puede entregar pedidos que están Listos.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } else if ("cocina".equals(role)) {
+            if (estadoActual == EstadoPedidoEnum.PENDIENTE) {
+                opciones = new EstadoPedidoEnum[]{ EstadoPedidoEnum.EN_PREPARACION };
+            } else if (estadoActual == EstadoPedidoEnum.EN_PREPARACION) {
+                opciones = new EstadoPedidoEnum[]{ EstadoPedidoEnum.LISTO_PARA_RETIRAR };
+            } else {
+                Toast.makeText(requireContext(), "La cocina ya no puede cambiar este estado.", Toast.LENGTH_SHORT).show();
                 return;
             }
         } else {

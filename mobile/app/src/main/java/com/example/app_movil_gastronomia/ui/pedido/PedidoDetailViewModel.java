@@ -74,6 +74,10 @@ public class PedidoDetailViewModel extends ViewModel {
         pedidoRepository.cambiarEstado(id, estado);
     }
 
+    public void consumeCambiarEstado() {
+        pedidoRepository.resetCambiarEstadoState();
+    }
+
     public void asignarRepartidor(int id, int repartidorId) {
         pedidoRepository.asignarRepartidor(id, repartidorId);
     }

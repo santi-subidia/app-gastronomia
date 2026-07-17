@@ -5,7 +5,29 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.MotionEvent;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+
+import org.maplibre.android.MapLibre;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.camera.CameraUpdateFactory;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.Style;
+
+import com.example.app_movil_gastronomia.BuildConfig;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -60,10 +82,24 @@ public class ConfiguracionFragment extends Fragment {
     @Nullable
     private ConfiguracionDto lastConfig;
 
+    private Double selectedLat = null;
+    private Double selectedLng = null;
+    private MapLibreMap mapLibreMap;
+
+    private final ActivityResultLauncher<String> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) {
+                    centerMapOnCurrentLocation();
+                } else {
+                    centerMapOnDefaultLocation();
+                }
+            });
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        MapLibre.getInstance(requireContext());
         binding = FragmentConfiguracionBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -72,10 +108,70 @@ public class ConfiguracionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        binding.mapView.onCreate(savedInstanceState);
+        
+        // Prevent ScrollView from interfering with map panning
+        binding.mapView.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                case MotionEvent.ACTION_MOVE:
+                    binding.scrollView.requestDisallowInterceptTouchEvent(true);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    binding.scrollView.requestDisallowInterceptTouchEvent(false);
+                    break;
+            }
+            return false;
+        });
+
+        binding.mapView.getMapAsync(map -> {
+            mapLibreMap = map;
+            String styleUrl = "https://api.maptiler.com/maps/streets-v2/style.json?key=" + BuildConfig.MAPTILER_KEY;
+            map.setStyle(styleUrl, style -> {
+                // Style loaded
+                if (lastConfig != null && lastConfig.getLatitudPartida() != null && lastConfig.getLongitudPartida() != null) {
+                    map.setCameraPosition(new CameraPosition.Builder()
+                            .target(new LatLng(lastConfig.getLatitudPartida(), lastConfig.getLongitudPartida()))
+                            .zoom(15)
+                            .build());
+                } else {
+                    // Try to get current location
+                    if (hasLocationPermission()) {
+                        centerMapOnCurrentLocation();
+                    } else {
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                    }
+                }
+            });
+
+            map.addOnCameraIdleListener(() -> {
+                if (mapLibreMap != null) {
+                    LatLng target = mapLibreMap.getCameraPosition().target;
+                    selectedLat = target.getLatitude();
+                    selectedLng = target.getLongitude();
+                }
+            });
+        });
+
         viewModel = new ViewModelProvider(this).get(ConfiguracionViewModel.class);
 
         viewModel.getConfigState().observe(getViewLifecycleOwner(), this::renderConfigState);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
+        viewModel.getMetodosPago().observe(getViewLifecycleOwner(), metodos -> {
+            if (metodos != null && binding != null) {
+                String[] nombres = new String[metodos.size()];
+                for (int i = 0; i < metodos.size(); i++) {
+                    nombres[i] = metodos.get(i).getNombre();
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                        requireContext(),
+                        android.R.layout.simple_dropdown_item_1line,
+                        nombres
+                );
+                binding.inputMetodoPago.setAdapter(adapter);
+            }
+        });
 
         binding.buttonSave.setOnClickListener(v -> submit());
         binding.buttonRetry.setOnClickListener(v -> viewModel.loadConfiguracion());
@@ -165,10 +261,9 @@ public class ConfiguracionFragment extends Fragment {
     private void applyCreateMode() {
         binding.buttonSave.setText(R.string.save_config);
         binding.inputNombre.setText("");
-        binding.inputMetodoPagoId.setText("");
-        binding.inputMetodoPagoNombre.setText("");
-        binding.inputLatitud.setText("");
-        binding.inputLongitud.setText("");
+        binding.inputMetodoPago.setText("", false);
+        selectedLat = null;
+        selectedLng = null;
     }
 
     private void applyUpdateMode(ConfiguracionDto dto) {
@@ -176,24 +271,17 @@ public class ConfiguracionFragment extends Fragment {
         binding.inputNombre.setText(
                 dto.getNombreGastronomico() != null ? dto.getNombreGastronomico() : ""
         );
-        binding.inputMetodoPagoId.setText(
-                dto.getMetodoPagoDefaultId() != null
-                        ? String.format(Locale.getDefault(), "%d", dto.getMetodoPagoDefaultId())
-                        : ""
+        binding.inputMetodoPago.setText(
+                dto.getMetodoPagoDefaultNombre() != null ? dto.getMetodoPagoDefaultNombre() : "", false
         );
-        binding.inputMetodoPagoNombre.setText(
-                dto.getMetodoPagoDefaultNombre() != null ? dto.getMetodoPagoDefaultNombre() : ""
-        );
-        binding.inputLatitud.setText(
-                dto.getLatitudPartida() != null
-                        ? String.format(Locale.getDefault(), "%s", dto.getLatitudPartida())
-                        : ""
-        );
-        binding.inputLongitud.setText(
-                dto.getLongitudPartida() != null
-                        ? String.format(Locale.getDefault(), "%s", dto.getLongitudPartida())
-                        : ""
-        );
+        selectedLat = dto.getLatitudPartida();
+        selectedLng = dto.getLongitudPartida();
+        
+        if (mapLibreMap != null && selectedLat != null && selectedLng != null) {
+            mapLibreMap.easeCamera(CameraUpdateFactory.newLatLngZoom(
+                    new LatLng(selectedLat, selectedLng), 15
+            ));
+        }
     }
 
     // ------------------------------------------------------------------
@@ -203,11 +291,22 @@ public class ConfiguracionFragment extends Fragment {
     private void submit() {
         ConfiguracionDto dto = new ConfiguracionDto();
         dto.setNombreGastronomico(textOf(binding.inputNombre));
-        dto.setMetodoPagoDefaultId(parseInteger(textOf(binding.inputMetodoPagoId)));
-        dto.setMetodoPagoDefaultNombre(textOf(binding.inputMetodoPagoNombre));
-        dto.setLatitudPartida(parseDouble(textOf(binding.inputLatitud)));
-        dto.setLongitudPartida(parseDouble(textOf(binding.inputLongitud)));
-        // id is intentionally not read from the form — the VM copies it
+        
+        String metodoNombre = textOf(binding.inputMetodoPago);
+        if (!TextUtils.isEmpty(metodoNombre)) {
+            int metodoId = viewModel.resolveMetodoPagoId(metodoNombre);
+            if (metodoId != -1) {
+                dto.setMetodoPagoDefaultId(metodoId);
+                dto.setMetodoPagoDefaultNombre(metodoNombre);
+            } else {
+                // If it can't be resolved, we can just send the string or clear it
+                dto.setMetodoPagoDefaultNombre(metodoNombre);
+            }
+        }
+
+        dto.setLatitudPartida(selectedLat);
+        dto.setLongitudPartida(selectedLng);
+        // id is intentionally not read from the form ?" the VM copies it
         // from the cached config when this is an update, so the server
         // receives a body that matches the previously saved row.
         viewModel.saveConfiguracion(dto);
@@ -246,9 +345,82 @@ public class ConfiguracionFragment extends Fragment {
         controller.popBackStack();
     }
 
+    private boolean hasLocationPermission() {
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @SuppressLint("MissingPermission")
+    private void centerMapOnCurrentLocation() {
+        if (mapLibreMap == null) return;
+        
+        LocationManager lm = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
+        if (lm != null) {
+            Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (loc == null) loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            
+            if (loc != null) {
+                mapLibreMap.setCameraPosition(new CameraPosition.Builder()
+                        .target(new LatLng(loc.getLatitude(), loc.getLongitude()))
+                        .zoom(16)
+                        .build());
+                return;
+            }
+        }
+        
+        // Fallback if no location found
+        centerMapOnDefaultLocation();
+    }
+
+    private void centerMapOnDefaultLocation() {
+        if (mapLibreMap != null) {
+            mapLibreMap.setCameraPosition(new CameraPosition.Builder()
+                    .target(new LatLng(-34.6037, -58.3816))
+                    .zoom(12)
+                    .build());
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (binding != null) binding.mapView.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (binding != null) binding.mapView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (binding != null) binding.mapView.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (binding != null) binding.mapView.onStop();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (binding != null) binding.mapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (binding != null) binding.mapView.onLowMemory();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (binding != null) binding.mapView.onDestroy();
         binding = null;
     }
 }

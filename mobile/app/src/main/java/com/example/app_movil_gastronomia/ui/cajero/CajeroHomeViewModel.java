@@ -1,14 +1,18 @@
 package com.example.app_movil_gastronomia.ui.cajero;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
+import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.caja.CajaDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
+import com.example.app_movil_gastronomia.data.dto.signalr.NuevoPedidoMessage;
 import com.example.app_movil_gastronomia.data.repository.contract.CajaRepository;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
@@ -50,20 +54,37 @@ public class CajeroHomeViewModel extends ViewModel {
 
     private final PedidoRepository pedidoRepository;
     private final CajaRepository cajaRepository;
+    @Nullable
+    private final SignalRService signalRService;
 
     private final MutableLiveData<UiState<Integer>> activePedidosState = new MutableLiveData<>();
     private final MutableLiveData<UiState<Boolean>> cajaState = new MutableLiveData<>();
 
     private final Observer<UiState<List<PedidoResumenDto>>> pedidosRepositoryObserver;
     private final Observer<UiState<List<CajaDto>>> cajasRepositoryObserver;
+    
+    private final Observer<NuevoPedidoMessage> nuevoPedidoObserver;
+    private final Observer<EstadoCambiadoMessage> estadoCambiadoObserver;
 
     private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public CajeroHomeViewModel(PedidoRepository pedidoRepository,
-                               CajaRepository cajaRepository) {
+                               CajaRepository cajaRepository,
+                               @Nullable SignalRService signalRService) {
         this.pedidoRepository = pedidoRepository;
         this.cajaRepository = cajaRepository;
+        this.signalRService = signalRService;
+
+        if (signalRService != null) {
+            this.nuevoPedidoObserver = msg -> pedidoRepository.getPedidos();
+            this.estadoCambiadoObserver = msg -> pedidoRepository.getPedidos();
+            signalRService.getNuevoPedido().observeForever(nuevoPedidoObserver);
+            signalRService.getEstadoCambiado().observeForever(estadoCambiadoObserver);
+        } else {
+            this.nuevoPedidoObserver = null;
+            this.estadoCambiadoObserver = null;
+        }
 
         // ---- Pedidos: count pedidos that are still in a non-terminal estado ----
         this.pedidosRepositoryObserver = upstream -> {
@@ -149,6 +170,14 @@ public class CajeroHomeViewModel extends ViewModel {
         super.onCleared();
         pedidoRepository.getPedidosState().removeObserver(pedidosRepositoryObserver);
         cajaRepository.getCajasState().removeObserver(cajasRepositoryObserver);
+        if (signalRService != null) {
+            if (nuevoPedidoObserver != null) {
+                signalRService.getNuevoPedido().removeObserver(nuevoPedidoObserver);
+            }
+            if (estadoCambiadoObserver != null) {
+                signalRService.getEstadoCambiado().removeObserver(estadoCambiadoObserver);
+            }
+        }
     }
 
     /** Test-only diagnostic: how many times the VM registered an observer. */

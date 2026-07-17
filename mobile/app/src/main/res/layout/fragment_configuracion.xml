@@ -72,88 +72,59 @@
                     android:inputType="text|textCapWords" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- metodoPagoDefaultId -->
+            <!-- metodoPagoDefault -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_metodo_pago_id_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="@string/config_metodo_pago_id_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_metodo_pago_id"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionNext"
-                    android:inputType="number" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- metodoPagoDefaultNombre -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_metodo_pago_nombre_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:id="@+id/input_metodo_pago_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:hint="@string/config_metodo_pago_nombre_hint">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_metodo_pago_nombre"
+                <AutoCompleteTextView
+                    android:id="@+id/input_metodo_pago"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:imeOptions="actionNext"
-                    android:inputType="text|textCapWords" />
+                    android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!--
-              Lat / Lng side-by-side row. Mirrors CrearPedidoFragment:
-              two equally-weighted fields that share the row to keep
-              the form compact.
-            -->
-            <LinearLayout
+            <!-- Map location picker -->
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal"
-                android:weightSum="2">
+                android:layout_marginTop="16dp"
+                android:text="Ubicación del local"
+                android:textAppearance="?attr/textAppearanceSubtitle1" />
 
-                <!-- latitudPartida -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/input_latitud_layout"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Arrastrá el mapa para centrar el pin en tu negocio"
+                android:textAppearance="?attr/textAppearanceCaption"
+                android:textColor="?attr/colorOnSurface"
+                android:alpha="0.7" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginTop="8dp"
+                android:background="#EEEEEE">
+
+                <org.maplibre.android.maps.MapView
+                    android:id="@+id/map_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <!-- Center pin overlay -->
+                <ImageView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:hint="@string/config_latitud_hint">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/input_latitud"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:imeOptions="actionNext"
-                        android:inputType="numberDecimal|numberSigned" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- longitudPartida -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/input_longitud_layout"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:hint="@string/config_longitud_hint">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/input_longitud"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:imeOptions="actionDone"
-                        android:inputType="numberDecimal|numberSigned" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="18dp" 
+                    android:src="@drawable/ic_pin_mapa"
+                    android:contentDescription="Pin de ubicación" />
+            </FrameLayout>
 
             <!-- Submit button. Label toggles between "Guardar" and "Actualizar" in code. -->
             <com.google.android.material.button.MaterialButton

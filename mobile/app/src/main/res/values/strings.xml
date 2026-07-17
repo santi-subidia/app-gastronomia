@@ -147,8 +147,8 @@
     <string name="save_config">Guardar Configuraci\u00f3n</string>
     <string name="update_config">Actualizar Configuraci\u00f3n</string>
     <string name="config_nombre_hint">Nombre del gastron\u00f3mico</string>
-    <string name="config_metodo_pago_id_hint">ID m\u00e9todo de pago por defecto</string>
-    <string name="config_metodo_pago_nombre_hint">Nombre m\u00e9todo de pago por defecto</string>
+    <string name="config_metodo_pago_id_hint">ID método de pago por defecto</string>
+    <string name="config_metodo_pago_nombre_hint">Método de pago por defecto</string>
     <string name="config_latitud_hint">Latitud de partida</string>
     <string name="config_longitud_hint">Longitud de partida</string>
 
