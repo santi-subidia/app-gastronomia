@@ -1,10 +1,12 @@
 package com.example.app_movil_gastronomia;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,6 +26,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.app_movil_gastronomia.core.SessionManager;
+import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -51,6 +54,10 @@ public class MainActivity extends AppCompatActivity {
     @VisibleForTesting
     @Inject
     public TokenManager tokenManager;
+
+    @Nullable
+    @Inject
+    public SignalRService signalRService;
 
     /**
      * True while {@link #onCreate(Bundle)} is performing the splash-gated
@@ -110,7 +117,10 @@ public class MainActivity extends AppCompatActivity {
                         sessionManager.consume();
                         return;
                     }
-                    navController.navigate(R.id.nav_login);
+                    NavOptions popUpToGraph = new NavOptions.Builder()
+                            .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ false)
+                            .build();
+                    navController.navigate(R.id.nav_login, null, popUpToGraph);
                     sessionManager.consume();
                 }
             }
@@ -118,17 +128,27 @@ public class MainActivity extends AppCompatActivity {
 
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             boolean isLogin = destination.getId() == R.id.nav_login;
+            boolean isCocina = tokenManager != null && "Cocina".equalsIgnoreCase(tokenManager.getRole());
             
             if (binding.appBarMain.toolbar != null) {
                 binding.appBarMain.toolbar.setVisibility(isLogin ? View.GONE : View.VISIBLE);
             }
             if (binding.appBarMain.contentMain.bottomNavView != null) {
-                binding.appBarMain.contentMain.bottomNavView.setVisibility(isLogin ? View.GONE : View.VISIBLE);
+                binding.appBarMain.contentMain.bottomNavView.setVisibility((isLogin || isCocina) ? View.GONE : View.VISIBLE);
             }
             if (binding.drawerLayout != null) {
                 binding.drawerLayout.setDrawerLockMode(
                         isLogin ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED : DrawerLayout.LOCK_MODE_UNLOCKED
                 );
+            }
+            
+            // Hide keyboard when navigating to avoid it sticking around on screens without inputs
+            View currentFocus = getCurrentFocus();
+            if (currentFocus != null) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
+                }
             }
         });
 
@@ -200,14 +220,19 @@ public class MainActivity extends AppCompatActivity {
 
         // Valid session: jump to the role-home, then wire the role-specific
         // bottom-nav tabs and the drawer header. popUpTo(mobile_navigation,
-        // inclusive=true) clears the back stack so back-from-home exits the
+        // inclusive=false) clears the back stack so back-from-home exits the
         // app instead of re-entering login.
         NavOptions popUpToGraph = new NavOptions.Builder()
-                .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ true)
+                .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ false)
                 .build();
         navController.navigate(homeDestination, null, popUpToGraph);
         configureBottomNav(role);
+        configureDrawerMenu(role);
         bindDrawerHeader();
+
+        if (signalRService != null) {
+            signalRService.connect(tokenManager.getToken());
+        }
 
         isCheckingSession = false;
         hideSplash();
@@ -219,8 +244,13 @@ public class MainActivity extends AppCompatActivity {
      */
     public void onLoginSuccess() {
         if (tokenManager.hasToken()) {
-            configureBottomNav(tokenManager.getRole());
+            String role = tokenManager.getRole();
+            configureBottomNav(role);
+            configureDrawerMenu(role);
             bindDrawerHeader();
+            if (signalRService != null) {
+                signalRService.connect(tokenManager.getToken());
+            }
         }
     }
 
@@ -258,12 +288,7 @@ public class MainActivity extends AppCompatActivity {
                         .setIcon(R.drawable.ic_caja_24dp);
                 break;
             case "cocina":
-                bottomNav.getMenu()
-                        .add(0, R.id.nav_cocina_home, 0, R.string.cocina_title)
-                        .setIcon(R.drawable.ic_home_24dp);
-                bottomNav.getMenu()
-                        .add(0, R.id.nav_pedido_list, 1, R.string.all_orders)
-                        .setIcon(R.drawable.ic_pedidos_24dp);
+                // Cocina solo necesita una pantalla, la BottomNav se oculta entera
                 break;
             case "repartidor":
                 bottomNav.getMenu()
@@ -280,6 +305,27 @@ public class MainActivity extends AppCompatActivity {
                 return;
         }
         NavigationUI.setupWithNavController(bottomNav, navController);
+    }
+
+    /**
+     * Shows or hides items in the side navigation drawer based on the user's role.
+     * For example, the 'cocina' role should not see the configuration menu.
+     */
+    private void configureDrawerMenu(@Nullable String role) {
+        if (binding.navView == null || role == null) return;
+        
+        Menu drawerMenu = binding.navView.getMenu();
+        MenuItem configItem = drawerMenu.findItem(R.id.nav_configuracion);
+        
+        if (configItem != null) {
+            String normalized = role.trim().toLowerCase(Locale.ROOT);
+            // Hide configuration for 'cocina', show it for others (like 'cajero')
+            if ("cocina".equals(normalized)) {
+                configItem.setVisible(false);
+            } else {
+                configItem.setVisible(true);
+            }
+        }
     }
 
     /**
@@ -321,11 +367,14 @@ public class MainActivity extends AppCompatActivity {
      * and navigates to {@code nav_login} with the back stack cleared.
      */
     private void performLogout() {
+        if (signalRService != null) {
+            signalRService.disconnect();
+        }
         tokenManager.clearToken();
         sessionManager.consume();
         if (navController != null) {
             NavOptions popUpToGraph = new NavOptions.Builder()
-                    .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ true)
+                    .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ false)
                     .build();
             navController.navigate(R.id.nav_login, null, popUpToGraph);
         }
