@@ -4,9 +4,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -15,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.app_movil_gastronomia.R;
 import com.example.app_movil_gastronomia.core.UiState;
+import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.databinding.FragmentCocinaHomeBinding;
 import com.example.app_movil_gastronomia.ui.pedido.PedidoAdapter;
@@ -43,6 +46,7 @@ public class CocinaHomeFragment extends Fragment {
     private FragmentCocinaHomeBinding binding;
     private CocinaHomeViewModel viewModel;
     private PedidoAdapter adapter;
+    private EstadoPedidoEnum currentFilter = null;
 
     @Nullable
     @Override
@@ -67,6 +71,45 @@ public class CocinaHomeFragment extends Fragment {
         viewModel.getCocinaState().observe(getViewLifecycleOwner(), this::handleState);
 
         binding.buttonRetry.setOnClickListener(v -> viewModel.retry());
+
+        setupFilters();
+    }
+
+    private void setupFilters() {
+        binding.chipTodos.setOnClickListener(v -> setFilter(null));
+        binding.chipPendiente.setOnClickListener(v -> setFilter(EstadoPedidoEnum.PENDIENTE));
+        binding.chipEnPreparacion.setOnClickListener(v -> setFilter(EstadoPedidoEnum.EN_PREPARACION));
+        binding.chipListo.setOnClickListener(v -> setFilter(EstadoPedidoEnum.LISTO_PARA_RETIRAR));
+        
+        updateChipStyles();
+    }
+
+    private void setFilter(@Nullable EstadoPedidoEnum filter) {
+        if (currentFilter == filter) return;
+        currentFilter = filter;
+        updateChipStyles();
+        
+        if (viewModel.getCocinaState().getValue() != null && 
+            viewModel.getCocinaState().getValue().getStatus() == UiState.Status.SUCCESS) {
+            showContent(viewModel.getCocinaState().getValue().getData());
+        }
+    }
+
+    private void updateChipStyles() {
+        styleChip(binding.chipTodos, currentFilter == null);
+        styleChip(binding.chipPendiente, currentFilter == EstadoPedidoEnum.PENDIENTE);
+        styleChip(binding.chipEnPreparacion, currentFilter == EstadoPedidoEnum.EN_PREPARACION);
+        styleChip(binding.chipListo, currentFilter == EstadoPedidoEnum.LISTO_PARA_RETIRAR);
+    }
+
+    private void styleChip(TextView chip, boolean isSelected) {
+        int bgColor = ContextCompat.getColor(requireContext(),
+                isSelected ? R.color.chip_selected_bg : R.color.chip_unselected_bg);
+        int fgColor = ContextCompat.getColor(requireContext(),
+                isSelected ? R.color.chip_selected_fg : R.color.chip_unselected_fg);
+
+        chip.setBackgroundColor(bgColor);
+        chip.setTextColor(fgColor);
     }
 
     private void handleState(UiState<List<PedidoResumenDto>> state) {
@@ -99,7 +142,7 @@ public class CocinaHomeFragment extends Fragment {
         binding.textError.setVisibility(View.GONE);
         binding.buttonRetry.setVisibility(View.GONE);
 
-        List<PedidoResumenDto> filtered = filterForCocina(pedidos);
+        List<PedidoResumenDto> filtered = filterForCocina(pedidos, currentFilter);
 
         if (filtered.isEmpty()) {
             binding.recyclerViewPedidos.setVisibility(View.GONE);
@@ -131,25 +174,36 @@ public class CocinaHomeFragment extends Fragment {
      * that ever sends the display label instead of the canonical
      * wire value still works.
      */
-    static List<PedidoResumenDto> filterForCocina(List<PedidoResumenDto> pedidos) {
+    static List<PedidoResumenDto> filterForCocina(List<PedidoResumenDto> pedidos, @Nullable EstadoPedidoEnum explicitFilter) {
         List<PedidoResumenDto> result = new ArrayList<>();
         if (pedidos == null) {
             return result;
         }
         for (PedidoResumenDto p : pedidos) {
-            if (isVisibleInCocina(p.getEstado())) {
+            if (isVisibleInCocina(p.getEstado(), explicitFilter)) {
                 result.add(p);
             }
         }
         return result;
     }
 
-    private static boolean isVisibleInCocina(String estado) {
+    private static boolean isVisibleInCocina(String estado, @Nullable EstadoPedidoEnum explicitFilter) {
         if (estado == null) return false;
         String normalized = estado.trim().toLowerCase();
+
+        if (explicitFilter != null) {
+            String filterValue = explicitFilter.getApiValue().toLowerCase();
+            if (!(normalized.equals(filterValue) || normalized.replace(" ", "").equals(filterValue.replace(" ", "")))) {
+                return false;
+            }
+        }
+
         return "pendiente".equals(normalized)
                 || "en preparacion".equals(normalized)
-                || "enpreparacion".equals(normalized);
+                || "enpreparacion".equals(normalized)
+                || "listo".equals(normalized)
+                || "listo para retirar".equals(normalized)
+                || "listopararetirar".equals(normalized);
     }
 
     private void navigateToDetail(PedidoResumenDto pedido) {

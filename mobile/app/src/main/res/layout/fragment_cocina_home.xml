@@ -5,6 +5,80 @@
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
 
+    <!-- Filter chips strip -->
+    <HorizontalScrollView
+        android:id="@+id/filter_scroll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:id="@+id/chip_todos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@color/chip_unselected_bg"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/all_orders"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/chip_unselected_fg"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chip_pendiente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@color/chip_unselected_bg"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/status_pending"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/chip_unselected_fg"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chip_en_preparacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:background="@color/chip_unselected_bg"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/status_preparing"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/chip_unselected_fg"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chip_listo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/chip_unselected_bg"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/status_ready"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/chip_unselected_fg"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
@@ -13,7 +87,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/filter_scroll" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_pedidos"
@@ -25,7 +99,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/filter_scroll" />
 
     <TextView
         android:id="@+id/text_empty"
@@ -37,7 +111,7 @@
         app:layout_constraintBottom_toTopOf="@id/text_empty_sub"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/filter_scroll"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
@@ -64,7 +138,7 @@
         app:layout_constraintBottom_toTopOf="@id/button_retry"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/filter_scroll"
         app:layout_constraintVertical_bias="0.4" />
 
     <com.google.android.material.button.MaterialButton
