@@ -10,7 +10,6 @@ public class Configuracion
     [Column("id")]
     public int Id { get; set; }
 
-    // FK -> MetodoVenta (método de pago por defecto)
     [Column("metodo_pago_default_id")]
     public int? MetodoPagoDefaultId { get; set; }
 

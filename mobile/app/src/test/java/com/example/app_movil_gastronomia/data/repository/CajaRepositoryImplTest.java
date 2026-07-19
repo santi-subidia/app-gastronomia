@@ -69,9 +69,6 @@ public class CajaRepositoryImplTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    // ------------------------------------------------------------------
-    // getCajas(estado)
-    // ------------------------------------------------------------------
 
     @Test
     public void getCajasEmitsLoadingThenSuccessOn2xx() {
@@ -178,9 +175,6 @@ public class CajaRepositoryImplTest {
         assertEquals("Abierta", api.lastCajasEstado);
     }
 
-    // ------------------------------------------------------------------
-    // getCaja(id)
-    // ------------------------------------------------------------------
 
     @Test
     public void getCajaEmitsLoadingThenSuccessOn2xx() {
@@ -264,9 +258,6 @@ public class CajaRepositoryImplTest {
         assertSame(first, repo.getCajaState());
     }
 
-    // ------------------------------------------------------------------
-    // abrirCaja(request)
-    // ------------------------------------------------------------------
 
     @Test
     public void abrirCajaEmitsLoadingThenSuccessOn2xx() {
@@ -352,9 +343,6 @@ public class CajaRepositoryImplTest {
         assertSame(first, repo.getAbrirState());
     }
 
-    // ------------------------------------------------------------------
-    // cerrarCaja(id, request)
-    // ------------------------------------------------------------------
 
     @Test
     public void cerrarCajaEmitsLoadingThenSuccessOn2xx() {
@@ -442,9 +430,6 @@ public class CajaRepositoryImplTest {
         assertSame(first, repo.getCerrarState());
     }
 
-    // ------------------------------------------------------------------
-    // Regression: state instances must be pairwise distinct across methods
-    // ------------------------------------------------------------------
 
     @Test
     public void allFourStateInstancesArePairwiseDistinct() {
@@ -458,8 +443,6 @@ public class CajaRepositoryImplTest {
         all.add(repo.getAbrirState());
         all.add(repo.getCerrarState());
 
-        // The five state instances must be pairwise distinct so that a
-        // SUCCESS/ERROR on one verb does not appear on another.
         for (int i = 0; i < all.size(); i++) {
             for (int j = i + 1; j < all.size(); j++) {
                 assertNotNull("state " + i + " must not be null", all.get(i));
@@ -469,13 +452,9 @@ public class CajaRepositoryImplTest {
         }
     }
 
-    // ------------------------------------------------------------------
-    // getCajasAbiertas()  --  spec CAJ-ABIERTAS-001
-    // ------------------------------------------------------------------
 
     @Test
     public void getCajasAbiertasEmitsLoadingThenSuccessOn2xx() {
-        // Triangulation: non-empty success path.
         FakeCajaApi api = new FakeCajaApi();
         List<CajaDto> data = new ArrayList<>();
         CajaDto a = new CajaDto();
@@ -506,8 +485,6 @@ public class CajaRepositoryImplTest {
 
     @Test
     public void getCajasAbiertasEmitsSuccessWithEmptyListWhenNoCajasAbiertas() {
-        // Spec CAJ-ABIERTAS-002: empty list (200) is a valid success
-        // state — the UI should render "no hay cajas abiertas".
         FakeCajaApi api = new FakeCajaApi();
         api.getCajasAbiertasResponse = Response.success(new ArrayList<>());
         CajaRepositoryImpl repo = new CajaRepositoryImpl(api);
@@ -532,8 +509,6 @@ public class CajaRepositoryImplTest {
 
     @Test
     public void getCajasAbiertasEmitsErrorWithParsedMensajeOn500() {
-        // Spec CAJ-ABIERTAS-003: server error (e.g. 500) must surface
-        // the parsed `mensaje` from the error envelope.
         FakeCajaApi api = new FakeCajaApi();
         api.getCajasAbiertasResponse = errorResponse(500, "{\"mensaje\":\"Falla interna del servidor\"}");
         CajaRepositoryImpl repo = new CajaRepositoryImpl(api);
@@ -556,8 +531,6 @@ public class CajaRepositoryImplTest {
 
     @Test
     public void getCajasAbiertasEmitsNetworkErrorOnIOException() {
-        // Spec CAJ-ABIERTAS-004: network failure must emit the
-        // "No hay conexión a internet" message.
         FakeCajaApi api = new FakeCajaApi();
         api.getCajasAbiertasFailure = new IOException("boom");
         CajaRepositoryImpl repo = new CajaRepositoryImpl(api);
@@ -580,9 +553,6 @@ public class CajaRepositoryImplTest {
 
     @Test
     public void getCajasAbiertasStateReturnsSameInstanceAcrossCalls() {
-        // Single-instance pattern: the state LiveData must be the same
-        // across calls so observers registered in the ViewModel ctor
-        // keep receiving emissions across retries.
         FakeCajaApi api = new FakeCajaApi();
         api.getCajasAbiertasResponse = Response.success(new ArrayList<>());
         CajaRepositoryImpl repo = new CajaRepositoryImpl(api);
@@ -595,9 +565,6 @@ public class CajaRepositoryImplTest {
         assertSame(first, repo.getCajasAbiertasState());
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     private static <T> EmissionRecorder<UiState<T>> recordEmissions(LiveData<UiState<T>> state) {
         List<UiState.Status> seen = new ArrayList<>();
@@ -614,7 +581,6 @@ public class CajaRepositoryImplTest {
         return Response.error(code, body);
     }
 
-    // -- Fakes ------------------------------------------------------------
 
     static final class FakeCajaApi implements CajaApi {
         Response<List<CajaDto>> getCajasResponse;

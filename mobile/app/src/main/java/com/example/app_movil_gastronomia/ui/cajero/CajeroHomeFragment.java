@@ -97,7 +97,6 @@ public class CajeroHomeFragment extends Fragment {
     private void renderDashboard() {
         if (binding == null) return;
 
-        // Initial state: neither stream has emitted yet → keep the spinner up.
         if (lastPedidosState == null || lastCajaState == null) {
             showLoading();
             return;
@@ -110,7 +109,6 @@ public class CajeroHomeFragment extends Fragment {
             return;
         }
 
-        // Prefer the first non-null error message (pedidos first, then caja).
         String error = lastPedidosState.getError() != null
                 ? lastPedidosState.getError()
                 : lastCajaState.getError();

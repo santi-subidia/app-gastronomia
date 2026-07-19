@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.pedido;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -12,7 +11,6 @@ import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -31,7 +29,6 @@ public class PedidoListViewModel extends ViewModel {
     private final PedidoRepository pedidoRepository;
     private final MutableLiveData<UiState<List<PedidoResumenDto>>> state = new MutableLiveData<>();
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     private Observer<UiState<List<PedidoResumenDto>>> activeObserver;
     private LiveData<UiState<List<PedidoResumenDto>>> activeSource;
@@ -40,7 +37,6 @@ public class PedidoListViewModel extends ViewModel {
     @Inject
     public PedidoListViewModel(PedidoRepository pedidoRepository) {
         this.pedidoRepository = pedidoRepository;
-        // Default: load all pedidos.
         switchSource(null);
     }
 
@@ -74,8 +70,6 @@ public class PedidoListViewModel extends ViewModel {
     private void switchSource(EstadoPedidoEnum filter) {
         currentFilter = filter;
 
-        // Drop the old observer before subscribing to the new source so the VM
-        // never receives stale emissions from the previous filter.
         if (activeSource != null && activeObserver != null) {
             activeSource.removeObserver(activeObserver);
             activeObserver = null;
@@ -93,7 +87,6 @@ public class PedidoListViewModel extends ViewModel {
         }
 
         activeSource.observeForever(activeObserver);
-        observerRegistrationCount.incrementAndGet();
     }
 
     @Override
@@ -104,9 +97,4 @@ public class PedidoListViewModel extends ViewModel {
         }
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

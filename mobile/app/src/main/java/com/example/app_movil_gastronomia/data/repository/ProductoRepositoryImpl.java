@@ -52,7 +52,6 @@ public class ProductoRepositoryImpl implements ProductoRepository {
 
     @Override
     public LiveData<UiState<List<ProductoDto>>> getProductos() {
-        // Reset the single shared instance to LOADING before the network call.
         _productListState.setValue(UiState.loading());
 
         productoApi.getProductos().enqueue(new Callback<List<ProductoDto>>() {

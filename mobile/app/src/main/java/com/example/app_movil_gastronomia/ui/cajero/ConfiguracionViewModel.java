@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.cajero;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -10,7 +9,6 @@ import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.configuracion.ConfiguracionDto;
 import com.example.app_movil_gastronomia.data.repository.contract.ConfiguracionRepository;
 
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -59,16 +57,11 @@ public class ConfiguracionViewModel extends ViewModel {
     private final Observer<UiState<ConfiguracionDto>> crearObserver;
     private final Observer<UiState<ConfiguracionDto>> actualizarObserver;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public ConfiguracionViewModel(ConfiguracionRepository repository) {
         this.repository = repository;
 
-        // ---- getConfiguracion -> configState ----
-        // SUCCESS payloads are forwarded verbatim. A "not found" error
-        // becomes success(null) so the fragment enters "create mode"
-        // without flashing an error. Any other error is forwarded.
         this.getConfigObserver = state -> {
             if (state == null) return;
             switch (state.getStatus()) {
@@ -81,7 +74,6 @@ public class ConfiguracionViewModel extends ViewModel {
                 case ERROR:
                     String error = state.getError();
                     if (isNotFoundMessage(error)) {
-                        // Singleton has never been created: switch to create mode.
                         configState.setValue(UiState.success(null));
                     } else {
                         configState.setValue(UiState.error(error));
@@ -90,26 +82,16 @@ public class ConfiguracionViewModel extends ViewModel {
             }
         };
         repository.getConfiguracionState().observeForever(getConfigObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // ---- crearConfiguracion -> saveState, then reload current config ----
         this.crearObserver = state -> bridgeSave(state, true);
         repository.getCrearState().observeForever(crearObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // ---- actualizarConfiguracion -> saveState, then reload current config ----
         this.actualizarObserver = state -> bridgeSave(state, true);
         repository.getActualizarState().observeForever(actualizarObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // Kick off the initial load so the fragment can prefill the
-        // form (or fall into create mode) on first render.
         repository.getConfiguracion();
     }
 
-    // ------------------------------------------------------------------
-    // Public state
-    // ------------------------------------------------------------------
 
     public LiveData<UiState<ConfiguracionDto>> getConfigState() {
         return configState;
@@ -119,9 +101,6 @@ public class ConfiguracionViewModel extends ViewModel {
         return saveState;
     }
 
-    // ------------------------------------------------------------------
-    // Intents
-    // ------------------------------------------------------------------
 
     /** Reloads the current configuration. Wired to the retry button. */
     public void loadConfiguracion() {
@@ -149,9 +128,6 @@ public class ConfiguracionViewModel extends ViewModel {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Wiring helpers
-    // ------------------------------------------------------------------
 
     /**
      * Forwards a create/update state into {@link #saveState} and, on
@@ -183,7 +159,6 @@ public class ConfiguracionViewModel extends ViewModel {
      * both the Spanish "no encontrada" and the English "not found"
      * phrases without coupling the VM to a specific server string.
      */
-    @VisibleForTesting
     static boolean isNotFoundMessage(String error) {
         if (error == null) return false;
         String lower = error.toLowerCase();
@@ -191,9 +166,6 @@ public class ConfiguracionViewModel extends ViewModel {
                 || lower.contains("not found");
     }
 
-    // ------------------------------------------------------------------
-    // Lifecycle
-    // ------------------------------------------------------------------
 
     @Override
     protected void onCleared() {
@@ -203,9 +175,4 @@ public class ConfiguracionViewModel extends ViewModel {
         repository.getActualizarState().removeObserver(actualizarObserver);
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

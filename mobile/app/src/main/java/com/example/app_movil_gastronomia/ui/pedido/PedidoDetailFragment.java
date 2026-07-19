@@ -72,9 +72,6 @@ public class PedidoDetailFragment extends Fragment {
         binding.buttonCancelarPedido.setOnClickListener(v -> confirmCancelOrder());
         binding.buttonAsignarRepartidor.setOnClickListener(v -> showAsignarRepartidorDialog());
         binding.buttonRegistrarDemora.setOnClickListener(v -> {
-            // Navigate to the Demora form, passing the current pedidoId
-            // as a SafeArgs-equivalent Bundle argument. The Demora
-            // fragment is responsible for the actual POST.
             Bundle args = new Bundle();
             args.putInt("pedidoId", pedidoId);
             NavController controller = Navigation.findNavController(v);
@@ -106,11 +103,8 @@ public class PedidoDetailFragment extends Fragment {
         if (state == null) return;
         switch (state.getStatus()) {
             case LOADING:
-                // The detail screen already shows its own loader; suppress a second one.
                 break;
             case SUCCESS:
-                // Refresh the detail from the server so the banner / fields reflect
-                // the new estado.
                 Toast.makeText(requireContext(),
                         isCanceled(state.getData()) ? R.string.order_cancelled : R.string.change_status,
                         Toast.LENGTH_SHORT).show();
@@ -160,7 +154,6 @@ public class PedidoDetailFragment extends Fragment {
         binding.buttonRetry.setVisibility(View.GONE);
         binding.contentScroll.setVisibility(View.VISIBLE);
 
-        // Update the action bar title with the pedido id.
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
             if (activity.getSupportActionBar() != null) {
@@ -169,17 +162,13 @@ public class PedidoDetailFragment extends Fragment {
             }
         }
 
-        // Status banner
         EstadoPedidoEnum estado = EstadoPedidoEnum.fromApiValue(pedido.getEstado());
         int statusColor = PedidoAdapter.colorForEstado(estado);
         binding.statusBanner.setBackgroundColor(statusColor);
         binding.statusBanner.setText(PedidoAdapter.labelForEstado(estado));
-        // Always pick a readable foreground: white on dark backgrounds,
-        // black on the amber Pendiente chip.
         int fg = (estado == EstadoPedidoEnum.PENDIENTE) ? Color.BLACK : Color.WHITE;
         binding.statusBanner.setTextColor(fg);
 
-        // Info card
         binding.clienteNombre.setText(pedido.getClienteNombre());
         String metodoVenta = pedido.getMetodoVenta() != null ? pedido.getMetodoVenta() : "";
         binding.metodoVenta.setText(metodoVenta);
@@ -187,12 +176,10 @@ public class PedidoDetailFragment extends Fragment {
                 ? pedido.getFechaIngreso() : "");
         binding.total.setText(String.format(Locale.getDefault(), "$%.0f", pedido.getTotalEstimado()));
 
-        // Configuración de botones de acción
         String role = tokenManager.getRole() != null ? tokenManager.getRole().toLowerCase(Locale.ROOT) : "";
         boolean isCajero = "cajero".equals(role);
         
         if (isCajero) {
-            // Lógica específica para el Cajero
             binding.buttonRegistrarDemora.setVisibility(View.GONE);
             
             if (estado == EstadoPedidoEnum.LISTO_PARA_RETIRAR) {
@@ -203,19 +190,15 @@ public class PedidoDetailFragment extends Fragment {
                     binding.buttonAsignarRepartidor.setVisibility(View.GONE);
                     binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
                     binding.buttonCambiarEstado.setText("Entregar");
-                    // Eliminamos el listener por defecto que abre el modal de todos los estados
-                    // y hacemos que asigne ENTREGADO directamente.
                     binding.buttonCambiarEstado.setOnClickListener(v -> {
                         viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.ENTREGADO);
                     });
                 }
             } else {
-                // Si no está listo, el cajero no puede hacer ninguna acción terminal en esta vista
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
                 binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             }
         } else {
-            // Lógica para Cocina / Repartidor (mantener comportamiento previo)
             binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
             binding.buttonCambiarEstado.setText(R.string.change_status);
             binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
@@ -226,7 +209,6 @@ public class PedidoDetailFragment extends Fragment {
         boolean canCancel = PedidoCancellationPolicy.isCancelable(estado);
         binding.buttonCancelarPedido.setVisibility(canCancel ? View.VISIBLE : View.GONE);
 
-        // Items list
         renderItems(pedido.getDetallePedidos());
     }
 
@@ -322,7 +304,6 @@ public class PedidoDetailFragment extends Fragment {
     }
 
     private void showAsignarRepartidorDialog() {
-        // Build a programmatic EditText to keep the layout XML lean.
         TextInputEditText input = new TextInputEditText(requireContext());
         input.setHint(R.string.driver_id_hint);
         input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);

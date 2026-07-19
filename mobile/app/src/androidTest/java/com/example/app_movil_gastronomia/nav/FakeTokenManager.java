@@ -32,7 +32,6 @@ public class FakeTokenManager implements TokenManager {
     private volatile long expSeconds = -1L;
 
     public FakeTokenManager() {
-        // No-arg constructor: default state is "no session".
     }
 
     /**

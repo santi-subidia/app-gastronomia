@@ -58,9 +58,6 @@ public class CatalogoRepositoryImplTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    // ------------------------------------------------------------------
-    // Happy path: all three catalogs load successfully
-    // ------------------------------------------------------------------
 
     @Test
     public void constructorEagerlyLoadsAllThreeCatalogs() {
@@ -176,9 +173,6 @@ public class CatalogoRepositoryImplTest {
         assertEquals(-1, repo.resolveMetodoVentaId("NoExiste"));
     }
 
-    // ------------------------------------------------------------------
-    // LiveData identity contract — single instance per getter
-    // ------------------------------------------------------------------
 
     @Test
     public void eachLiveDataGetterReturnsSameInstanceAcrossCalls() {
@@ -203,9 +197,6 @@ public class CatalogoRepositoryImplTest {
                 repo.getMetodosPago() != repo.getMetodosVenta());
     }
 
-    // ------------------------------------------------------------------
-    // Failure modes
-    // ------------------------------------------------------------------
 
     @Test
     public void isReadyIsFalseWhenEstadosLoadFails() {
@@ -240,20 +231,12 @@ public class CatalogoRepositoryImplTest {
                 estadosValue);
         assertTrue("failed catalog must emit an empty list", estadosValue.isEmpty());
 
-        // The other catalogs still loaded their data (successPagos and
-        // successVentas return an empty list, but the important thing
-        // is that they emitted non-null — meaning the LiveData is
-        // "ready for observation" and the failure didn't poison them).
         assertNotNull(repo.getMetodosPago().getValue());
         assertNotNull(repo.getMetodosVenta().getValue());
     }
 
     @Test
     public void resolveEstadoIdThrowsWhileCatalogIsStillLoading() {
-        // Force the API to never call back synchronously by giving it
-        // a response that is null (no callback fires) — simulates a
-        // long-running request. isReady must stay false and resolve
-        // must throw.
         FakeEstadosPedidoApi estados = new FakeEstadosPedidoApi();
         estados.nextResponse = null; // callback never fires
         CatalogoRepositoryImpl repo = new CatalogoRepositoryImpl(
@@ -264,14 +247,9 @@ public class CatalogoRepositoryImplTest {
             repo.resolveEstadoId("Anything");
             fail("expected IllegalStateException while catalog is still loading");
         } catch (IllegalStateException expected) {
-            // ok
         }
     }
 
-    // ------------------------------------------------------------------
-    // helpers — provide one-shot success APIs so each test sets up
-    // only the catalogs it cares about.
-    // ------------------------------------------------------------------
 
     private static FakeEstadosPedidoApi successEstados() {
         FakeEstadosPedidoApi api = new FakeEstadosPedidoApi();
@@ -291,7 +269,6 @@ public class CatalogoRepositoryImplTest {
         return api;
     }
 
-    // -- Fakes -----------------------------------------------------------
 
     static class FakeEstadosPedidoApi implements EstadosPedidoApi {
         Response<List<CatalogoItemDto>> nextResponse;
@@ -343,10 +320,6 @@ public class CatalogoRepositoryImplTest {
 
         @Override
         public void enqueue(Callback<T> callback) {
-            // The "never resolves" simulator requires BOTH response and
-            // failure to be null. A failure-only setup (response == null,
-            // failure != null) must still fire onFailure so the
-            // repository can post its empty-list fallback.
             if (response == null && failure == null) {
                 return;
             }

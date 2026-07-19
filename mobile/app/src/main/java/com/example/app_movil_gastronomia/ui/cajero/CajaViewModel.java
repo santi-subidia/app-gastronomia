@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.cajero;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -13,7 +12,6 @@ import com.example.app_movil_gastronomia.data.dto.caja.CerrarCajaRequest;
 import com.example.app_movil_gastronomia.data.repository.contract.CajaRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -51,15 +49,11 @@ public class CajaViewModel extends ViewModel {
     private final Observer<UiState<CajaDto>> abrirRepositoryObserver;
     private final Observer<UiState<CajaDto>> cerrarRepositoryObserver;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public CajaViewModel(CajaRepository cajaRepository) {
         this.cajaRepository = cajaRepository;
 
-        // ---- Caja status: bridge getCajas("abiertas") into a single CajaDto stream ----
-        // SUCCESS with a non-empty list means there is one open caja;
-        // SUCCESS with an empty list means no caja is currently open.
         this.cajasRepositoryObserver = upstream -> {
             if (upstream == null) return;
             switch (upstream.getStatus()) {
@@ -77,9 +71,7 @@ public class CajaViewModel extends ViewModel {
             }
         };
         cajaRepository.getCajasState().observeForever(cajasRepositoryObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // ---- Abrir: bridge abrirState, then reload caja status on success ----
         this.abrirRepositoryObserver = upstream -> {
             if (upstream == null) return;
             abrirState.setValue(upstream);
@@ -88,9 +80,7 @@ public class CajaViewModel extends ViewModel {
             }
         };
         cajaRepository.getAbrirState().observeForever(abrirRepositoryObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // ---- Cerrar: bridge cerrarState, then reload caja status on success ----
         this.cerrarRepositoryObserver = upstream -> {
             if (upstream == null) return;
             cerrarState.setValue(upstream);
@@ -99,9 +89,7 @@ public class CajaViewModel extends ViewModel {
             }
         };
         cajaRepository.getCerrarState().observeForever(cerrarRepositoryObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // Kick off the initial status load.
         loadCajaStatus();
     }
 
@@ -169,9 +157,4 @@ public class CajaViewModel extends ViewModel {
         cajaRepository.getCerrarState().removeObserver(cerrarRepositoryObserver);
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

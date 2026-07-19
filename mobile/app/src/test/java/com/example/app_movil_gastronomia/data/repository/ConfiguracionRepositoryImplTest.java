@@ -49,9 +49,6 @@ public class ConfiguracionRepositoryImplTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    // ------------------------------------------------------------------
-    // getConfiguracion
-    // ------------------------------------------------------------------
 
     @Test
     public void getConfiguracionEmitsLoadingThenSuccessOn2xx() {
@@ -135,9 +132,6 @@ public class ConfiguracionRepositoryImplTest {
         assertSame(first, repo.getConfiguracionState());
     }
 
-    // ------------------------------------------------------------------
-    // crearConfiguracion
-    // ------------------------------------------------------------------
 
     @Test
     public void crearConfiguracionEmitsLoadingThenSuccessOn2xx() {
@@ -230,9 +224,6 @@ public class ConfiguracionRepositoryImplTest {
         assertSame(first, repo.getCrearState());
     }
 
-    // ------------------------------------------------------------------
-    // actualizarConfiguracion
-    // ------------------------------------------------------------------
 
     @Test
     public void actualizarConfiguracionEmitsLoadingThenSuccessOn2xx() {
@@ -325,9 +316,6 @@ public class ConfiguracionRepositoryImplTest {
         assertSame(first, repo.getActualizarState());
     }
 
-    // ------------------------------------------------------------------
-    // Pairwise distinct state instances (CONF-DI-001)
-    // ------------------------------------------------------------------
 
     @Test
     public void allThreeStateInstancesArePairwiseDistinct() {
@@ -343,9 +331,6 @@ public class ConfiguracionRepositoryImplTest {
         assertNotEquals(crear, actualizar);
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     private static ConfiguracionDto newConfig(int id, String nombre, Double lat, Double lng) {
         ConfiguracionDto dto = new ConfiguracionDto();
@@ -385,10 +370,8 @@ public class ConfiguracionRepositoryImplTest {
         return Response.error(code, body);
     }
 
-    // -- Fakes ------------------------------------------------------------
 
     static final class FakeConfiguracionApi implements ConfiguracionApi {
-        // get
         Response<ConfiguracionDto> getConfiguracionResponse;
         Throwable getConfiguracionFailure;
         @Override
@@ -396,7 +379,6 @@ public class ConfiguracionRepositoryImplTest {
             return new FakeCall<>(getConfiguracionResponse, getConfiguracionFailure);
         }
 
-        // create
         Response<ConfiguracionDto> crearConfiguracionResponse;
         Throwable crearConfiguracionFailure;
         ConfiguracionDto lastCrearBody;
@@ -406,7 +388,6 @@ public class ConfiguracionRepositoryImplTest {
             return new FakeCall<>(crearConfiguracionResponse, crearConfiguracionFailure);
         }
 
-        // update
         Response<ConfiguracionDto> actualizarConfiguracionResponse;
         Throwable actualizarConfiguracionFailure;
         ConfiguracionDto lastActualizarBody;

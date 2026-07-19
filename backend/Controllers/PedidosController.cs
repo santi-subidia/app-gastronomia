@@ -144,7 +144,6 @@ public class PedidosController : ControllerBase
     }
 
     // ================================================================
-    // Private mapping helpers — entity → DTO
     // ================================================================
 
     private static PedidoResumenDTO MapToResumen(Pedido p) => new(

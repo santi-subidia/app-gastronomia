@@ -91,14 +91,11 @@ public class MapaFragment extends Fragment {
         binding.buttonSendPosition.setOnClickListener(v -> viewModel.sendPositionNow());
         binding.switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (buttonView.isPressed()) {
-                // Only react to user-initiated toggles. Programmatic
-                // setChecked() from the observer does not set isPressed.
                 onAutoSendToggled(isChecked);
             }
         });
         binding.buttonRetry.setOnClickListener(v -> viewModel.retry());
 
-        // GPS startup: request permission if needed, then subscribe.
         if (hasLocationPermission()) {
             onLocationPermissionGranted();
         } else {
@@ -112,9 +109,6 @@ public class MapaFragment extends Fragment {
         binding = null;
     }
 
-    // ------------------------------------------------------------------
-    // Permission flow
-    // ------------------------------------------------------------------
 
     private boolean hasLocationPermission() {
         return ContextCompat.checkSelfPermission(
@@ -145,13 +139,9 @@ public class MapaFragment extends Fragment {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Auto-send toggle wiring
-    // ------------------------------------------------------------------
 
     private void onAutoSendToggled(boolean isChecked) {
         if (isChecked && !hasLocationPermission()) {
-            // Re-prompt the user before we start broadcasting.
             binding.switchAutoSend.setChecked(false);
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
             return;
@@ -162,7 +152,6 @@ public class MapaFragment extends Fragment {
     private void handleAutoSendToggle(Boolean enabled) {
         if (binding == null || enabled == null) return;
         if (binding.switchAutoSend.isChecked() != enabled) {
-            // Suppress the listener while we sync the visual state.
             binding.switchAutoSend.setOnCheckedChangeListener(null);
             binding.switchAutoSend.setChecked(enabled);
             binding.switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -173,9 +162,6 @@ public class MapaFragment extends Fragment {
         }
     }
 
-    // ------------------------------------------------------------------
-    // State observers
-    // ------------------------------------------------------------------
 
     private void handlePedidosState(UiState<List<PedidoResumenDto>> state) {
         if (state == null || binding == null) return;
@@ -242,9 +228,6 @@ public class MapaFragment extends Fragment {
                 lastSent != null ? lastSent : "--:--:--"));
     }
 
-    // ------------------------------------------------------------------
-    // Navigation
-    // ------------------------------------------------------------------
 
     private void navigateToDetail(PedidoResumenDto pedido) {
         Bundle args = new Bundle();

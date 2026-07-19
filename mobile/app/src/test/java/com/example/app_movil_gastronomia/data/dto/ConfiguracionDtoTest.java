@@ -35,7 +35,6 @@ public class ConfiguracionDtoTest {
 
         String json = gson.toJson(dto);
 
-        // Round-trip: parse back and verify equality of every field.
         ConfiguracionDto parsed = gson.fromJson(json, ConfiguracionDto.class);
         assertEquals(1, parsed.getId());
         assertEquals(Integer.valueOf(5), parsed.getMetodoPagoDefaultId());
@@ -44,7 +43,6 @@ public class ConfiguracionDtoTest {
         assertEquals(-34.6037, parsed.getLatitudPartida(), 0.0);
         assertEquals(-58.3816, parsed.getLongitudPartida(), 0.0);
 
-        // String-level: every required key MUST be present.
         assertTrue("json must contain 'id', got: " + json, json.contains("\"id\""));
         assertTrue("json must contain 'metodoPagoDefaultId', got: " + json, json.contains("\"metodoPagoDefaultId\""));
         assertTrue("json must contain 'metodoPagoDefaultNombre', got: " + json, json.contains("\"metodoPagoDefaultNombre\""));
@@ -94,7 +92,6 @@ public class ConfiguracionDtoTest {
 
     @Test
     public void nullOptionalFieldsRoundTripAsNull() {
-        // Build a DTO with optional fields explicitly null (boxed types allow this).
         ConfiguracionDto dto = new ConfiguracionDto();
         dto.setId(1);
         dto.setMetodoPagoDefaultId(null);
@@ -103,14 +100,11 @@ public class ConfiguracionDtoTest {
         dto.setLatitudPartida(null);
         dto.setLongitudPartida(null);
 
-        // Getters return null (the boxed-type contract).
         assertNull(dto.getMetodoPagoDefaultId());
         assertNull(dto.getMetodoPagoDefaultNombre());
         assertNull(dto.getLatitudPartida());
         assertNull(dto.getLongitudPartida());
 
-        // Server may omit the optional keys in the JSON wire format.
-        // When it does, the DTO MUST deserialize them as null (boxed types required).
         String serverJson = "{"
                 + "\"id\":1,"
                 + "\"nombreGastronomico\":\"Sin Config\""

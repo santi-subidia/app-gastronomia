@@ -102,7 +102,6 @@ public class DetalleAdapter extends RecyclerView.Adapter<DetalleAdapter.DetalleV
             subtotal = itemView.findViewById(R.id.detalle_subtotal);
             delete = itemView.findViewById(R.id.detalle_delete);
 
-            // Tint the delete button red for clarity in the dark theme.
             int red = ContextCompat.getColor(itemView.getContext(), android.R.color.holo_red_light);
             delete.setColorFilter(red);
         }

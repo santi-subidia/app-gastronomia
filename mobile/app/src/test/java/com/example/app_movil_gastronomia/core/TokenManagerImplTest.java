@@ -69,7 +69,6 @@ public class TokenManagerImplTest {
 
     @Test
     public void decodeTokenExp_payloadWithoutExp_returnsNegativeOne() {
-        // Valid JWT shape but no "exp" claim in the payload.
         String header = base64UrlEncode("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
         String payload = base64UrlEncode("{\"sub\":\"123\"}");
         String jwt = header + "." + payload + ".sig";
@@ -109,7 +108,6 @@ public class TokenManagerImplTest {
         assertNull(tm.getToken());
     }
 
-    // -- Helpers -------------------------------------------------------------
 
     /**
      * Builds a TokenManagerImpl wired to a fake prefs pre-populated with the

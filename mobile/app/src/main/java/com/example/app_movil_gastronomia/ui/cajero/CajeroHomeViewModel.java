@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.cajero;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -13,7 +12,6 @@ import com.example.app_movil_gastronomia.data.repository.contract.CajaRepository
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -57,7 +55,6 @@ public class CajeroHomeViewModel extends ViewModel {
     private final Observer<UiState<List<PedidoResumenDto>>> pedidosRepositoryObserver;
     private final Observer<UiState<List<CajaDto>>> cajasRepositoryObserver;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public CajeroHomeViewModel(PedidoRepository pedidoRepository,
@@ -65,7 +62,6 @@ public class CajeroHomeViewModel extends ViewModel {
         this.pedidoRepository = pedidoRepository;
         this.cajaRepository = cajaRepository;
 
-        // ---- Pedidos: count pedidos that are still in a non-terminal estado ----
         this.pedidosRepositoryObserver = upstream -> {
             if (upstream == null) return;
             switch (upstream.getStatus()) {
@@ -82,10 +78,8 @@ public class CajeroHomeViewModel extends ViewModel {
             }
         };
         pedidoRepository.getPedidosState().observeForever(pedidosRepositoryObserver);
-        observerRegistrationCount.incrementAndGet();
         pedidoRepository.getPedidos();
 
-        // ---- Caja: any caja with estado="abierta" means there is one open ----
         this.cajasRepositoryObserver = upstream -> {
             if (upstream == null) return;
             switch (upstream.getStatus()) {
@@ -102,7 +96,6 @@ public class CajeroHomeViewModel extends ViewModel {
             }
         };
         cajaRepository.getCajasState().observeForever(cajasRepositoryObserver);
-        observerRegistrationCount.incrementAndGet();
         cajaRepository.getCajas("abierta");
     }
 
@@ -151,9 +144,4 @@ public class CajeroHomeViewModel extends ViewModel {
         cajaRepository.getCajasState().removeObserver(cajasRepositoryObserver);
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

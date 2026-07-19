@@ -59,7 +59,6 @@ public class CrearPedidoRequestTest {
 
     @Test
     public void roundTripsSampleJsonFromApiReference() {
-        // Exact body from doc/API_REFERENCIA.md §3.2 POST /api/pedidos
         String sample = "{"
                 + "\"cajaId\": 1,"
                 + "\"metodoPagoId\": 1,"
@@ -110,7 +109,6 @@ public class CrearPedidoRequestTest {
         request.setClienteNombre("Ana");
         request.setClienteDireccion("Calle 1");
         request.setTotalEstimado(500.0);
-        // cajaId, latitudDestino, longitudDestino, demoraAprox stay null
 
         String json = gson.toJson(request);
 

@@ -1,7 +1,6 @@
 package com.example.app_movil_gastronomia.ui.repartidor;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -15,7 +14,6 @@ import com.example.app_movil_gastronomia.data.dto.signalr.RepartidorAsignadoMess
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -70,7 +68,6 @@ public class RepartidorHomeViewModel extends ViewModel {
     private final Observer<PedidoFinalizadoMessage> pedidoFinalizadoObserver;
     private final Observer<Boolean> connectedObserver;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public RepartidorHomeViewModel(PedidoRepository pedidoRepository,
@@ -78,36 +75,23 @@ public class RepartidorHomeViewModel extends ViewModel {
         this.pedidoRepository = pedidoRepository;
         this.signalRService = signalRService;
 
-        // ---- REST: bridge the repository state into the VM-owned LiveData ----
         this.repositoryObserver = state::setValue;
         pedidoRepository.getPedidosState().observeForever(repositoryObserver);
-        observerRegistrationCount.incrementAndGet();
         pedidoRepository.getPedidos();
 
-        // ---- SignalR: react to realtime events ----
         if (signalRService != null) {
-            // New assignment → reload the list so the new pedido shows up.
             this.repartidorAsignadoObserver = msg -> pedidoRepository.getPedidos();
             signalRService.getRepartidorAsignado().observeForever(repartidorAsignadoObserver);
-            observerRegistrationCount.incrementAndGet();
 
-            // Pedido reached a terminal state → forward to the fragment for a toast.
-            // The fragment can choose to also call retry() if it wants to drop the
-            // finalizado row from the list immediately.
             this.pedidoFinalizadoObserver = pedidoFinalizado::setValue;
             signalRService.getPedidoFinalizado().observeForever(pedidoFinalizadoObserver);
-            observerRegistrationCount.incrementAndGet();
 
-            // Re-join every "En Camino" pedido group on (re)connect so a hub
-            // reconnect after a network blip does not silently drop our
-            // subscription to per-pedido events.
             this.connectedObserver = isConnected -> {
                 if (isConnected != null && isConnected) {
                     rejoinActivePedidoGroups();
                 }
             };
             signalRService.getConnected().observeForever(connectedObserver);
-            observerRegistrationCount.incrementAndGet();
         } else {
             this.repartidorAsignadoObserver = null;
             this.pedidoFinalizadoObserver = null;
@@ -183,9 +167,4 @@ public class RepartidorHomeViewModel extends ViewModel {
         }
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

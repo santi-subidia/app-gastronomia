@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -44,11 +43,9 @@ public class MainActivity extends AppCompatActivity {
     private NavController navController;
     private ActivityMainBinding binding;
 
-    @VisibleForTesting
     @Inject
     public SessionManager sessionManager;
 
-    @VisibleForTesting
     @Inject
     public TokenManager tokenManager;
 
@@ -73,18 +70,12 @@ public class MainActivity extends AppCompatActivity {
         assert navHostFragment != null;
         navController = navHostFragment.getNavController();
 
-        // Top-level destinations are the three role-home screens; the
-        // drawerLayout is wired as the openable container so the
-        // hamburger/up-arrow switch works correctly.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_cajero_home, R.id.nav_cocina_home, R.id.nav_repartidor_home)
                 .setOpenableLayout(binding.drawerLayout)
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
 
-        // Drawer item selection: handle logout + configuracion, then close
-        // the drawer. We keep the listener attached for the whole activity
-        // lifetime because the drawer's contents do not change at runtime.
         binding.navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_cerrar_sesion) {
@@ -96,16 +87,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Observe session-expiration: when fired, navigate to the login screen
-        // and re-arm the flag. Preserved from the previous implementation —
-        // OkHttp's AuthInterceptor posts here on 401, and the host Activity
-        // is the only place that can safely navigate.
         sessionManager.getSessionExpired().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(@Nullable Boolean expired) {
                 if (Boolean.TRUE.equals(expired) && navController != null) {
                     NavDestination current = navController.getCurrentDestination();
-                    // Guard: don't re-navigate if we are already on login.
                     if (current != null && current.getId() == R.id.nav_login) {
                         sessionManager.consume();
                         return;
@@ -132,9 +118,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Splash-gated auto-login. The splash stays on top of every other
-        // view while we validate the stored session so the login form
-        // never flickers on cold start.
         runAutoLogin();
     }
 
@@ -169,8 +152,6 @@ public class MainActivity extends AppCompatActivity {
         showSplash();
 
         if (!tokenManager.hasToken()) {
-            // No token: login is the nav graph's startDestination, so we
-            // just need to make sure the splash is dismissed and bail.
             isCheckingSession = false;
             hideSplash();
             return;
@@ -179,8 +160,6 @@ public class MainActivity extends AppCompatActivity {
         long expSeconds = tokenManager.decodeTokenExp();
         long nowSeconds = System.currentTimeMillis() / 1000L;
         if (expSeconds < 0 || expSeconds <= nowSeconds) {
-            // Malformed (-1) or expired. Treat as invalid: clear and let
-            // the startDestination (login) handle the rest.
             tokenManager.clearToken();
             isCheckingSession = false;
             hideSplash();
@@ -190,18 +169,12 @@ public class MainActivity extends AppCompatActivity {
         String role = tokenManager.getRole();
         Integer homeDestination = resolveHomeDestination(role);
         if (homeDestination == null) {
-            // Unknown role: log a warning and bail to the start destination
-            // (login) so the user can re-authenticate.
             Log.w(TAG, "Unknown role '" + role + "' — falling back to login");
             isCheckingSession = false;
             hideSplash();
             return;
         }
 
-        // Valid session: jump to the role-home, then wire the role-specific
-        // bottom-nav tabs and the drawer header. popUpTo(mobile_navigation,
-        // inclusive=true) clears the back stack so back-from-home exits the
-        // app instead of re-entering login.
         NavOptions popUpToGraph = new NavOptions.Builder()
                 .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ true)
                 .build();
@@ -233,8 +206,6 @@ public class MainActivity extends AppCompatActivity {
     private void configureBottomNav(@Nullable String role) {
         BottomNavigationView bottomNav = binding.appBarMain.contentMain.bottomNavView;
         if (bottomNav == null) {
-            // The view is only present in the default layout (not w600dp /
-            // w1240dp). Tablets skip the bottom-nav entirely.
             return;
         }
         bottomNav.getMenu().clear();
@@ -366,7 +337,6 @@ public class MainActivity extends AppCompatActivity {
      * Activity or running Robolectric.
      */
     @Nullable
-    @VisibleForTesting
     static Integer resolveHomeDestination(@Nullable String role) {
         if (role == null) {
             return null;

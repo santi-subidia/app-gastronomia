@@ -11,35 +11,30 @@ public class Pedido
     [Column("id")]
     public int Id { get; set; }
 
-    // FK -> Caja
     [Column("caja_id")]
     public int? CajaId { get; set; }
 
     [ForeignKey(nameof(CajaId))]
     public Caja? Caja { get; set; }
 
-    // FK -> Usuario (repartidor)
     [Column("repartidor_id")]
     public int? RepartidorId { get; set; }
 
     [ForeignKey(nameof(RepartidorId))]
     public Usuario? Repartidor { get; set; }
 
-    // FK -> EstadoPedido
     [Column("estado_id")]
     public int EstadoId { get; set; }
 
     [ForeignKey(nameof(EstadoId))]
     public EstadoPedido Estado { get; set; } = null!;
 
-    // FK -> MetodoPago
     [Column("metodo_pago_id")]
     public int MetodoPagoId { get; set; }
 
     [ForeignKey(nameof(MetodoPagoId))]
     public MetodoPago MetodoPago { get; set; } = null!;
 
-    // FK -> MetodoVenta
     [Column("metodo_venta_id")]
     public int MetodoVentaId { get; set; }
 
@@ -92,7 +87,6 @@ public class Pedido
         set => EstadoId = (int)value;
     }
 
-    // Navegación
     public ICollection<DetallePedido> DetallePedidos { get; set; } = new List<DetallePedido>();
     public ICollection<Demora> Demoras { get; set; } = new List<Demora>();
 }

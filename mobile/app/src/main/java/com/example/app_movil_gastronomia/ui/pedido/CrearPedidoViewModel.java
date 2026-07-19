@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.pedido;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -16,7 +15,6 @@ import com.example.app_movil_gastronomia.data.repository.contract.ProductoReposi
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -60,7 +58,6 @@ public class CrearPedidoViewModel extends ViewModel {
             new MutableLiveData<>();
     private final MutableLiveData<String> formError = new MutableLiveData<>();
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     private Observer<UiState<List<ProductoDto>>> productListObserver;
     private LiveData<UiState<List<ProductoDto>>> productListSource;
@@ -80,9 +77,6 @@ public class CrearPedidoViewModel extends ViewModel {
         wireCrearObserver();
     }
 
-    // ------------------------------------------------------------------
-    // Public state
-    // ------------------------------------------------------------------
 
     public LiveData<UiState<List<ProductoDto>>> getProductListState() {
         return productListState;
@@ -93,7 +87,6 @@ public class CrearPedidoViewModel extends ViewModel {
     }
 
     /** Returns whether the create-order error should offer the caja shortcut. */
-    @VisibleForTesting
     static boolean shouldOfferOpenRegister(UiState<PedidoDetalleDto> state) {
         return state != null
                 && state.getStatus() == UiState.Status.ERROR
@@ -113,9 +106,6 @@ public class CrearPedidoViewModel extends ViewModel {
         formError.setValue(null);
     }
 
-    // ------------------------------------------------------------------
-    // Intents
-    // ------------------------------------------------------------------
 
     /** Reloads the product catalog. Used both for the initial load and retry. */
     public void loadProductos() {
@@ -142,9 +132,6 @@ public class CrearPedidoViewModel extends ViewModel {
         pedidoRepository.resetCrearState();
     }
 
-    // ------------------------------------------------------------------
-    // Validation
-    // ------------------------------------------------------------------
 
     /**
      * Returns {@code null} when the request is valid, otherwise a
@@ -157,7 +144,6 @@ public class CrearPedidoViewModel extends ViewModel {
      *   <li>When metodoVentaId == Delivery, lat / lng both provided.</li>
      * </ol>
      */
-    @VisibleForTesting
     String validate(CrearPedidoRequest request) {
         if (request == null) {
             return "El pedido es inválido";
@@ -183,17 +169,12 @@ public class CrearPedidoViewModel extends ViewModel {
         return null;
     }
 
-    // ------------------------------------------------------------------
-    // Wiring
-    // ------------------------------------------------------------------
 
     private void wireProductListObserver() {
         productListObserver = productListState::setValue;
         productListSource = productoRepository.getProductListState();
         productListSource.observeForever(productListObserver);
-        observerRegistrationCount.incrementAndGet();
 
-        // Kick off the initial load.
         productoRepository.getProductos();
     }
 
@@ -201,7 +182,6 @@ public class CrearPedidoViewModel extends ViewModel {
         crearObserver = crearState::setValue;
         crearSource = pedidoRepository.getCrearState();
         crearSource.observeForever(crearObserver);
-        observerRegistrationCount.incrementAndGet();
     }
 
     @Override
@@ -215,9 +195,6 @@ public class CrearPedidoViewModel extends ViewModel {
         }
     }
 
-    // ------------------------------------------------------------------
-    // DetalleLine → CrearDetalleRequest mapping
-    // ------------------------------------------------------------------
 
     /**
      * Maps the UI-layer {@link DetalleLine} list to a list of
@@ -253,9 +230,6 @@ public class CrearPedidoViewModel extends ViewModel {
         return out;
     }
 
-    // ------------------------------------------------------------------
-    // Request building
-    // ------------------------------------------------------------------
 
     /**
      * Builds the {@link CrearPedidoRequest} from primitive form values
@@ -301,12 +275,8 @@ public class CrearPedidoViewModel extends ViewModel {
         return request;
     }
 
-    // ------------------------------------------------------------------
-    // Test diagnostics
-    // ------------------------------------------------------------------
 
     /** Test-only: how many times the VM registered an observer. */
-    @VisibleForTesting
     int getObserverRegistrationCount() {
         return observerRegistrationCount.get();
     }

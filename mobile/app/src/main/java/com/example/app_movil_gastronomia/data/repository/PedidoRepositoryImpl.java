@@ -77,13 +77,9 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         this.catalogoRepository = catalogoRepository;
     }
 
-    // ------------------------------------------------------------------
-    // getPedidos
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<List<PedidoResumenDto>>> getPedidos() {
-        // Reset the single shared instance to LOADING before the network call.
         _pedidosState.setValue(UiState.loading());
 
         pedidoApi.getPedidos().enqueue(new Callback<List<PedidoResumenDto>>() {
@@ -113,9 +109,6 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _pedidosState;
     }
 
-    // ------------------------------------------------------------------
-    // getPedido
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<PedidoDetalleDto>> getPedido(int id) {
@@ -148,16 +141,11 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _pedidoState;
     }
 
-    // ------------------------------------------------------------------
-    // getByEstado
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<List<PedidoResumenDto>>> getByEstado(EstadoPedidoEnum estado) {
         _byEstadoState.setValue(UiState.loading());
 
-        // Resolve the enum to its API string at the repo boundary so the
-        // PedidoApi interface stays free of generic converters.
         final String estadoPath = estado.getApiValue();
 
         pedidoApi.getByEstado(estadoPath).enqueue(new Callback<List<PedidoResumenDto>>() {
@@ -187,15 +175,9 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _byEstadoState;
     }
 
-    // ------------------------------------------------------------------
-    // crearPedido
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<PedidoDetalleDto>> crearPedido(CrearPedidoRequest request) {
-        // Spec PED-VAL-001 / PED-VAL-002: validate BEFORE any API call.
-        // When validation fails the API is never called and the state
-        // is set to ERROR directly (skipping LOADING).
         if (request.getDetalles() == null || request.getDetalles().isEmpty()) {
             _crearState.setValue(UiState.error("El pedido debe tener al menos un producto"));
             return getCrearState();
@@ -240,15 +222,9 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         _crearState.setValue(null);
     }
 
-    // ------------------------------------------------------------------
-    // cambiarEstado
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<PedidoDetalleDto>> cambiarEstado(int id, EstadoPedidoEnum estado) {
-        // Spec PED-ENUM-002 (v2): the backend wants a raw int body.
-        // Resolve the enum via the catalog BEFORE any network call so
-        // a missing / unloaded cache fails fast with a clear error.
         if (!catalogoRepository.isReady()) {
             _cambiarEstadoState.setValue(UiState.error(
                     "El catálogo de estados aún no está disponible, intente nuevamente"));
@@ -290,9 +266,6 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _cambiarEstadoState;
     }
 
-    // ------------------------------------------------------------------
-    // asignarRepartidor
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<PedidoDetalleDto>> asignarRepartidor(int id, int repartidorId) {
@@ -327,9 +300,6 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _asignarRepartidorState;
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     /**
      * Parses the server's {@code {"mensaje":"..."}} envelope from a Retrofit

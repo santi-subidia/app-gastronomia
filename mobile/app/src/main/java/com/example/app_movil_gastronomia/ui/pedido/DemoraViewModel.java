@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.pedido;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -11,7 +10,6 @@ import com.example.app_movil_gastronomia.data.dto.demora.CrearDemoraRequest;
 import com.example.app_movil_gastronomia.data.dto.demora.DemoraDto;
 import com.example.app_movil_gastronomia.data.repository.contract.DemoraRepository;
 
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -43,7 +41,6 @@ public class DemoraViewModel extends ViewModel {
     private final Observer<UiState<DemoraDto>> crearObserver;
     private final LiveData<UiState<DemoraDto>> crearSource;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public DemoraViewModel(DemoraRepository demoraRepository) {
@@ -52,7 +49,6 @@ public class DemoraViewModel extends ViewModel {
         this.crearObserver = crearState::setValue;
         this.crearSource = demoraRepository.getCrearState();
         crearSource.observeForever(crearObserver);
-        observerRegistrationCount.incrementAndGet();
     }
 
     public LiveData<UiState<DemoraDto>> getCrearState() {
@@ -94,9 +90,4 @@ public class DemoraViewModel extends ViewModel {
         }
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

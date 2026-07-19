@@ -24,7 +24,6 @@ public class ActualizarDemoraRequestTest {
 
     @Test
     public void serializesOnlySetFieldsAndOmitsNulls() {
-        // Only the demoraMinutos is being changed.
         ActualizarDemoraRequest request = new ActualizarDemoraRequest();
         request.setDemoraMinutos(30);
 
@@ -39,13 +38,11 @@ public class ActualizarDemoraRequestTest {
     public void nullObservacionesIsOmittedFromJson() {
         ActualizarDemoraRequest request = new ActualizarDemoraRequest();
         request.setDemoraMinutos(30);
-        // observaciones stays null.
 
         String json = gson.toJson(request);
 
         assertFalse("json must NOT contain 'observaciones' when null, got: " + json,
                 json.contains("\"observaciones\""));
-        // v2 contract: sector MUST NOT be present.
         assertFalse("json must NOT contain 'sector' (removed in v2), got: " + json,
                 json.contains("\"sector\""));
     }
@@ -54,15 +51,12 @@ public class ActualizarDemoraRequestTest {
     public void nullDemoraMinutosIsOmittedFromJson() {
         ActualizarDemoraRequest request = new ActualizarDemoraRequest();
         request.setObservaciones("rehacer");
-        // demoraMinutos stays null — this is the key safety property: a
-        // primitive int would serialize as 0 and zero out the stored value.
 
         String json = gson.toJson(request);
 
         assertTrue("json must contain 'observaciones', got: " + json, json.contains("\"observaciones\""));
         assertFalse("json must NOT contain 'demoraMinutos' when null, got: " + json,
                 json.contains("\"demoraMinutos\""));
-        // v2 contract: sector MUST NOT be present.
         assertFalse("json must NOT contain 'sector' (removed in v2), got: " + json,
                 json.contains("\"sector\""));
     }
@@ -86,7 +80,6 @@ public class ActualizarDemoraRequestTest {
 
         assertTrue(json.contains("\"demoraMinutos\""));
         assertTrue(json.contains("\"observaciones\""));
-        // v2 contract: sector MUST NOT be present.
         assertTrue("json must NOT contain 'sector' (removed in v2), got: " + json,
                 !json.contains("\"sector\""));
     }
@@ -97,7 +90,6 @@ public class ActualizarDemoraRequestTest {
         request.setDemoraMinutos(10);
         request.setObservaciones("primera version");
 
-        // Reset one to null and the other to a new value
         request.setDemoraMinutos(null);
         request.setObservaciones("segunda version");
 

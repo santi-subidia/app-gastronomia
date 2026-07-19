@@ -62,9 +62,6 @@ public class PedidoRepositoryImplTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    // ------------------------------------------------------------------
-    // getPedidos
-    // ------------------------------------------------------------------
 
     @Test
     public void getPedidosEmitsLoadingThenSuccessOn2xx() {
@@ -147,9 +144,6 @@ public class PedidoRepositoryImplTest {
         assertSame(first, repo.getPedidosState());
     }
 
-    // ------------------------------------------------------------------
-    // getPedido(id)
-    // ------------------------------------------------------------------
 
     @Test
     public void getPedidoEmitsLoadingThenSuccessOn2xx() {
@@ -232,9 +226,6 @@ public class PedidoRepositoryImplTest {
         assertSame(first, repo.getPedidoState());
     }
 
-    // ------------------------------------------------------------------
-    // getByEstado(estado)
-    // ------------------------------------------------------------------
 
     @Test
     public void getByEstadoEmitsLoadingThenSuccessOn2xx() {
@@ -251,7 +242,6 @@ public class PedidoRepositoryImplTest {
             assertTrue(recorder.seen.contains(UiState.Status.SUCCESS));
             assertEquals(UiState.Status.LOADING, recorder.seen.get(0));
             assertEquals(UiState.Status.SUCCESS, recorder.seen.get(recorder.seen.size() - 1));
-            // PED-ENUM-001: repo must call getApiValue() before passing the path param
             assertEquals("EnPreparacion", api.lastByEstadoPath);
         } finally {
             recorder.cleanup(state);
@@ -316,9 +306,6 @@ public class PedidoRepositoryImplTest {
         assertSame(first, repo.getByEstadoState());
     }
 
-    // ------------------------------------------------------------------
-    // crearPedido(request)
-    // ------------------------------------------------------------------
 
     @Test
     public void crearPedidoEmitsLoadingThenSuccessOn201() {
@@ -517,7 +504,6 @@ public class PedidoRepositoryImplTest {
 
     @Test
     public void crearPedidoAllowsNonDeliveryWithoutCoords() {
-        // metodoVentaId != 1 -> validation guard for delivery coords must NOT trigger
         FakePedidoApi api = new FakePedidoApi();
         api.crearPedidoResponse = Response.success(new PedidoDetalleDto());
         PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
@@ -547,9 +533,6 @@ public class PedidoRepositoryImplTest {
         assertSame(first, repo.getCrearState());
     }
 
-    // ------------------------------------------------------------------
-    // cambiarEstado(id, estado) — v2 contract
-    // ------------------------------------------------------------------
 
     /**
      * The v2 test catalog wires every EstadoPedidoEnum apiValue to a
@@ -589,7 +572,6 @@ public class PedidoRepositoryImplTest {
             assertEquals(UiState.Status.LOADING, recorder.seen.get(0));
             assertEquals(UiState.Status.SUCCESS, recorder.seen.get(recorder.seen.size() - 1));
             assertEquals(3, api.lastCambiarEstadoId);
-            // PED-ENUM-002 (v2): body is the catalog-resolved int, not a wrapper object.
             assertEquals(300, api.lastCambiarEstadoBody);
         } finally {
             recorder.cleanup(state);
@@ -598,7 +580,6 @@ public class PedidoRepositoryImplTest {
 
     @Test
     public void cambiarEstadoResolvesEachEnumToItsOwnCatalogId() {
-        // Triangulation: every enum hits the API with a different int.
         for (EstadoPedidoEnum e : EstadoPedidoEnum.values()) {
             FakePedidoApi api = new FakePedidoApi();
             api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
@@ -670,8 +651,6 @@ public class PedidoRepositoryImplTest {
 
     @Test
     public void cambiarEstadoEmitsErrorWhenCatalogNotReady() {
-        // Spec: when the catalog is not yet loaded the repo must NOT
-        // call the API and must surface a clear error.
         FakePedidoApi api = new FakePedidoApi();
         api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
         FakeCatalogoRepository notReady = new FakeCatalogoRepository(
@@ -699,13 +678,8 @@ public class PedidoRepositoryImplTest {
 
     @Test
     public void cambiarEstadoEmitsErrorWhenEstadoNotInCatalog() {
-        // Spec PED-ENUM-002 (v2): when the catalog cache is ready but
-        // does NOT contain the requested enum's apiValue, the resolver
-        // returns -1 (per CatalogoRepository contract). The repo must
-        // surface a clear, specific error and MUST NOT call the API.
         FakePedidoApi api = new FakePedidoApi();
         api.cambiarEstadoResponse = Response.success(new PedidoDetalleDto());
-        // Catalog IS ready but only contains a single, different estado.
         Map<String, Integer> partial = new HashMap<>();
         partial.put("Pendiente", 100);
         FakeCatalogoRepository partialCatalog = new FakeCatalogoRepository(partial, true);
@@ -716,8 +690,6 @@ public class PedidoRepositoryImplTest {
         Observer<UiState<PedidoDetalleDto>> observer = latest::set;
         state.observeForever(observer);
         try {
-            // EN_PREPARACION is not in the partial catalog — resolveEstadoId
-            // returns -1 and the repo must short-circuit with an error.
             repo.cambiarEstado(1, EstadoPedidoEnum.EN_PREPARACION);
 
             UiState<PedidoDetalleDto> after = latest.get();
@@ -728,7 +700,6 @@ public class PedidoRepositoryImplTest {
                     after.getError().toLowerCase().contains("no reconoc"));
             assertTrue("error must include the offending apiValue, got: " + after.getError(),
                     after.getError().contains("EnPreparacion"));
-            // API must NOT be called when the estado is unknown.
             assertEquals(-1, api.lastCambiarEstadoId);
         } finally {
             state.removeObserver(observer);
@@ -749,9 +720,6 @@ public class PedidoRepositoryImplTest {
         assertSame(first, repo.getCambiarEstadoState());
     }
 
-    // ------------------------------------------------------------------
-    // asignarRepartidor(id, repartidorId)
-    // ------------------------------------------------------------------
 
     @Test
     public void asignarRepartidorEmitsLoadingThenSuccessOn2xx() {
@@ -836,9 +804,6 @@ public class PedidoRepositoryImplTest {
         assertSame(first, repo.getAsignarRepartidorState());
     }
 
-    // ------------------------------------------------------------------
-    // Regression: state instances must be unique across methods
-    // ------------------------------------------------------------------
 
     @Test
     public void allSixStateInstancesArePairwiseDistinct() {
@@ -853,8 +818,6 @@ public class PedidoRepositoryImplTest {
         all.add(repo.getCambiarEstadoState());
         all.add(repo.getAsignarRepartidorState());
 
-        // The six state instances must be pairwise distinct so that a
-        // SUCCESS/ERROR on one verb does not appear on another.
         for (int i = 0; i < all.size(); i++) {
             for (int j = i + 1; j < all.size(); j++) {
                 assertNotNull("state " + i + " must not be null", all.get(i));
@@ -864,9 +827,6 @@ public class PedidoRepositoryImplTest {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     private static CrearPedidoRequest validDeliveryRequest() {
         CrearPedidoRequest req = new CrearPedidoRequest();
@@ -900,7 +860,6 @@ public class PedidoRepositoryImplTest {
         return Response.error(code, body);
     }
 
-    // -- Fakes ------------------------------------------------------------
 
     static final class FakePedidoApi implements PedidoApi {
         Response<List<PedidoResumenDto>> getPedidosResponse;

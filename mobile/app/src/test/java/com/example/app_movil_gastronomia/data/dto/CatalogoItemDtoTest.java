@@ -54,7 +54,6 @@ public class CatalogoItemDtoTest {
 
     @Test
     public void deserializesSingleItemFromApiJson() {
-        // Exact shape returned by GET /api/catalogo/estados-pedido
         String json = "{\"id\": 3, \"nombre\": \"EnPreparacion\"}";
 
         CatalogoItemDto item = gson.fromJson(json, CatalogoItemDto.class);
@@ -66,7 +65,6 @@ public class CatalogoItemDtoTest {
 
     @Test
     public void deserializesListFromApiJson() {
-        // Exact shape returned by GET /api/catalogo/metodos-pago
         String json = "["
                 + "{\"id\": 1, \"nombre\": \"Efectivo\"},"
                 + "{\"id\": 2, \"nombre\": \"Tarjeta\"},"

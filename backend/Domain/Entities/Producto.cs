@@ -26,6 +26,5 @@ public class Producto
     [Column("activo")]
     public bool Activo { get; set; } = true;
 
-    // Navegación
     public ICollection<DetallePedido> DetallePedidos { get; set; } = new List<DetallePedido>();
 }

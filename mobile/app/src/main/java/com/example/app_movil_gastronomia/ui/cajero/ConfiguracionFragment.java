@@ -81,9 +81,6 @@ public class ConfiguracionFragment extends Fragment {
         binding.buttonRetry.setOnClickListener(v -> viewModel.loadConfiguracion());
     }
 
-    // ------------------------------------------------------------------
-    // State observers
-    // ------------------------------------------------------------------
 
     /**
      * Renders the current configuration state. LOADING hides the form
@@ -158,9 +155,6 @@ public class ConfiguracionFragment extends Fragment {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Form rendering
-    // ------------------------------------------------------------------
 
     private void applyCreateMode() {
         binding.buttonSave.setText(R.string.save_config);
@@ -196,9 +190,6 @@ public class ConfiguracionFragment extends Fragment {
         );
     }
 
-    // ------------------------------------------------------------------
-    // Submit
-    // ------------------------------------------------------------------
 
     private void submit() {
         ConfiguracionDto dto = new ConfiguracionDto();
@@ -207,15 +198,9 @@ public class ConfiguracionFragment extends Fragment {
         dto.setMetodoPagoDefaultNombre(textOf(binding.inputMetodoPagoNombre));
         dto.setLatitudPartida(parseDouble(textOf(binding.inputLatitud)));
         dto.setLongitudPartida(parseDouble(textOf(binding.inputLongitud)));
-        // id is intentionally not read from the form — the VM copies it
-        // from the cached config when this is an update, so the server
-        // receives a body that matches the previously saved row.
         viewModel.saveConfiguracion(dto);
     }
 
-    // ------------------------------------------------------------------
-    // Parsing helpers
-    // ------------------------------------------------------------------
 
     private static String textOf(android.widget.EditText edit) {
         return edit.getText() != null ? edit.getText().toString().trim() : "";

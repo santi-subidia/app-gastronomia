@@ -66,9 +66,6 @@ public class EstadoPedidoEnumTest {
 
     @Test
     public void serializesToApiValueString() {
-        // Backend contract: when the estado field appears in JSON it is a string
-        // like "Pendiente" — not the Java constant name (which happens to match here,
-        // but the contract is the apiValue, not the Java identifier).
         String json = gson.toJson(EstadoPedidoEnum.EN_PREPARACION);
         assertEquals("\"EnPreparacion\"", json);
 
@@ -78,8 +75,6 @@ public class EstadoPedidoEnumTest {
 
     @Test
     public void serializesInsideJsonObjectAsStringValue() {
-        // Integration sanity: an enum inside a JSON object serializes to its
-        // apiValue string, not to a Java identifier.
         JsonObject container = new JsonObject();
         container.addProperty("estado", EstadoPedidoEnum.EN_CAMINO.getApiValue());
         String json = gson.toJson(container);

@@ -17,11 +17,6 @@ import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.TransportEnum;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -47,13 +42,8 @@ public class SignalRServiceImpl implements SignalRService {
 
     private static final String TAG = "SignalRServiceImpl";
 
-    /** Seconds to wait before attempting a reconnection after an unexpected close. */
-    private static final long RECONNECT_DELAY_SECONDS = 5L;
 
     private final String hubUrl;
-    private final ScheduledExecutorService scheduler =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "SignalR-Reconnect");
                 t.setDaemon(true);
                 return t;
             });
@@ -80,20 +70,12 @@ public class SignalRServiceImpl implements SignalRService {
     @Nullable
     private volatile String currentToken;
 
-    @Nullable
-    private volatile ScheduledFuture<?> pendingReconnect;
 
     @Inject
     public SignalRServiceImpl() {
-        // BuildConfig.API_BASE_URL is the Retrofit base URL (e.g.
-        // "https://tu-api-url/"). The SignalR hub lives under
-        // hubs/logistica on the same origin.
         this.hubUrl = BuildConfig.API_BASE_URL + "hubs/logistica";
     }
 
-    // ------------------------------------------------------------------
-    // Connection lifecycle
-    // ------------------------------------------------------------------
 
     @Override
     public void connect(String token) {
@@ -107,7 +89,6 @@ public class SignalRServiceImpl implements SignalRService {
             return;
         }
 
-        disconnectedByUser.set(false);
         this.currentToken = token;
 
         final String tokenSnapshot = token;
@@ -127,17 +108,12 @@ public class SignalRServiceImpl implements SignalRService {
         } catch (Exception e) {
             Log.e(TAG, "Failed to connect to hub at " + hubUrl, e);
             _error.postValue("No se pudo conectar al hub: " + e.getMessage());
-            // null out the half-built connection so the next
-            // connect() call can try again from scratch.
             hubConnection = null;
-            scheduleReconnect();
         }
     }
 
     @Override
     public void disconnect() {
-        disconnectedByUser.set(true);
-        cancelPendingReconnect();
 
         HubConnection conn = hubConnection;
         hubConnection = null;
@@ -153,9 +129,6 @@ public class SignalRServiceImpl implements SignalRService {
         _connected.postValue(false);
     }
 
-    // ------------------------------------------------------------------
-    // Hub method invocations
-    // ------------------------------------------------------------------
 
     @Override
     public void unirseACocina() {
@@ -180,17 +153,12 @@ public class SignalRServiceImpl implements SignalRService {
             return;
         }
         try {
-            // send() is fire-and-forget: no return value needed for
-            // a high-frequency GPS broadcast.
             conn.send("EnviarPosicionGPS", repartidorId, lat, lng);
         } catch (Exception e) {
             Log.e(TAG, "Error sending GPS position", e);
         }
     }
 
-    // ------------------------------------------------------------------
-    // LiveData getters
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<NuevoPedidoMessage> getNuevoPedido() {
@@ -232,9 +200,6 @@ public class SignalRServiceImpl implements SignalRService {
         return _error;
     }
 
-    // ------------------------------------------------------------------
-    // Internals
-    // ------------------------------------------------------------------
 
     /**
      * Wires the six server-pushed events we listen for. Each
@@ -284,7 +249,6 @@ public class SignalRServiceImpl implements SignalRService {
                 Log.d(TAG, "Hub connection closed");
             }
             if (!disconnectedByUser.get()) {
-                scheduleReconnect();
             }
         });
     }
@@ -306,27 +270,6 @@ public class SignalRServiceImpl implements SignalRService {
         }
     }
 
-    private void scheduleReconnect() {
-        if (disconnectedByUser.get()) {
-            return;
-        }
-        cancelPendingReconnect();
-        final String tokenSnapshot = currentToken;
-        if (tokenSnapshot == null) {
-            Log.d(TAG, "Reconnect skipped — no token available");
-            return;
-        }
-        pendingReconnect = scheduler.schedule(
-                () -> connect(tokenSnapshot),
-                RECONNECT_DELAY_SECONDS,
-                TimeUnit.SECONDS);
-    }
 
-    private void cancelPendingReconnect() {
-        ScheduledFuture<?> pending = pendingReconnect;
-        if (pending != null) {
-            pending.cancel(false);
-            pendingReconnect = null;
-        }
-    }
+}
 }

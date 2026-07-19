@@ -44,21 +44,17 @@ public class MainActivityTest {
             SessionManager sessionManager = activity.sessionManager;
             assertNotNull(sessionManager);
 
-            // Fire the session-expiration event.
             sessionManager.expireSession();
 
-            // Spin the main looper so the observer runs synchronously.
             try { Thread.sleep(200); } catch (InterruptedException ignored) {}
         });
 
-        // Re-grab the activity state to assert the nav destination.
         scenario.onActivity(activity -> {
             NavHostFragment navHost = (NavHostFragment) activity
                     .getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_content_main);
             assertNotNull(navHost);
             NavController controller = navHost.getNavController();
             assertEquals(R.id.nav_login, controller.getCurrentDestination().getId());
-            // Event was consumed.
             assertEquals(Boolean.FALSE, activity.sessionManager.getSessionExpired().getValue());
         });
 
@@ -73,7 +69,6 @@ public class MainActivityTest {
         scenario.moveToState(Lifecycle.State.RESUMED);
 
         scenario.onActivity(activity -> {
-            // The start destination is R.id.nav_login already.
             SessionManager sessionManager = activity.sessionManager;
             sessionManager.expireSession();
             try { Thread.sleep(200); } catch (InterruptedException ignored) {}

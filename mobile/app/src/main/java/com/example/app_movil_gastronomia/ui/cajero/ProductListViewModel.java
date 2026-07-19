@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.cajero;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -13,7 +12,6 @@ import com.example.app_movil_gastronomia.data.dto.producto.ProductoDto;
 import com.example.app_movil_gastronomia.data.repository.contract.ProductoRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -34,7 +32,6 @@ public class ProductListViewModel extends ViewModel {
     private final Observer<UiState<ProductoDto>> createObserver;
     private final Observer<UiState<ProductoDto>> updateObserver;
     private final Observer<UiState<Void>> deleteObserver;
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     private Action pendingAction;
 
@@ -51,13 +48,10 @@ public class ProductListViewModel extends ViewModel {
         this.createObserver = state -> handleProductAction(state, "Producto creado exitosamente");
         this.updateObserver = state -> handleProductAction(state, "Producto actualizado exitosamente");
         this.deleteObserver = state -> handleDeleteAction(state);
-        // Register ONCE for the lifetime of this ViewModel.
         productoRepository.getProductListState().observeForever(repositoryObserver);
         productoRepository.getCrearState().observeForever(createObserver);
         productoRepository.getActualizarState().observeForever(updateObserver);
         productoRepository.getEliminarState().observeForever(deleteObserver);
-        observerRegistrationCount.incrementAndGet();
-        // Trigger the initial load.
         loadProductos();
     }
 
@@ -178,11 +172,6 @@ public class ProductListViewModel extends ViewModel {
         productoRepository.getEliminarState().removeObserver(deleteObserver);
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 
     public static final class ValidationResult {
         private final boolean valid;

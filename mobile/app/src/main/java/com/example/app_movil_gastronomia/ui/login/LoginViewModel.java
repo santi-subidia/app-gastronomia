@@ -1,6 +1,5 @@
 package com.example.app_movil_gastronomia.ui.login;
 
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -11,7 +10,6 @@ import com.example.app_movil_gastronomia.data.dto.auth.LoginRequest;
 import com.example.app_movil_gastronomia.data.dto.auth.LoginResponse;
 import com.example.app_movil_gastronomia.data.repository.contract.AuthRepository;
 
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -29,15 +27,12 @@ public class LoginViewModel extends ViewModel {
     private final AuthRepository authRepository;
     private final MutableLiveData<UiState<LoginResponse>> loginState = new MutableLiveData<>();
     private final Observer<UiState<LoginResponse>> repositoryObserver;
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public LoginViewModel(AuthRepository authRepository) {
         this.authRepository = authRepository;
-        // Register ONCE for the lifetime of this ViewModel.
         this.repositoryObserver = loginState::setValue;
         authRepository.getLoginState().observeForever(repositoryObserver);
-        observerRegistrationCount.incrementAndGet();
     }
 
     public LiveData<UiState<LoginResponse>> getLoginState() {
@@ -71,9 +66,4 @@ public class LoginViewModel extends ViewModel {
         authRepository.getLoginState().removeObserver(repositoryObserver);
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

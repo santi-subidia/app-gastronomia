@@ -50,9 +50,6 @@ public class CatalogApisTest {
                 .build();
     }
 
-    // ------------------------------------------------------------------
-    // EstadosPedidoApi
-    // ------------------------------------------------------------------
 
     @Test
     public void estadosPedidoApiSendsGetToEstadosPedidoPath() throws Exception {
@@ -65,9 +62,6 @@ public class CatalogApisTest {
         assertEquals("/api/catalogo/estados-pedido", request.url().encodedPath());
     }
 
-    // ------------------------------------------------------------------
-    // MetodoPagoApi
-    // ------------------------------------------------------------------
 
     @Test
     public void metodoPagoApiSendsGetToMetodosPagoPath() throws Exception {
@@ -80,9 +74,6 @@ public class CatalogApisTest {
         assertEquals("/api/catalogo/metodos-pago", request.url().encodedPath());
     }
 
-    // ------------------------------------------------------------------
-    // MetodoVentaApi
-    // ------------------------------------------------------------------
 
     @Test
     public void metodoVentaApiSendsGetToMetodosVentaPath() throws Exception {
@@ -95,11 +86,6 @@ public class CatalogApisTest {
         assertEquals("/api/catalogo/metodos-venta", request.url().encodedPath());
     }
 
-    // ------------------------------------------------------------------
-    // Triangulation: every catalog API must hit a path under
-    // /api/catalogo/ (defends against a typo in @GET on a new
-    // catalog later).
-    // ------------------------------------------------------------------
 
     @Test
     public void everyCatalogApiPathIsUnderCatalogNamespace() throws Exception {
