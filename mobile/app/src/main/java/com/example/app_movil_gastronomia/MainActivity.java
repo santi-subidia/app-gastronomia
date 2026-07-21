@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
                     NavOptions popUpToGraph = new NavOptions.Builder()
-                            .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ false)
+                            .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
                             .build();
                     navController.navigate(R.id.nav_login, null, popUpToGraph);
                     sessionManager.consume();
@@ -219,11 +219,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Valid session: jump to the role-home, then wire the role-specific
-        // bottom-nav tabs and the drawer header. popUpTo(mobile_navigation,
-        // inclusive=false) clears the back stack so back-from-home exits the
+        // bottom-nav tabs and the drawer header. popUpTo(nav_login, inclusive=true) clears the back stack so back-from-home exits the
         // app instead of re-entering login.
         NavOptions popUpToGraph = new NavOptions.Builder()
-                .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ false)
+                .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
                 .build();
         navController.navigate(homeDestination, null, popUpToGraph);
         configureBottomNav(role);
@@ -374,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
         sessionManager.consume();
         if (navController != null) {
             NavOptions popUpToGraph = new NavOptions.Builder()
-                    .setPopUpTo(R.id.mobile_navigation, /* inclusive= */ false)
+                    .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
                     .build();
             navController.navigate(R.id.nav_login, null, popUpToGraph);
         }
@@ -433,3 +432,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
