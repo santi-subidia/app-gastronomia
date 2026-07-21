@@ -104,4 +104,11 @@ public class AuthRepositoryImpl implements AuthRepository {
     public LiveData<UiState<LoginResponse>> getLoginState() {
         return _loginState;
     }
+
+    @Override
+    public void resetLoginState() {
+        _loginState.setValue(null);
+    }
 }
+
+

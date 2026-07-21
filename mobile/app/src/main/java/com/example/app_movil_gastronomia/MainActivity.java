@@ -26,6 +26,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.app_movil_gastronomia.core.SessionManager;
+import com.example.app_movil_gastronomia.data.repository.contract.AuthRepository;
 import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.databinding.ActivityMainBinding;
@@ -54,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
     @VisibleForTesting
     @Inject
     public TokenManager tokenManager;
+
+    @Inject
+    public AuthRepository authRepository;
 
     @Nullable
     @Inject
@@ -194,6 +198,9 @@ public class MainActivity extends AppCompatActivity {
             // Malformed (-1) or expired. Treat as invalid: clear and let
             // the startDestination (login) handle the rest.
             tokenManager.clearToken();
+        if (authRepository != null) {
+            authRepository.resetLoginState();
+        }
             isCheckingSession = false;
             hideSplash();
             return;
@@ -362,6 +369,9 @@ public class MainActivity extends AppCompatActivity {
             signalRService.disconnect();
         }
         tokenManager.clearToken();
+        if (authRepository != null) {
+            authRepository.resetLoginState();
+        }
         sessionManager.consume();
         android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
         intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -422,6 +432,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
+
 
 
 

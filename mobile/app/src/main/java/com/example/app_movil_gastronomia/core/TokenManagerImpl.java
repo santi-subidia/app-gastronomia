@@ -66,7 +66,7 @@ public class TokenManagerImpl implements TokenManager {
                 .putString(KEY_ROLE, rolNombre)
                 .putInt(KEY_USER_ID, userId)
                 .putString(KEY_USER_NAME, nombreUsuario)
-                .apply();
+                .commit();
     }
 
     @Override
@@ -134,7 +134,8 @@ public class TokenManagerImpl implements TokenManager {
                 .remove(KEY_ROLE)
                 .remove(KEY_USER_ID)
                 .remove(KEY_USER_NAME)
-                .apply();
+                .commit();
     }
 }
+
 

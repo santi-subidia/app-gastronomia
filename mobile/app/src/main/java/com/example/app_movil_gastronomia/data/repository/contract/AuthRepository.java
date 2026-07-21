@@ -17,4 +17,6 @@ public interface AuthRepository {
      * {@code ViewModel}) can register exactly once.
      */
     LiveData<UiState<LoginResponse>> getLoginState();
+
+    void resetLoginState();
 }
