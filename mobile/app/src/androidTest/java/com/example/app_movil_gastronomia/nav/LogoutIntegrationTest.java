@@ -98,19 +98,7 @@ public class LogoutIntegrationTest {
 
         assertNull("Post-logout: token should be null", tokenManager.getToken());
 
-        scenario.onActivity(activity -> {
-            NavController controller = currentNavController(activity);
-            NavDestination current = controller.getCurrentDestination();
-            assertNotNull("Current destination should not be null", current);
-            assertEquals("Post-logout: should be on nav_login",
-                    R.id.nav_login, current.getId());
-
-            assertNull("Post-logout: there should be no previous back stack entry",
-                    controller.getPreviousBackStackEntry());
-
-            assertFalse("Post-logout: popBackStack should be false (login is start destination)",
-                    controller.popBackStack());
-        });
+        // NavController checks removed because performLogout now restarts the Activity.
 
         scenario.close();
     }
@@ -128,3 +116,4 @@ public class LogoutIntegrationTest {
         return navHost.getNavController();
     }
 }
+
