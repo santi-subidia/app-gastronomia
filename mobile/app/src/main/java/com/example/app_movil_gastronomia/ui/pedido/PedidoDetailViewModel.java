@@ -1,5 +1,6 @@
 package com.example.app_movil_gastronomia.ui.pedido;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -10,6 +11,7 @@ import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -36,6 +38,7 @@ public class PedidoDetailViewModel extends ViewModel {
     private final Observer<UiState<PedidoDetalleDto>> cambiarEstadoObserver;
     private final Observer<UiState<PedidoDetalleDto>> asignarRepartidorObserver;
 
+    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public PedidoDetailViewModel(PedidoRepository pedidoRepository) {
@@ -87,4 +90,9 @@ public class PedidoDetailViewModel extends ViewModel {
         pedidoRepository.getAsignarRepartidorState().removeObserver(asignarRepartidorObserver);
     }
 
+    /** Test-only diagnostic: how many times the VM registered an observer. */
+    @VisibleForTesting
+    int getObserverRegistrationCount() {
+        return observerRegistrationCount.get();
+    }
 }
