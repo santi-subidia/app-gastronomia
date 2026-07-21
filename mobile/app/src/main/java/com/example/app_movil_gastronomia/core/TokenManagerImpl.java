@@ -129,6 +129,12 @@ public class TokenManagerImpl implements TokenManager {
 
     @Override
     public void clearToken() {
-        encryptedPrefs.edit().clear().apply();
+        encryptedPrefs.edit()
+                .remove(KEY_TOKEN)
+                .remove(KEY_ROLE)
+                .remove(KEY_USER_ID)
+                .remove(KEY_USER_NAME)
+                .apply();
     }
 }
+
