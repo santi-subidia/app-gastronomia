@@ -111,14 +111,22 @@ public class MainActivity extends AppCompatActivity {
         // and re-arm the flag. Preserved from the previous implementation —
         // OkHttp's AuthInterceptor posts here on 401, and the host Activity
         // is the only place that can safely navigate.
-        sessionManager.getSessionExpired().observe(this, expired -> {
-            if (Boolean.TRUE.equals(expired)) {
-                NavDestination current = navController != null ? navController.getCurrentDestination() : null;
-                if (current != null && current.getId() == R.id.nav_login) {
+        sessionManager.getSessionExpired().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(@Nullable Boolean expired) {
+                if (Boolean.TRUE.equals(expired) && navController != null) {
+                    NavDestination current = navController.getCurrentDestination();
+                    // Guard: don't re-navigate if we are already on login.
+                    if (current != null && current.getId() == R.id.nav_login) {
+                        sessionManager.consume();
+                        return;
+                    }
+                    NavOptions popUpToGraph = new NavOptions.Builder()
+                            .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
+                            .build();
+                    navController.navigate(R.id.nav_login, null, popUpToGraph);
                     sessionManager.consume();
-                    return;
                 }
-                performLogout();
             }
         });
 
@@ -373,10 +381,12 @@ public class MainActivity extends AppCompatActivity {
             authRepository.resetLoginState();
         }
         sessionManager.consume();
-        android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
-        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        if (navController != null) {
+            NavOptions popUpToGraph = new NavOptions.Builder()
+                    .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
+                    .build();
+            navController.navigate(R.id.nav_login, null, popUpToGraph);
+        }
         if (binding != null && binding.drawerLayout != null) {
             binding.drawerLayout.closeDrawer(GravityCompat.START);
         }
@@ -432,6 +442,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
+
 
 
 
