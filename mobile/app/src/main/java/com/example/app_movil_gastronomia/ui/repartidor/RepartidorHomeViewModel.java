@@ -11,6 +11,10 @@ import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.RepartidorAsignadoMessage;
+
+import com.example.app_movil_gastronomia.data.repository.contract.UsuarioRepository;
+import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
+
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
 import java.util.List;
@@ -113,6 +117,18 @@ public class RepartidorHomeViewModel extends ViewModel {
     }
 
     /** Reloads the pedido list. Wired to the retry button. */
+
+    public LiveData<UiState<UsuarioDto>> getUpdateState() {
+        return usuarioRepository.getUpdateState();
+    }
+
+    public void updateDisponibilidad(boolean disponible) {
+        int userId = tokenManager.getUserId();
+        if (userId > 0) {
+            usuarioRepository.updateDisponibilidad(userId, disponible);
+        }
+    }
+
     public void retry() {
         pedidoRepository.getPedidos();
     }

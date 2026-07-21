@@ -102,4 +102,16 @@ public class UsuariosController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Obtiene todos los repartidores disponibles. Accesible para Cajero y Admin.
+    /// </summary>
+    [HttpGet("repartidores/disponibles")]
+    [Authorize(Roles = "Admin,Cajero")]
+    public async Task<ActionResult<IEnumerable<UsuarioResponse>>> GetRepartidoresDisponibles()
+    {
+        var usuarios = await _usuarioService.ObtenerUsuariosAsync();
+        var repartidores = usuarios.Where(u => u.RolNombre == "Repartidor" && u.Disponible);
+        return Ok(repartidores);
+    }
 }

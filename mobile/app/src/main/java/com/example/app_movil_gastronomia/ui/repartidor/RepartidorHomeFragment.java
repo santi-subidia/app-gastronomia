@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.app_movil_gastronomia.R;
 import com.example.app_movil_gastronomia.core.UiState;
+import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
+import android.widget.Toast;
+
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
 import com.example.app_movil_gastronomia.databinding.FragmentRepartidorHomeBinding;
@@ -72,6 +75,31 @@ public class RepartidorHomeFragment extends Fragment {
         viewModel.getPedidoFinalizado().observe(getViewLifecycleOwner(), this::handlePedidoFinalizado);
 
         binding.buttonRetry.setOnClickListener(v -> viewModel.retry());
+
+        binding.switchDisponible.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (buttonView.isPressed()) {
+                viewModel.updateDisponibilidad(isChecked);
+            }
+        });
+
+        viewModel.getUpdateState().observe(getViewLifecycleOwner(), state -> {
+            if (state == null) return;
+            switch (state.getStatus()) {
+                case LOADING:
+                    binding.switchDisponible.setEnabled(false);
+                    break;
+                case SUCCESS:
+                    binding.switchDisponible.setEnabled(true);
+                    Toast.makeText(requireContext(), "Estado actualizado", Toast.LENGTH_SHORT).show();
+                    break;
+                case ERROR:
+                    binding.switchDisponible.setEnabled(true);
+                    binding.switchDisponible.setChecked(!binding.switchDisponible.isChecked());
+                    Toast.makeText(requireContext(), "Error al actualizar estado: " + state.getError(), Toast.LENGTH_LONG).show();
+                    break;
+            }
+        });
+
         binding.fabViewMap.setOnClickListener(v -> navigateToMapa());
     }
 

@@ -11,6 +11,7 @@ import com.example.app_movil_gastronomia.data.api.DemoraApi;
 import com.example.app_movil_gastronomia.data.api.EstadosPedidoApi;
 import com.example.app_movil_gastronomia.data.api.MetodoPagoApi;
 import com.example.app_movil_gastronomia.data.api.MetodoVentaApi;
+import com.example.app_movil_gastronomia.data.api.UsuarioApi;
 import com.example.app_movil_gastronomia.data.api.PedidoApi;
 import com.example.app_movil_gastronomia.data.api.ProductoApi;
 import com.google.gson.Gson;
@@ -130,5 +131,11 @@ public class NetworkModule {
     @Singleton
     public MetodoVentaApi provideMetodoVentaApi(Retrofit retrofit) {
         return retrofit.create(MetodoVentaApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public UsuarioApi provideUsuarioApi(Retrofit retrofit) {
+        return retrofit.create(UsuarioApi.class);
     }
 }

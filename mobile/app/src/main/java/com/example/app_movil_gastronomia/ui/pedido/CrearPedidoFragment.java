@@ -1,5 +1,20 @@
 package com.example.app_movil_gastronomia.ui.pedido;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import org.maplibre.android.MapLibre;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
+import com.example.app_movil_gastronomia.BuildConfig;
+
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -91,19 +106,74 @@ public class CrearPedidoFragment extends Fragment {
     private final List<DetalleLine> detalles = new ArrayList<>();
 
     /** Last product list received from the VM, used to populate the picker. */
+
+    private Double selectedLat = null;
+    private Double selectedLng = null;
+    private MapLibreMap mapLibreMap;
+
+    private final ActivityResultLauncher<String> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) {
+                    centerMapOnCurrentLocation();
+                } else {
+                    centerMapOnDefaultLocation();
+                }
+            });
+
     private List<ProductoDto> lastProductos = new ArrayList<>();
+
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        MapLibre.getInstance(requireContext());
         binding = FragmentCrearPedidoBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        
         super.onViewCreated(view, savedInstanceState);
+
+        binding.mapView.onCreate(savedInstanceState);
+        
+        // Prevent ScrollView from interfering with map panning
+        binding.mapView.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                case android.view.MotionEvent.ACTION_MOVE:
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.getParent().requestDisallowInterceptTouchEvent(false);
+                    break;
+            }
+            return false;
+        });
+
+        binding.mapView.getMapAsync(map -> {
+            mapLibreMap = map;
+            String styleUrl = "https://api.maptiler.com/maps/streets-v2/style.json?key=" + BuildConfig.MAPTILER_KEY;
+            map.setStyle(styleUrl, style -> {
+                if (hasLocationPermission()) {
+                    centerMapOnCurrentLocation();
+                } else {
+                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                }
+            });
+
+            map.addOnCameraIdleListener(() -> {
+                if (mapLibreMap != null) {
+                    LatLng target = mapLibreMap.getCameraPosition().target;
+                    selectedLat = target.getLatitude();
+                    selectedLng = target.getLongitude();
+                }
+            });
+        });
+
 
         viewModel = new ViewModelProvider(this).get(CrearPedidoViewModel.class);
 
@@ -165,8 +235,8 @@ public class CrearPedidoFragment extends Fragment {
         binding.groupDelivery.setVisibility(isDelivery ? View.VISIBLE : View.GONE);
         if (!isDelivery) {
             binding.inputClienteDireccion.setText("");
-            binding.inputLatitud.setText("");
-            binding.inputLongitud.setText("");
+            selectedLat = null;
+            selectedLng = null;
         }
     }
 
@@ -358,8 +428,8 @@ public class CrearPedidoFragment extends Fragment {
         Double longitud = null;
         if (metodoVentaId == METODO_VENTA_DELIVERY) {
             clienteDireccion = textOf(binding.inputClienteDireccion);
-            latitud = parseDouble(textOf(binding.inputLatitud));
-            longitud = parseDouble(textOf(binding.inputLongitud));
+            latitud = selectedLat;
+            longitud = selectedLng;
         }
 
         return viewModel.buildRequest(
@@ -413,9 +483,112 @@ public class CrearPedidoFragment extends Fragment {
         controller.popBackStack();
     }
 
+
+    private boolean hasLocationPermission() {
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @SuppressLint("MissingPermission")
+    private void centerMapOnCurrentLocation() {
+        if (mapLibreMap == null) return;
+        
+        LocationManager lm = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
+        if (lm != null) {
+            Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (loc == null) loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            
+            if (loc != null) {
+                mapLibreMap.setCameraPosition(new CameraPosition.Builder()
+                        .target(new LatLng(loc.getLatitude(), loc.getLongitude()))
+                        .zoom(16)
+                        .build());
+                return;
+            } else {
+                // Fetch fresh location if cached is null
+                android.location.LocationListener listener = new android.location.LocationListener() {
+                    @Override
+                    public void onLocationChanged(@NonNull Location location) {
+                        if (mapLibreMap != null) {
+                            mapLibreMap.setCameraPosition(new CameraPosition.Builder()
+                                    .target(new LatLng(location.getLatitude(), location.getLongitude()))
+                                    .zoom(16)
+                                    .build());
+                        }
+                        lm.removeUpdates(this);
+                    }
+                    @Override
+                    public void onStatusChanged(String provider, int status, android.os.Bundle extras) {}
+                    @Override
+                    public void onProviderEnabled(@NonNull String provider) {}
+                    @Override
+                    public void onProviderDisabled(@NonNull String provider) {}
+                };
+                
+                try {
+                    lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, listener, android.os.Looper.getMainLooper());
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener, android.os.Looper.getMainLooper());
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+        }
+        
+        centerMapOnDefaultLocation();
+    }
+
+    private void centerMapOnDefaultLocation() {
+        if (mapLibreMap != null) {
+            mapLibreMap.setCameraPosition(new CameraPosition.Builder()
+                    .target(new LatLng(-34.6037, -58.3816))
+                    .zoom(12)
+                    .build());
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (binding != null) binding.mapView.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (binding != null) binding.mapView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (binding != null) binding.mapView.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (binding != null) binding.mapView.onStop();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (binding != null) binding.mapView.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (binding != null) binding.mapView.onLowMemory();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        if (binding != null) {
+            binding.mapView.onDestroy();
+            binding = null;
+        }
     }
 }
+

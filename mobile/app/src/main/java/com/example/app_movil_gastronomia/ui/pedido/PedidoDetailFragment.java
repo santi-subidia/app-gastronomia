@@ -24,6 +24,10 @@ import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.DetallePedidoDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
+import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
 import com.example.app_movil_gastronomia.databinding.FragmentPedidoDetailBinding;
 import com.google.android.material.textfield.TextInputEditText;
@@ -67,10 +71,11 @@ public class PedidoDetailFragment extends Fragment {
         viewModel.getDetailState().observe(getViewLifecycleOwner(), this::handleDetailState);
         viewModel.getCambiarEstadoState().observe(getViewLifecycleOwner(), this::handleCambiarEstadoResult);
         viewModel.getAsignarRepartidorState().observe(getViewLifecycleOwner(), this::handleAsignarRepartidorResult);
+        viewModel.getRepartidoresDisponiblesState().observe(getViewLifecycleOwner(), this::handleRepartidoresResult);
 
         binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
         binding.buttonCancelarPedido.setOnClickListener(v -> confirmCancelOrder());
-        binding.buttonAsignarRepartidor.setOnClickListener(v -> showAsignarRepartidorDialog());
+        binding.buttonAsignarRepartidor.setOnClickListener(v -> viewModel.fetchRepartidoresDisponibles());
         binding.buttonRegistrarDemora.setOnClickListener(v -> {
             // Navigate to the Demora form, passing the current pedidoId
             // as a SafeArgs-equivalent Bundle argument. The Demora
@@ -358,36 +363,72 @@ public class PedidoDetailFragment extends Fragment {
                 .show();
     }
 
+
+    private List<UsuarioDto> lastRepartidores;
+    
+    private void handleRepartidoresResult(UiState<List<UsuarioDto>> state) {
+        if (state == null) return;
+        switch (state.getStatus()) {
+            case LOADING:
+                binding.buttonAsignarRepartidor.setEnabled(false);
+                break;
+            case SUCCESS:
+                binding.buttonAsignarRepartidor.setEnabled(true);
+                lastRepartidores = state.getData();
+                showAsignarRepartidorDialog();
+                break;
+            case ERROR:
+                binding.buttonAsignarRepartidor.setEnabled(true);
+                Toast.makeText(requireContext(), "Error obteniendo repartidores: " + state.getError(), Toast.LENGTH_SHORT).show();
+                break;
+        }
+    }
+
     private void showAsignarRepartidorDialog() {
-        // Build a programmatic EditText to keep the layout XML lean.
-        TextInputEditText input = new TextInputEditText(requireContext());
-        input.setHint(R.string.driver_id_hint);
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        if (lastRepartidores == null || lastRepartidores.isEmpty()) {
+            Toast.makeText(requireContext(), "No hay repartidores disponibles en este momento.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] nombres = new String[lastRepartidores.size()];
+        for (int i = 0; i < lastRepartidores.size(); i++) {
+            nombres[i] = lastRepartidores.get(i).getUsuarioNombre();
+        }
+
+        TextInputLayout layout = new TextInputLayout(requireContext(), null, com.google.android.material.R.style.Widget_MaterialComponents_TextInputLayout_OutlinedBox_ExposedDropdownMenu);
+        layout.setHint("Selecciona un repartidor");
+        
+        AutoCompleteTextView input = new AutoCompleteTextView(requireContext());
+        input.setInputType(android.text.InputType.TYPE_NULL);
+        input.setFocusable(false);
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, nombres);
+        input.setAdapter(adapter);
+        layout.addView(input);
 
         LinearLayout container = new LinearLayout(requireContext());
         int padding = (int) (16 * getResources().getDisplayMetrics().density);
         container.setPadding(padding, padding, padding, 0);
-        container.addView(input);
+        container.addView(layout, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.assign_driver)
                 .setView(container)
                 .setPositiveButton(R.string.action_confirm, (dialog, which) -> {
-                    CharSequence raw = input.getText();
-                    String text = raw != null ? raw.toString().trim() : "";
-                    if (TextUtils.isEmpty(text)) {
-                        Toast.makeText(requireContext(),
-                                R.string.driver_id_hint,
-                                Toast.LENGTH_SHORT).show();
+                    String seleccionado = input.getText().toString();
+                    if (TextUtils.isEmpty(seleccionado)) {
+                        Toast.makeText(requireContext(), "Debes seleccionar un repartidor", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    try {
-                        int repartidorId = Integer.parseInt(text);
+                    int repartidorId = -1;
+                    for (UsuarioDto r : lastRepartidores) {
+                        if (r.getUsuarioNombre().equals(seleccionado)) {
+                            repartidorId = r.getId();
+                            break;
+                        }
+                    }
+                    if (repartidorId != -1) {
                         viewModel.asignarRepartidor(pedidoId, repartidorId);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(requireContext(),
-                                R.string.driver_id_hint,
-                                Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton(R.string.action_cancel, null)

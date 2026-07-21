@@ -32,4 +32,8 @@ public abstract class RepositoryModule {
 
     @Binds
     public abstract CatalogoRepository bindCatalogoRepository(CatalogoRepositoryImpl impl);
+
+    @Binds
+    public abstract UsuarioRepository bindUsuarioRepository(UsuarioRepositoryImpl impl);
 }
+

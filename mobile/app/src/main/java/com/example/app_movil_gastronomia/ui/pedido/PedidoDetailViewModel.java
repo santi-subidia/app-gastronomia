@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModel;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
+import com.example.app_movil_gastronomia.data.repository.contract.UsuarioRepository;
+import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
+import java.util.List;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
 import java.util.concurrent.atomic.AtomicInteger;
