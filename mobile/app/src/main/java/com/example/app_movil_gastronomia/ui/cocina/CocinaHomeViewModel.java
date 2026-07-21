@@ -1,7 +1,6 @@
 package com.example.app_movil_gastronomia.ui.cocina;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -14,7 +13,6 @@ import com.example.app_movil_gastronomia.data.dto.signalr.NuevoPedidoMessage;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -55,7 +53,6 @@ public class CocinaHomeViewModel extends ViewModel {
     private final Observer<NuevoPedidoMessage> nuevoPedidoObserver;
     private final Observer<Boolean> connectedObserver;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public CocinaHomeViewModel(PedidoRepository pedidoRepository,
@@ -63,28 +60,20 @@ public class CocinaHomeViewModel extends ViewModel {
         this.pedidoRepository = pedidoRepository;
         this.signalRService = signalRService;
 
-        // ---- REST: bridge the repository state into the VM-owned LiveData ----
         this.repositoryObserver = state::setValue;
         pedidoRepository.getPedidosState().observeForever(repositoryObserver);
-        observerRegistrationCount.incrementAndGet();
         pedidoRepository.getPedidos();
 
-        // ---- SignalR: refresh on each new pedido and join Cocina group on connect ----
         if (signalRService != null) {
             this.nuevoPedidoObserver = msg -> pedidoRepository.getPedidos();
             signalRService.getNuevoPedido().observeForever(nuevoPedidoObserver);
-            observerRegistrationCount.incrementAndGet();
 
-            // Re-join the Cocina group on every (re)connect so a hub
-            // reconnect after a network blip does not silently drop
-            // our subscription to NuevoPedido.
             this.connectedObserver = isConnected -> {
                 if (isConnected != null && isConnected) {
                     signalRService.unirseACocina();
                 }
             };
             signalRService.getConnected().observeForever(connectedObserver);
-            observerRegistrationCount.incrementAndGet();
         } else {
             this.nuevoPedidoObserver = null;
             this.connectedObserver = null;
@@ -114,9 +103,4 @@ public class CocinaHomeViewModel extends ViewModel {
         }
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

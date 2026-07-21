@@ -70,10 +70,6 @@ public class LogoutIntegrationTest {
     @Before
     public void setUp() {
         hiltRule.inject();
-        // Log the user in as "cajero" so the activity routes to the
-        // cajero home on cold start. The role itself is not significant
-        // for the logout assertions — any logged-in role exercises the
-        // same performLogout() path.
         ((FakeTokenManager) tokenManager).setRole("cajero");
     }
 
@@ -82,7 +78,6 @@ public class LogoutIntegrationTest {
         ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class);
         scenario.moveToState(Lifecycle.State.RESUMED);
 
-        // Sanity: the activity landed on the cajero home destination.
         scenario.onActivity(activity -> {
             NavController controller = currentNavController(activity);
             assertEquals("Pre-logout: should be on cajero home",
@@ -91,10 +86,6 @@ public class LogoutIntegrationTest {
                     "fake.jwt.token", tokenManager.getToken());
         });
 
-        // Invoke performLogout() — the single entry point used by both
-        // the toolbar overflow and the navigation drawer. This is the
-        // production code path, reached via reflection only because
-        // the method is private.
         scenario.onActivity(activity -> {
             try {
                 Method performLogout = MainActivity.class.getDeclaredMethod("performLogout");
@@ -105,14 +96,8 @@ public class LogoutIntegrationTest {
             }
         });
 
-        // Post-logout: the token MUST be cleared.
         assertNull("Post-logout: token should be null", tokenManager.getToken());
 
-        // Post-logout: nav destination is nav_login, and the back stack
-        // has no previous entry — popBackStack() returns false because
-        // nav_login is the graph's start destination (no parent), so
-        // pressing back from login exits the app instead of returning
-        // to a home screen.
         scenario.onActivity(activity -> {
             NavController controller = currentNavController(activity);
             NavDestination current = controller.getCurrentDestination();

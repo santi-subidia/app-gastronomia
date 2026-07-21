@@ -14,6 +14,5 @@ public class MetodoPago
     [Column("nombre")]
     public string Nombre { get; set; } = string.Empty;
 
-    // Navegación
     public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
 }

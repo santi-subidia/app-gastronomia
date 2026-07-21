@@ -51,9 +51,6 @@ public class ProductoRepositoryImplTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    // ------------------------------------------------------------------
-    // getProducto
-    // ------------------------------------------------------------------
 
     @Test
     public void getProductoEmitsLoadingThenSuccessOn2xx() {
@@ -139,9 +136,6 @@ public class ProductoRepositoryImplTest {
         assertSame(first, repo.getProductoState());
     }
 
-    // ------------------------------------------------------------------
-    // crearProducto
-    // ------------------------------------------------------------------
 
     @Test
     public void crearProductoEmitsLoadingThenSuccessOn201() {
@@ -224,9 +218,6 @@ public class ProductoRepositoryImplTest {
         assertSame(first, repo.getCrearState());
     }
 
-    // ------------------------------------------------------------------
-    // actualizarProducto
-    // ------------------------------------------------------------------
 
     @Test
     public void actualizarProductoEmitsLoadingThenSuccessOn2xx() {
@@ -260,7 +251,6 @@ public class ProductoRepositoryImplTest {
         api.actualizarProductoResponse = Response.success(new ProductoDto());
         ProductoRepositoryImpl repo = new ProductoRepositoryImpl(api);
 
-        // Only set the price — verify the captured request body matches.
         ActualizarProductoRequest req = new ActualizarProductoRequest();
         req.setPrecio(2000.0);
         repo.actualizarProducto(5, req);
@@ -335,9 +325,6 @@ public class ProductoRepositoryImplTest {
         assertSame(first, repo.getActualizarState());
     }
 
-    // ------------------------------------------------------------------
-    // eliminarProducto
-    // ------------------------------------------------------------------
 
     @Test
     public void eliminarProductoEmitsLoadingThenSuccessOn2xx() {
@@ -417,9 +404,6 @@ public class ProductoRepositoryImplTest {
         assertSame(first, repo.getEliminarState());
     }
 
-    // ------------------------------------------------------------------
-    // Regression: getProductos() must stay untouched (PROD-CRUD-007/separate).
-    // ------------------------------------------------------------------
 
     @Test
     public void getProductosListStateIsNotAffectedByNewMethodStates() {
@@ -433,7 +417,6 @@ public class ProductoRepositoryImplTest {
         LiveData<UiState<List<ProductoDto>>> listState = repo.getProductListState();
         assertSame(listState, repo.getProductListState());
 
-        // Triggering other methods must NOT mutate the list-state instance.
         repo.getProducto(1);
         repo.crearProducto(new CrearProductoRequest("X", 1.0, 1));
         ActualizarProductoRequest req = new ActualizarProductoRequest();
@@ -445,9 +428,6 @@ public class ProductoRepositoryImplTest {
                 listState, repo.getProductListState());
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     private static <T> EmissionRecorder<UiState<T>> recordEmissions(LiveData<UiState<T>> state) {
         List<UiState.Status> seen = new ArrayList<>();
@@ -480,16 +460,13 @@ public class ProductoRepositoryImplTest {
         return Response.error(code, body);
     }
 
-    // -- Fakes ------------------------------------------------------------
 
     static final class FakeProductoApi implements ProductoApi {
-        // list
         @Override
         public Call<List<ProductoDto>> getProductos() {
             return new FakeCall<>(Response.success(new ArrayList<>()), null);
         }
 
-        // get
         Response<ProductoDto> getProductoResponse;
         Throwable getProductoFailure;
         @Override
@@ -497,7 +474,6 @@ public class ProductoRepositoryImplTest {
             return new FakeCall<>(getProductoResponse, getProductoFailure);
         }
 
-        // create
         Response<ProductoDto> crearProductoResponse;
         Throwable crearProductoFailure;
         @Override
@@ -505,7 +481,6 @@ public class ProductoRepositoryImplTest {
             return new FakeCall<>(crearProductoResponse, crearProductoFailure);
         }
 
-        // update
         Response<ProductoDto> actualizarProductoResponse;
         Throwable actualizarProductoFailure;
         ActualizarProductoRequest lastActualizarRequest;
@@ -517,7 +492,6 @@ public class ProductoRepositoryImplTest {
             return new FakeCall<>(actualizarProductoResponse, actualizarProductoFailure);
         }
 
-        // delete
         Response<Void> eliminarProductoResponse;
         Throwable eliminarProductoFailure;
         int lastEliminarId = -1;

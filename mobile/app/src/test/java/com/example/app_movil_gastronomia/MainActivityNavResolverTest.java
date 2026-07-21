@@ -60,7 +60,6 @@ public class MainActivityNavResolverTest {
 
     @Test
     public void cajero_upperCase_returnsCajeroHome() {
-        // Be defensive: server casing is unconstrained.
         assertEquals(Integer.valueOf(R.id.nav_cajero_home),
                 MainActivity.resolveHomeDestination("CAJERO"));
     }

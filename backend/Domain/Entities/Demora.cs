@@ -10,14 +10,12 @@ public class Demora
     [Column("id")]
     public int Id { get; set; }
 
-    // FK -> Usuario (quién registró la demora)
     [Column("usuario_id")]
     public int UsuarioId { get; set; }
 
     [ForeignKey(nameof(UsuarioId))]
     public Usuario Usuario { get; set; } = null!;
 
-    // FK -> Pedido
     [Column("pedido_id")]
     public int PedidoId { get; set; }
 

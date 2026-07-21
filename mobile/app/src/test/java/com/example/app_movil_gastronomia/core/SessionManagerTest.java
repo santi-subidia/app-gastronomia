@@ -103,7 +103,6 @@ public class SessionManagerTest {
             }
         });
 
-        // Simulate the OkHttp interceptor calling expireSession from a background thread
         new Thread(() -> sessionManager.expireSession()).start();
 
         assertTrue("Observer should receive TRUE within 2 seconds",

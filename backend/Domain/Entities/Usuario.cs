@@ -24,14 +24,12 @@ public class Usuario
     [Column("activo")]
     public bool Activo { get; set; } = true;
 
-    // FK -> Rol
     [Column("rol_id")]
     public int RolId { get; set; }
 
     [ForeignKey(nameof(RolId))]
     public Rol Rol { get; set; } = null!;
 
-    // Navegación inversa: entregas asignadas (repartidor)
     [InverseProperty(nameof(Pedido.Repartidor))]
     public ICollection<Pedido> PedidosAsignados { get; set; } = new List<Pedido>();
 

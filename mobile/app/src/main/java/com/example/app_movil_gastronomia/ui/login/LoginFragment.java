@@ -107,7 +107,6 @@ public class LoginFragment extends Fragment {
         } else if ("Repartidor".equalsIgnoreCase(rolNombre)) {
             destinationId = R.id.action_nav_login_to_nav_repartidor_home;
         } else {
-            // Unknown role — default to Cajero home with a warning
             destinationId = R.id.action_nav_login_to_nav_cajero_home;
         }
 

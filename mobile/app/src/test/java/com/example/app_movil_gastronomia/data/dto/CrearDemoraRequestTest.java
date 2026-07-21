@@ -25,17 +25,14 @@ public class CrearDemoraRequestTest {
 
         String json = gson.toJson(request);
 
-        // Round-trip: parse back and verify equality of every field.
         CrearDemoraRequest parsed = gson.fromJson(json, CrearDemoraRequest.class);
         assertEquals(7, parsed.getPedidoId());
         assertEquals(15, parsed.getDemoraMinutos());
         assertEquals("sin papas", parsed.getObservaciones());
 
-        // String-level: the three required keys MUST be present.
         assertTrue("json must contain 'pedidoId', got: " + json, json.contains("\"pedidoId\""));
         assertTrue("json must contain 'demoraMinutos', got: " + json, json.contains("\"demoraMinutos\""));
         assertTrue("json must contain 'observaciones', got: " + json, json.contains("\"observaciones\""));
-        // v2 contract: sector MUST NOT be present.
         assertTrue("json must NOT contain 'sector' (removed in v2), got: " + json,
                 !json.contains("\"sector\""));
     }

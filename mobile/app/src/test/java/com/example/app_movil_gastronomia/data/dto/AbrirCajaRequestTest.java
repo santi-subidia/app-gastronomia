@@ -32,14 +32,12 @@ public class AbrirCajaRequestTest {
 
         assertTrue("json must contain 'montoApertura', got: " + json,
                 json.contains("\"montoApertura\""));
-        // v2 contract: usuarioAperturaId MUST NOT be present.
         assertTrue("json must NOT contain 'usuarioAperturaId' (removed in v2), got: " + json,
                 !json.contains("\"usuarioAperturaId\""));
     }
 
     @Test
     public void roundTripsSampleJsonFromApiReference() {
-        // Exact body from doc/API_REFERENCIA.md §3.4 POST /api/cajas/apertura (v2)
         String sample = "{"
                 + "\"montoApertura\": 5000.00"
                 + "}";

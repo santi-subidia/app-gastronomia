@@ -109,7 +109,6 @@ public class CajaDtoTest {
         assertTrue("json must contain 'montoCierreTeorico', got: " + json, json.contains("\"montoCierreTeorico\""));
         assertTrue("json must contain 'montoCierreReal', got: " + json, json.contains("\"montoCierreReal\""));
         assertTrue("json must contain 'estado', got: " + json, json.contains("\"estado\""));
-        // v2 contract: user IDs MUST NOT be present.
         assertTrue("json must NOT contain 'usuarioAperturaId' (removed in v2), got: " + json,
                 !json.contains("\"usuarioAperturaId\""));
         assertTrue("json must NOT contain 'usuarioCierreId' (removed in v2), got: " + json,
@@ -152,8 +151,6 @@ public class CajaDtoTest {
         dto.setFechaApertura("2026-06-18T08:00:00Z");
         dto.setMontoApertura(5000.0);
         dto.setEstado("abierta");
-        // usuarioCierreNombre, fechaCierre,
-        // montoCierreTeorico, montoCierreReal stay null
 
         String json = gson.toJson(dto);
         JsonObject obj = JsonParser.parseString(json).getAsJsonObject();

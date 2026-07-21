@@ -14,6 +14,5 @@ public class Rol
     [Column("nombre")]
     public string Nombre { get; set; } = string.Empty;
 
-    // Navegación
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
 }

@@ -14,7 +14,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -93,7 +91,6 @@ public class MapaViewModel extends ViewModel {
     @Nullable
     private final SignalRService signalRService;
 
-    // ---- State ----
     private final MutableLiveData<UiState<List<PedidoResumenDto>>> pedidosState =
             new MutableLiveData<>(UiState.loading());
 
@@ -111,19 +108,16 @@ public class MapaViewModel extends ViewModel {
     @Nullable
     private volatile String lastSentAt;
 
-    // ---- Handlers / listeners ----
     private final Handler autoSendHandler = new Handler(Looper.getMainLooper());
     @Nullable
     private LocationManager locationManager;
     @Nullable
     private LocationListener locationListener;
 
-    // ---- Observer bookkeeping ----
     private final Observer<UiState<List<PedidoResumenDto>>> repositoryObserver;
     private final Observer<PosicionGPSActualizadaMessage> posicionGpsObserver;
     private final Observer<Boolean> connectedObserver;
 
-    private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
     public MapaViewModel(@NonNull @dagger.hilt.android.qualifiers.ApplicationContext Context appContext,
@@ -135,7 +129,6 @@ public class MapaViewModel extends ViewModel {
         this.signalRService = signalRService;
         this.tokenManager = tokenManager;
 
-        // ---- REST: bridge the repository state and filter to "En Camino" ----
         this.repositoryObserver = state -> {
             if (state == null) {
                 pedidosState.setValue(UiState.loading());
@@ -154,41 +147,28 @@ public class MapaViewModel extends ViewModel {
             }
         };
         pedidoRepository.getPedidosState().observeForever(repositoryObserver);
-        observerRegistrationCount.incrementAndGet();
         pedidoRepository.getPedidos();
 
-        // Initial GPS label until the first fix arrives.
         gpsState.setValue(formatGpsWaiting());
 
-        // ---- SignalR: react to pushed events ----
         if (signalRService != null) {
             this.posicionGpsObserver = msg -> {
-                // Echo of our own broadcast (or a peer's). Update the
-                // gpsState so the rider can see their last broadcast
-                // coordinates reflected back.
                 if (msg == null) return;
                 int myId = tokenManager.getUserId();
                 if (myId > 0 && msg.getRepartidorId() != myId) return;
                 gpsState.setValue(formatCoords(msg.getLatitud(), msg.getLongitud()));
             };
             signalRService.getPosicionGPSActualizada().observeForever(posicionGpsObserver);
-            observerRegistrationCount.incrementAndGet();
 
             this.connectedObserver = isConnected -> {
-                // No-op for now: auto-send lifecycle is driven by the
-                // user toggling the switch, not by hub connectivity.
             };
             signalRService.getConnected().observeForever(connectedObserver);
-            observerRegistrationCount.incrementAndGet();
         } else {
             this.posicionGpsObserver = null;
             this.connectedObserver = null;
         }
     }
 
-    // ------------------------------------------------------------------
-    // Public state accessors
-    // ------------------------------------------------------------------
 
     public LiveData<UiState<List<PedidoResumenDto>>> getPedidosState() {
         return pedidosState;
@@ -211,9 +191,6 @@ public class MapaViewModel extends ViewModel {
         pedidoRepository.getPedidos();
     }
 
-    // ------------------------------------------------------------------
-    // GPS subscription
-    // ------------------------------------------------------------------
 
     /**
      * Starts listening to GPS updates. Idempotent. Should be called
@@ -232,7 +209,6 @@ public class MapaViewModel extends ViewModel {
             return;
         }
         if (locationListener != null) {
-            // Already registered; do nothing.
             return;
         }
 
@@ -245,7 +221,6 @@ public class MapaViewModel extends ViewModel {
 
             @Override
             public void onProviderEnabled(@NonNull String provider) {
-                // No-op: keep showing last known coordinates if any.
             }
 
             @Override
@@ -255,7 +230,6 @@ public class MapaViewModel extends ViewModel {
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {
-                // Deprecated; no-op.
             }
         };
 
@@ -277,8 +251,6 @@ public class MapaViewModel extends ViewModel {
             return;
         }
 
-        // Seed with last known position so the UI shows something
-        // useful while we wait for the first fresh fix.
         @SuppressLint("MissingPermission")
         Location cached = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (cached != null) {
@@ -304,9 +276,6 @@ public class MapaViewModel extends ViewModel {
         locationListener = null;
     }
 
-    // ------------------------------------------------------------------
-    // Auto-send toggle
-    // ------------------------------------------------------------------
 
     /**
      * Enables or disables the periodic position broadcast. When
@@ -344,8 +313,6 @@ public class MapaViewModel extends ViewModel {
         }
         Location loc = lastKnownLocation;
         if (loc == null) {
-            // Try the last known system position one more time so
-            // the rider is not punished for the cold-start of GPS.
             LocationManager lm = getLocationManager();
             if (lm != null && hasLocationPermission()) {
                 try {
@@ -356,7 +323,6 @@ public class MapaViewModel extends ViewModel {
                         lastKnownLocation = cached;
                     }
                 } catch (SecurityException ignored) {
-                    // Permission revoked between checks; fall through.
                 }
             }
         }
@@ -396,9 +362,6 @@ public class MapaViewModel extends ViewModel {
         }
     };
 
-    // ------------------------------------------------------------------
-    // Filter helper
-    // ------------------------------------------------------------------
 
     /**
      * Keeps only pedidos in the {@code "En Camino"} estado. Mirrors
@@ -424,9 +387,6 @@ public class MapaViewModel extends ViewModel {
         return "encamino".equals(normalized) || "en camino".equals(normalized);
     }
 
-    // ------------------------------------------------------------------
-    // Formatting helpers
-    // ------------------------------------------------------------------
 
     static String formatCoords(double lat, double lng) {
         return String.format(Locale.US, "%.6f, %.6f", lat, lng);
@@ -459,9 +419,6 @@ public class MapaViewModel extends ViewModel {
         return fmt.format(new Date());
     }
 
-    // ------------------------------------------------------------------
-    // Internals
-    // ------------------------------------------------------------------
 
     @Nullable
     private LocationManager getLocationManager() {
@@ -500,9 +457,4 @@ public class MapaViewModel extends ViewModel {
         }
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
-    @VisibleForTesting
-    int getObserverRegistrationCount() {
-        return observerRegistrationCount.get();
-    }
 }

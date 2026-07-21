@@ -139,9 +139,6 @@ public class PedidoDetalleDtoTest {
 
     @Test
     public void nullBoxedFieldsAreOmittedFromJson() {
-        // The boxed nullables (demoraAprox, latitudDestino, etc.) must be
-        // omitted by Gson when null — that matches the partial-update
-        // convention already used by ActualizarProductoRequest.
         PedidoDetalleDto dto = new PedidoDetalleDto();
         dto.setId(1);
         dto.setEstado("Pendiente");

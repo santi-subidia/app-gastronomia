@@ -57,17 +57,11 @@ public class CajaRepositoryImpl implements CajaRepository {
         this.cajaApi = cajaApi;
     }
 
-    // ------------------------------------------------------------------
-    // getCajas(estado)
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<List<CajaDto>>> getCajas(String estado) {
-        // Reset the single shared instance to LOADING before the network call.
         _cajasState.setValue(UiState.loading());
 
-        // Pass through the nullable filter; Retrofit omits a null query
-        // param so the same endpoint lists all cajas when estado == null.
         cajaApi.getCajas(estado).enqueue(new Callback<List<CajaDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<CajaDto>> call,
@@ -95,16 +89,9 @@ public class CajaRepositoryImpl implements CajaRepository {
         return _cajasState;
     }
 
-    // ------------------------------------------------------------------
-    // getCajasAbiertas()
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<List<CajaDto>>> getCajasAbiertas() {
-        // Spec CAJ-ABIERTAS-001: dedicated endpoint, no query params.
-        // The server returns 200 with an empty list when no caja is
-        // open — we treat that as SUCCESS, not ERROR, so the UI can
-        // render "no hay cajas abiertas" cleanly.
         _cajasAbiertasState.setValue(UiState.loading());
 
         cajaApi.getCajasAbiertas().enqueue(new Callback<List<CajaDto>>() {
@@ -134,9 +121,6 @@ public class CajaRepositoryImpl implements CajaRepository {
         return _cajasAbiertasState;
     }
 
-    // ------------------------------------------------------------------
-    // getCaja(id)
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<CajaDto>> getCaja(int id) {
@@ -169,9 +153,6 @@ public class CajaRepositoryImpl implements CajaRepository {
         return _cajaState;
     }
 
-    // ------------------------------------------------------------------
-    // abrirCaja(request)
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<CajaDto>> abrirCaja(AbrirCajaRequest request) {
@@ -204,9 +185,6 @@ public class CajaRepositoryImpl implements CajaRepository {
         return _abrirState;
     }
 
-    // ------------------------------------------------------------------
-    // cerrarCaja(id, request)
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<UiState<CajaDto>> cerrarCaja(int id, CerrarCajaRequest request) {
@@ -239,9 +217,6 @@ public class CajaRepositoryImpl implements CajaRepository {
         return _cerrarState;
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     /**
      * Parses the server's {@code {"mensaje":"..."}} envelope from a Retrofit

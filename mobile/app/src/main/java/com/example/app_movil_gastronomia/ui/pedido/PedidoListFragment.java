@@ -64,7 +64,6 @@ public class PedidoListFragment extends Fragment {
 
         wireFilterChips();
 
-        // Default selected chip: "Todos" (null filter).
         setActiveChip(binding.chipTodos);
 
         viewModel.getPedidoListState().observe(getViewLifecycleOwner(), this::handleState);

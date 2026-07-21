@@ -58,7 +58,6 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
     public void onBindViewHolder(@NonNull PedidoViewHolder holder, int position) {
         PedidoResumenDto pedido = items.get(position);
 
-        // Header: "#<id>" + status chip
         holder.pedidoIdText.setText(String.format(Locale.getDefault(), "#%d", pedido.getId()));
 
         String estadoStr = pedido.getEstado();
@@ -70,10 +69,8 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
         holder.statusChip.setBackgroundColor(statusColor);
         holder.statusChip.setTextColor(textColor);
 
-        // Left accent border colored by status
         holder.accentBorder.setBackgroundColor(statusColor);
 
-        // Body
         holder.clienteNombreText.setText(pedido.getClienteNombre());
 
         holder.metodoVentaText.setText(pedido.getMetodoVenta() != null

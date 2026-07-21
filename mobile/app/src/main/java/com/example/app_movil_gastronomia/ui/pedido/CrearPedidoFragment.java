@@ -119,9 +119,6 @@ public class CrearPedidoFragment extends Fragment {
         viewModel.getFormError().observe(getViewLifecycleOwner(), this::handleFormError);
     }
 
-    // ------------------------------------------------------------------
-    // Setup
-    // ------------------------------------------------------------------
 
     private void setupDropdowns() {
         ArrayAdapter<String> ventaAdapter = new ArrayAdapter<>(
@@ -156,14 +153,9 @@ public class CrearPedidoFragment extends Fragment {
     }
 
     private void setupDeliveryVisibility() {
-        // Show delivery fields iff the default selection is Delivery.
         applyDeliveryVisibility(currentMetodoVentaId());
 
         binding.inputMetodoVenta.setOnItemClickListener((parent, view, position, id) -> {
-            // Re-read the selected label so the AutoCompleteTextView
-            // shows it after a tap; AutoCompleteTextView handles the
-            // text update itself when an item is clicked, so we just
-            // need to react to the position change.
             applyDeliveryVisibility(METODO_VENTA_IDS[position]);
         });
     }
@@ -172,31 +164,23 @@ public class CrearPedidoFragment extends Fragment {
         boolean isDelivery = metodoVentaId == METODO_VENTA_DELIVERY;
         binding.groupDelivery.setVisibility(isDelivery ? View.VISIBLE : View.GONE);
         if (!isDelivery) {
-            // Clear the delivery-only fields so a stale value never
-            // slips into a non-Delivery request.
             binding.inputClienteDireccion.setText("");
             binding.inputLatitud.setText("");
             binding.inputLongitud.setText("");
         }
     }
 
-    // ------------------------------------------------------------------
-    // State observers
-    // ------------------------------------------------------------------
 
     private void handleProductos(UiState<List<ProductoDto>> state) {
         if (state == null) return;
         switch (state.getStatus()) {
             case LOADING:
-                // No full-screen spinner — the picker dialog shows its own.
                 break;
             case SUCCESS:
                 lastProductos = state.getData() != null ? state.getData() : new ArrayList<>();
                 break;
             case ERROR:
                 lastProductos = new ArrayList<>();
-                // Surface a transient toast so the user can retry by tapping
-                // "Agregar Producto" again.
                 Toast.makeText(requireContext(),
                         state.getError() != null ? state.getError() : getString(R.string.error_generic),
                         Toast.LENGTH_SHORT).show();
@@ -251,15 +235,11 @@ public class CrearPedidoFragment extends Fragment {
         viewModel.acknowledgeFormError();
     }
 
-    // ------------------------------------------------------------------
-    // Detalle editing
-    // ------------------------------------------------------------------
 
     private void openProductPicker() {
         if (lastProductos == null || lastProductos.isEmpty()) {
             Snackbar.make(binding.getRoot(),
                     R.string.no_products_available, Snackbar.LENGTH_SHORT).show();
-            // Trigger a retry in case the catalog hadn't loaded yet.
             viewModel.loadProductos();
             return;
         }
@@ -314,7 +294,6 @@ public class CrearPedidoFragment extends Fragment {
     }
 
     private void addDetalle(ProductoDto producto, int cantidad) {
-        // If the same product is already in the list, merge by summing quantity.
         for (int i = 0; i < detalles.size(); i++) {
             DetalleLine existing = detalles.get(i);
             if (existing.getProductoId() == producto.getId()) {
@@ -364,9 +343,6 @@ public class CrearPedidoFragment extends Fragment {
         binding.recyclerViewDetalles.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
-    // ------------------------------------------------------------------
-    // Submit
-    // ------------------------------------------------------------------
 
     private void submit() {
         CrearPedidoRequest request = buildRequestFromForm();
@@ -386,10 +362,6 @@ public class CrearPedidoFragment extends Fragment {
             longitud = parseDouble(textOf(binding.inputLongitud));
         }
 
-        // Delegate request building to the ViewModel so the fragment
-        // never imports the wire DTO (CrearDetalleRequest). The VM
-        // maps DetalleLine → CrearDetalleRequest internally and
-        // computes totalEstimado from the mapped DTOs.
         return viewModel.buildRequest(
                 clienteNombre,
                 metodoVentaId,

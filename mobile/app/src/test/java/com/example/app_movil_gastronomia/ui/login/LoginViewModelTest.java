@@ -34,7 +34,6 @@ public class LoginViewModelTest {
 
         assertEquals(1, vm.getObserverRegistrationCount());
 
-        // Repository emissions must reach the VM's own LiveData.
         repo.getLoginStateInternal().setValue(UiState.success(loginResponse()));
         assertNotNull(vm.getLoginState().getValue());
         assertEquals(UiState.Status.SUCCESS, vm.getLoginState().getValue().getStatus());
@@ -122,7 +121,6 @@ public class LoginViewModelTest {
         assertEquals(UiState.Status.ERROR, vm.getLoginState().getValue().getStatus());
     }
 
-    // -- helpers -------------------------------------------------------------
 
     private static LoginResponse loginResponse() {
         LoginResponse r = new LoginResponse();

@@ -48,7 +48,6 @@ public class AuthRepositoryImpl implements AuthRepository {
 
     @Override
     public LiveData<UiState<LoginResponse>> login(LoginRequest request) {
-        // Reset the single shared instance to LOADING before the network call.
         _loginState.setValue(UiState.loading());
 
         authApi.login(request).enqueue(new Callback<LoginResponse>() {
@@ -76,10 +75,8 @@ public class AuthRepositoryImpl implements AuthRepository {
                                     errorMsg = errorResponse.getMensaje();
                                 }
                             } catch (com.google.gson.JsonSyntaxException ignored) {
-                                // Fallback if backend returns plain text instead of JSON
                                 if (errorBody != null && !errorBody.trim().isEmpty()) {
                                     errorMsg = errorBody.trim();
-                                    // Remove quotes if the string was serialized as a JSON string literal
                                     if (errorMsg.startsWith("\"") && errorMsg.endsWith("\"") && errorMsg.length() >= 2) {
                                         errorMsg = errorMsg.substring(1, errorMsg.length() - 1);
                                     }

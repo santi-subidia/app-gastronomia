@@ -10,14 +10,12 @@ public class Caja
     [Column("id")]
     public int Id { get; set; }
 
-    // FK -> Usuario (apertura)
     [Column("usuario_apertura_id")]
     public int UsuarioAperturaId { get; set; }
 
     [ForeignKey(nameof(UsuarioAperturaId))]
     public Usuario UsuarioApertura { get; set; } = null!;
 
-    // FK -> Usuario (cierre, nullable)
     [Column("usuario_cierre_id")]
     public int? UsuarioCierreId { get; set; }
 
@@ -39,6 +37,5 @@ public class Caja
     [Column("monto_cierre_real")]
     public decimal? MontoCierreReal { get; set; }
 
-    // Navegación inversa: pedidos asociados a esta caja
     public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
 }

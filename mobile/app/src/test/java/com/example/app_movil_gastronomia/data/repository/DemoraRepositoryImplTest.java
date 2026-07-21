@@ -55,9 +55,6 @@ public class DemoraRepositoryImplTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    // ------------------------------------------------------------------
-    // getDemoras
-    // ------------------------------------------------------------------
 
     @Test
     public void getDemorasEmitsLoadingThenSuccessOn2xx() {
@@ -169,9 +166,6 @@ public class DemoraRepositoryImplTest {
         assertEquals(Integer.valueOf(7), api.lastGetDemorasPedidoId);
     }
 
-    // ------------------------------------------------------------------
-    // crearDemora
-    // ------------------------------------------------------------------
 
     @Test
     public void crearDemoraEmitsLoadingThenSuccessOn201() {
@@ -255,9 +249,6 @@ public class DemoraRepositoryImplTest {
         assertSame(first, repo.getCrearState());
     }
 
-    // ------------------------------------------------------------------
-    // actualizarDemora
-    // ------------------------------------------------------------------
 
     @Test
     public void actualizarDemoraEmitsLoadingThenSuccessOn2xx() {
@@ -348,9 +339,6 @@ public class DemoraRepositoryImplTest {
         assertSame(first, repo.getActualizarState());
     }
 
-    // ------------------------------------------------------------------
-    // eliminarDemora
-    // ------------------------------------------------------------------
 
     @Test
     public void eliminarDemoraEmitsLoadingThenSuccessOn2xx() {
@@ -430,9 +418,6 @@ public class DemoraRepositoryImplTest {
         assertSame(first, repo.getEliminarState());
     }
 
-    // ------------------------------------------------------------------
-    // Pairwise distinct state instances (DEM-DI-001)
-    // ------------------------------------------------------------------
 
     @Test
     public void allFourStateInstancesArePairwiseDistinct() {
@@ -452,9 +437,6 @@ public class DemoraRepositoryImplTest {
         assertNotEquals(actualizar, eliminar);
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
     private static <T> EmissionRecorder<UiState<T>> recordEmissions(LiveData<UiState<T>> state) {
         List<UiState.Status> seen = new ArrayList<>();
@@ -485,10 +467,8 @@ public class DemoraRepositoryImplTest {
         return Response.error(code, body);
     }
 
-    // -- Fakes ------------------------------------------------------------
 
     static final class FakeDemoraApi implements DemoraApi {
-        // list
         Response<List<DemoraDto>> getDemorasResponse;
         Throwable getDemorasFailure;
         Integer lastGetDemorasPedidoId;
@@ -498,7 +478,6 @@ public class DemoraRepositoryImplTest {
             return new FakeCall<>(getDemorasResponse, getDemorasFailure);
         }
 
-        // create
         Response<DemoraDto> crearDemoraResponse;
         Throwable crearDemoraFailure;
         @Override
@@ -506,7 +485,6 @@ public class DemoraRepositoryImplTest {
             return new FakeCall<>(crearDemoraResponse, crearDemoraFailure);
         }
 
-        // update
         Response<DemoraDto> actualizarDemoraResponse;
         Throwable actualizarDemoraFailure;
         ActualizarDemoraRequest lastActualizarRequest;
@@ -518,7 +496,6 @@ public class DemoraRepositoryImplTest {
             return new FakeCall<>(actualizarDemoraResponse, actualizarDemoraFailure);
         }
 
-        // delete
         Response<Void> eliminarDemoraResponse;
         Throwable eliminarDemoraFailure;
         int lastEliminarId = -1;

@@ -39,7 +39,6 @@ public class UsuariosController : ControllerBase
         if (usuario is null)
             return NotFound(new { Mensaje = $"Usuario #{id} no encontrado." });
 
-        // Self-access check: non-admin users can only see their own record
         var currentUserId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
         var currentUserRole = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
 
@@ -75,7 +74,6 @@ public class UsuariosController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<UsuarioResponse>> Update(int id, [FromBody] UpdateUserRequest request)
     {
-        // Self-access check for non-admin users
         var currentUserId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
         var currentUserRole = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
 

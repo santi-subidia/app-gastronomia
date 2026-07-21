@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -135,8 +134,6 @@ public class CatalogoRepositoryImpl implements CatalogoRepository {
         return estadosLoaded && pagosLoaded && ventasLoaded;
     }
 
-    // -- internal: each load is fire-and-forget and updates its own
-    //             state independently. ----------------------------------
 
     private void loadEstadosPedido() {
         estadosApi.getEstados().enqueue(new CatalogCallback(

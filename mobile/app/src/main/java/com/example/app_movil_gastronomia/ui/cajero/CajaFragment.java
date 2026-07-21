@@ -82,9 +82,6 @@ public class CajaFragment extends Fragment {
         viewModel.getCerrarState().observe(getViewLifecycleOwner(), this::handleCerrar);
     }
 
-    // ------------------------------------------------------------------
-    // Caja status render
-    // ------------------------------------------------------------------
 
     private void renderCaja(UiState<CajaDto> state) {
         if (binding == null || state == null) return;
@@ -181,9 +178,6 @@ public class CajaFragment extends Fragment {
         binding.buttonRetry.setVisibility(View.VISIBLE);
     }
 
-    // ------------------------------------------------------------------
-    // Open / close submissions
-    // ------------------------------------------------------------------
 
     private void submitAbrir() {
         Double monto = parseMonto(binding.inputMontoApertura);
@@ -224,9 +218,6 @@ public class CajaFragment extends Fragment {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Open / close results
-    // ------------------------------------------------------------------
 
     private void handleAbrir(UiState<CajaDto> state) {
         if (binding == null || state == null) return;

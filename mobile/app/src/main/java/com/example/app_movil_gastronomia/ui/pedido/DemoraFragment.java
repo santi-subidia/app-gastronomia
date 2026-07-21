@@ -64,8 +64,6 @@ public class DemoraFragment extends Fragment {
         binding.textTitle.setText(getString(R.string.demora_for_order, pedidoId));
         binding.buttonRegistrar.setOnClickListener(v -> submit());
 
-        // Clear field errors as the user types so the same submit tap
-        // doesn't keep showing a stale message.
         attachClearErrorOnType(binding.inputMinutos, binding.inputMinutosLayout);
         attachClearErrorOnType(binding.inputSector, binding.inputSectorLayout);
 
@@ -122,9 +120,6 @@ public class DemoraFragment extends Fragment {
         }
         binding.inputMinutosLayout.setError(null);
 
-        // v2: the sector field is no longer sent in the wire body. The
-        // inputSector EditText is still rendered in the layout for a
-        // future UX cleanup; its value is intentionally ignored here.
         viewModel.registrarDemora(pedidoId, minutos, observaciones);
     }
 
@@ -149,12 +144,10 @@ public class DemoraFragment extends Fragment {
         field.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // no-op
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // no-op
             }
 
             @Override

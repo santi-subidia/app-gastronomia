@@ -21,7 +21,6 @@ public class ActualizarProductoRequestTest {
 
     @Test
     public void serializesOnlySetFieldsAndOmitsNulls() {
-        // Only the price is being changed.
         ActualizarProductoRequest request = new ActualizarProductoRequest();
         request.setPrecio(2000.0);
 
@@ -36,7 +35,6 @@ public class ActualizarProductoRequestTest {
     public void nullNombreAndDemoraAreOmittedFromJson() {
         ActualizarProductoRequest request = new ActualizarProductoRequest();
         request.setPrecio(2000.0);
-        // nombre and demora stay null.
 
         String json = gson.toJson(request);
 
@@ -49,7 +47,6 @@ public class ActualizarProductoRequestTest {
         ActualizarProductoRequest request = new ActualizarProductoRequest();
         request.setNombre("Pizza");
         request.setDemora(20);
-        // precio stays null.
 
         String json = gson.toJson(request);
 

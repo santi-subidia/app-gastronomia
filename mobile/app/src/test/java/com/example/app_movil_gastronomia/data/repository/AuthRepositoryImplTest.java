@@ -53,7 +53,6 @@ public class AuthRepositoryImplTest {
                 first, second
         );
 
-        // Even after triggering a login, the same instance is returned.
         repo.login(new LoginRequest("u", "p"));
         LiveData<UiState<LoginResponse>> third = repo.getLoginState();
         assertSame(first, third);
@@ -78,10 +77,8 @@ public class AuthRepositoryImplTest {
         Observer<UiState<LoginResponse>> observer = latest::set;
         state.observeForever(observer);
         try {
-            // MutableLiveData initial value is null until first setValue; observer has nothing yet.
             repo.login(new LoginRequest("u", "p"));
 
-            // The single shared instance must now have been set to LOADING then SUCCESS.
             UiState<LoginResponse> after = latest.get();
             assertNotNull(after);
             assertEquals(UiState.Status.SUCCESS, after.getStatus());
@@ -165,15 +162,12 @@ public class AuthRepositoryImplTest {
         LiveData<UiState<LoginResponse>> state = repo.getLoginState();
         assertSame(state, repo.getLoginState());
 
-        // First call: posts LOADING then SUCCESS.
         repo.login(new LoginRequest("u", "p"));
 
-        // Second call: must NOT allocate a new MutableLiveData.
         LiveData<UiState<LoginResponse>> sameRef = repo.getLoginState();
         assertSame(state, sameRef);
     }
 
-    // -- Fakes ---------------------------------------------------------------
 
     static final class FakeAuthApi implements AuthApi {
         Response<LoginResponse> nextResponse;
