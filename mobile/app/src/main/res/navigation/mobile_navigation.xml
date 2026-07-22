@@ -44,6 +44,9 @@
         <action
             android:id="@+id/action_nav_cajero_home_to_nav_configuracion"
             app:destination="@id/nav_configuracion" />
+        <action
+            android:id="@+id/action_nav_cajero_home_to_nav_repartidores_mapa"
+            app:destination="@id/nav_repartidores_mapa" />
     </fragment>
 
     <fragment
@@ -60,6 +63,11 @@
         android:id="@+id/nav_configuracion"
         android:name="com.example.app_movil_gastronomia.ui.cajero.ConfiguracionFragment"
         android:label="Configuración" />
+
+    <fragment
+        android:id="@+id/nav_repartidores_mapa"
+        android:name="com.example.app_movil_gastronomia.ui.cajero.RepartidoresMapaFragment"
+        android:label="@string/repartidores_mapa_title" />
 
     <fragment
         android:id="@+id/nav_cocina_home"
@@ -106,12 +114,24 @@
         <action
             android:id="@+id/action_nav_pedido_detail_to_nav_demora"
             app:destination="@id/nav_demora" />
+        <action
+            android:id="@+id/action_nav_pedido_detail_to_nav_ruta_repartidor"
+            app:destination="@id/nav_ruta_repartidor" />
     </fragment>
 
     <fragment
         android:id="@+id/nav_demora"
         android:name="com.example.app_movil_gastronomia.ui.pedido.DemoraFragment"
         android:label="Registrar Demora">
+        <argument
+            android:name="pedidoId"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_ruta_repartidor"
+        android:name="com.example.app_movil_gastronomia.ui.repartidor.RutaRepartidorFragment"
+        android:label="Ruta de entrega">
         <argument
             android:name="pedidoId"
             app:argType="integer" />

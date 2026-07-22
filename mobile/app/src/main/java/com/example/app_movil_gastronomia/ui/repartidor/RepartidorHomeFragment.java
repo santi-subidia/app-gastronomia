@@ -133,7 +133,7 @@ public class RepartidorHomeFragment extends Fragment {
         binding.textError.setVisibility(View.GONE);
         binding.buttonRetry.setVisibility(View.GONE);
 
-        List<PedidoResumenDto> filtered = filterEnCamino(pedidos);
+        List<PedidoResumenDto> filtered = filterActivos(pedidos);
 
         if (filtered.isEmpty()) {
             binding.recyclerViewPedidos.setVisibility(View.GONE);
@@ -159,18 +159,15 @@ public class RepartidorHomeFragment extends Fragment {
 
     /**
      * Keeps only pedidos the repartidor should see right now:
-     * those in the {@code "En Camino"} estado. Case-insensitive
-     * and tolerant of both the canonical API value
-     * ({@code "EnCamino"}) and the human-friendly label
-     * ({@code "En Camino"}).
+     * those in the "En Camino" or "Listo para retirar" estado.
      */
-    static List<PedidoResumenDto> filterEnCamino(List<PedidoResumenDto> pedidos) {
+    static List<PedidoResumenDto> filterActivos(List<PedidoResumenDto> pedidos) {
         List<PedidoResumenDto> result = new ArrayList<>();
         if (pedidos == null) {
             return result;
         }
         for (PedidoResumenDto p : pedidos) {
-            if (RepartidorHomeViewModel.isEnCamino(p.getEstado())) {
+            if (RepartidorHomeViewModel.isEnCaminoOrListo(p.getEstado())) {
                 result.add(p);
             }
         }

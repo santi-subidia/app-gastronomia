@@ -12,6 +12,7 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 val apiBaseUrl = localProperties.getProperty("API_BASE_URL") ?: "http://10.0.2.2:5000/"
+val osrmBaseUrl = localProperties.getProperty("OSRM_BASE_URL") ?: "http://router.project-osrm.org/"
 
 android {
     namespace = "com.example.app_movil_gastronomia"
@@ -28,6 +29,7 @@ android {
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "MAPTILER_KEY", "\"${localProperties.getProperty("MAPTILER_KEY", "")}\"")
+        buildConfigField("String", "OSRM_BASE_URL", "\"$osrmBaseUrl\"")
     }
 
     buildTypes {
@@ -73,6 +75,7 @@ dependencies {
     implementation(libs.security.crypto)
     implementation(libs.signalr)
     implementation(libs.maplibre)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     testImplementation(libs.arch.core.testing)
     testImplementation(libs.org.json)

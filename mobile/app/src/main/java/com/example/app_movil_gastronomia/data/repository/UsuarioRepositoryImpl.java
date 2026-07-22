@@ -34,6 +34,31 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
     }
 
     @Override
+    public LiveData<UiState<List<UsuarioDto>>> getRepartidoresState() {
+        return repartidoresState;
+    }
+
+    @Override
+    public void fetchRepartidores() {
+        repartidoresState.setValue(UiState.loading());
+        api.getRepartidores("Repartidor").enqueue(new Callback<List<UsuarioDto>>() {
+            @Override
+            public void onResponse(Call<List<UsuarioDto>> call, Response<List<UsuarioDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    repartidoresState.setValue(UiState.success(response.body()));
+                } else {
+                    repartidoresState.setValue(UiState.error(parseError(response)));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<UsuarioDto>> call, Throwable t) {
+                repartidoresState.setValue(UiState.error(t.getMessage()));
+            }
+        });
+    }
+
+    @Override
     public LiveData<UiState<List<UsuarioDto>>> getRepartidoresDisponiblesState() {
         return repartidoresState;
     }
@@ -90,6 +115,7 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
                 if (err != null && err.getMensaje() != null) return err.getMensaje();
             }
         } catch (Exception ignored) {}
-        return "Error en la petición";
+        return "Error en la peticion";
     }
 }
+

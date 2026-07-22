@@ -193,6 +193,7 @@ public class PedidoDetailFragment extends Fragment {
 
         // Info card
         binding.clienteNombre.setText(pedido.getClienteNombre());
+        binding.clienteDireccion.setText(pedido.getClienteDireccion() != null ? pedido.getClienteDireccion() : "No especificada");
         String metodoVenta = pedido.getMetodoVenta() != null ? pedido.getMetodoVenta() : "";
         binding.metodoVenta.setText(metodoVenta);
         binding.fechaIngreso.setText(pedido.getFechaIngreso() != null
@@ -249,10 +250,26 @@ public class PedidoDetailFragment extends Fragment {
             }
         } else {
             // Lógica para Repartidor
-            binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
-            binding.buttonCambiarEstado.setText(R.string.change_status);
-            binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
-            binding.buttonAsignarRepartidor.setVisibility(View.VISIBLE);
+            binding.buttonAsignarRepartidor.setVisibility(View.GONE);
+            binding.buttonVerRuta.setVisibility(View.VISIBLE);
+            binding.buttonVerRuta.setOnClickListener(v -> {
+                Bundle args = new Bundle();
+                args.putInt("pedidoId", pedidoId);
+                Navigation.findNavController(v).navigate(
+                        R.id.action_nav_pedido_detail_to_nav_ruta_repartidor, args);
+            });
+            
+            if (estado == EstadoPedidoEnum.LISTO_PARA_RETIRAR) {
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Comenzar Viaje");
+                binding.buttonCambiarEstado.setOnClickListener(v -> viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.EN_CAMINO));
+            } else if (estado == EstadoPedidoEnum.EN_CAMINO) {
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Marcar Entregado");
+                binding.buttonCambiarEstado.setOnClickListener(v -> viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.ENTREGADO));
+            } else {
+                binding.buttonCambiarEstado.setVisibility(View.GONE);
+            }
             binding.buttonRegistrarDemora.setVisibility(View.VISIBLE);
         }
 
@@ -338,14 +355,14 @@ public class PedidoDetailFragment extends Fragment {
                 return;
             }
         } else {
-            opciones = new EstadoPedidoEnum[]{
-                    EstadoPedidoEnum.PENDIENTE,
-                    EstadoPedidoEnum.EN_PREPARACION,
-                    EstadoPedidoEnum.LISTO_PARA_RETIRAR,
-                    EstadoPedidoEnum.EN_CAMINO,
-                    EstadoPedidoEnum.ENTREGADO,
-                    EstadoPedidoEnum.CANCELADO
-            };
+            if (estadoActual == EstadoPedidoEnum.LISTO_PARA_RETIRAR) {
+                opciones = new EstadoPedidoEnum[]{ EstadoPedidoEnum.EN_CAMINO };
+            } else if (estadoActual == EstadoPedidoEnum.EN_CAMINO) {
+                opciones = new EstadoPedidoEnum[]{ EstadoPedidoEnum.ENTREGADO };
+            } else {
+                Toast.makeText(requireContext(), "No puedes cambiar el estado desde " + PedidoAdapter.labelForEstado(estadoActual), Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
 
         String[] labels = new String[opciones.length];
@@ -395,41 +412,11 @@ public class PedidoDetailFragment extends Fragment {
             nombres[i] = lastRepartidores.get(i).getUsuarioNombre();
         }
 
-        TextInputLayout layout = new TextInputLayout(requireContext(), null, com.google.android.material.R.style.Widget_MaterialComponents_TextInputLayout_OutlinedBox_ExposedDropdownMenu);
-        layout.setHint("Selecciona un repartidor");
-        
-        AutoCompleteTextView input = new AutoCompleteTextView(requireContext());
-        input.setInputType(android.text.InputType.TYPE_NULL);
-        input.setFocusable(false);
-        
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, nombres);
-        input.setAdapter(adapter);
-        layout.addView(input);
-
-        LinearLayout container = new LinearLayout(requireContext());
-        int padding = (int) (16 * getResources().getDisplayMetrics().density);
-        container.setPadding(padding, padding, padding, 0);
-        container.addView(layout, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.assign_driver)
-                .setView(container)
-                .setPositiveButton(R.string.action_confirm, (dialog, which) -> {
-                    String seleccionado = input.getText().toString();
-                    if (TextUtils.isEmpty(seleccionado)) {
-                        Toast.makeText(requireContext(), "Debes seleccionar un repartidor", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    int repartidorId = -1;
-                    for (UsuarioDto r : lastRepartidores) {
-                        if (r.getUsuarioNombre().equals(seleccionado)) {
-                            repartidorId = r.getId();
-                            break;
-                        }
-                    }
-                    if (repartidorId != -1) {
-                        viewModel.asignarRepartidor(pedidoId, repartidorId);
-                    }
+                .setItems(nombres, (dialog, which) -> {
+                    UsuarioDto seleccionado = lastRepartidores.get(which);
+                    viewModel.asignarRepartidor(pedidoId, seleccionado.getId());
                 })
                 .setNegativeButton(R.string.action_cancel, null)
                 .show();

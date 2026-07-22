@@ -257,4 +257,28 @@ public class LogisticaHubTests
         Assert.Equal(-34.6037, msg.Latitud);
         Assert.Equal(-58.3816, msg.Longitud);
     }
+
+    [Fact]
+    public async Task OnConnectedAsync_CajeroJoinsCajerosGroup()
+    {
+        var hub = CreateHubWithRoles("Cajero");
+        var groups = Mock.Get(hub.Groups);
+
+        await hub.OnConnectedAsync();
+
+        groups.Verify(g => g.AddToGroupAsync(
+            "test-connection", "Cajeros", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EnviarPosicionGPS_SendsToCajerosGroup()
+    {
+        var (hub, mockProxy) = CreateHubWithProxy("Repartidor");
+
+        await hub.EnviarPosicionGPS(5, -34.6037, -58.3816);
+
+        mockProxy.Verify(proxy => proxy.SendCoreAsync(
+            "PosicionGPSActualizada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
 }

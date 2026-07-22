@@ -61,7 +61,8 @@ public class ConfiguracionController : ControllerBase
             request.MetodoPagoDefaultId,
             request.NombreGastronomico,
             request.LatitudPartida,
-            request.LongitudPartida);
+            request.LongitudPartida,
+            request.MaxPedidosPorRepartidor);
 
         if (result is null)
             return NotFound(new { Mensaje = "Configuración no encontrada." });

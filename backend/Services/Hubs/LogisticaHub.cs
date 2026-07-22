@@ -15,6 +15,7 @@ namespace ApiGastronomia.Services.Hubs;
 [DisableRateLimiting]
 public class LogisticaHub : Hub
 {
+    private const string CajerosGroup = "Cajeros";
     private readonly ILogger<LogisticaHub> _logger;
 
     public LogisticaHub(ILogger<LogisticaHub> logger)
@@ -27,6 +28,13 @@ public class LogisticaHub : Hub
     public override async Task OnConnectedAsync()
     {
         _logger.LogInformation("Cliente conectado: {ConnectionId}", Context.ConnectionId);
+
+        if (Context.User?.IsInRole("Cajero") == true)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, CajerosGroup);
+            _logger.LogInformation("Cliente {ConnectionId} se unió al grupo {Grupo}", Context.ConnectionId, CajerosGroup);
+        }
+
         await base.OnConnectedAsync();
     }
 
@@ -97,8 +105,12 @@ public class LogisticaHub : Hub
         if (!Context.User!.IsInRole("Repartidor"))
             throw new HubException("Solo repartidores pueden enviar posición GPS.");
 
-        await Clients.Group($"pedido_repartidor_{repartidorId}").SendAsync("PosicionGPSActualizada", new PosicionGPSMessage(
-            repartidorId, latitud, longitud, DateTime.UtcNow));
+        var message = new PosicionGPSMessage(repartidorId, latitud, longitud, DateTime.UtcNow);
+
+        await Clients.Group($"pedido_repartidor_{repartidorId}")
+            .SendAsync("PosicionGPSActualizada", message);
+        await Clients.Group(CajerosGroup)
+            .SendAsync("PosicionGPSActualizada", message);
     }
 
     #endregion

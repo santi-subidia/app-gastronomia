@@ -131,10 +131,26 @@ public class PedidoService : IPedidoService
             .FirstOrDefaultAsync();
     }
 
+    public async Task<IEnumerable<Pedido>> ObtenerPedidosPorRepartidorAsync(int repartidorId)
+    {
+        var cajaId = await ObtenerCajaAbiertaIdAsync();
+        if (cajaId is null)
+            return Array.Empty<Pedido>();
+
+        return await _context.Pedidos
+            .Include(p => p.Estado)
+            .Include(p => p.MetodoVenta)
+            .Include(p => p.Repartidor)
+            .Where(p => p.CajaId == cajaId && p.RepartidorId == repartidorId)
+            .OrderByDescending(p => p.FechaIngreso)
+            .ToListAsync();
+    }
+
     public async Task<Pedido> CambiarEstadoAsync(int pedidoId, EstadoPedidoEnum nuevoEstado)
     {
         var pedido = await _context.Pedidos
             .Include(p => p.Estado)
+            .Include(p => p.Repartidor)
             .FirstOrDefaultAsync(p => p.Id == pedidoId)
             ?? throw new KeyNotFoundException($"Pedido #{pedidoId} no encontrado.");
 
@@ -160,6 +176,38 @@ public class PedidoService : IPedidoService
             case EstadoPedidoEnum.Devuelto:
                 pedido.FechaFinalizado = DateTime.UtcNow;
                 break;
+        }
+
+        // Manejar estado del repartidor (Disponible / No Disponible)
+        if (pedido.RepartidorId.HasValue && pedido.Repartidor != null)
+        {
+            if (nuevoEstado == EstadoPedidoEnum.EnCamino)
+            {
+                // Cuando pone un pedido en camino, ya no está libre para recibir nuevos
+                pedido.Repartidor.Disponible = false;
+                _logger.LogInformation("Repartidor #{RepartidorId} marcado como NO disponible por pedido #{PedidoId} en camino", pedido.RepartidorId, pedidoId);
+            }
+            else if (nuevoEstado is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado or EstadoPedidoEnum.Cancelado or EstadoPedidoEnum.Devuelto)
+            {
+                // Verificar si le quedan pedidos activos (asignados o en camino, básicamente no finalizados)
+                bool tienePedidosActivos = await _context.Pedidos.AnyAsync(p => 
+                    p.RepartidorId == pedido.RepartidorId && 
+                    p.Id != pedido.Id && // Excluir este pedido actual que ya está finalizado
+                    p.EstadoId != (int)EstadoPedidoEnum.Entregado &&
+                    p.EstadoId != (int)EstadoPedidoEnum.Retirado &&
+                    p.EstadoId != (int)EstadoPedidoEnum.Cancelado &&
+                    p.EstadoId != (int)EstadoPedidoEnum.Devuelto);
+
+                if (!tienePedidosActivos && !pedido.Repartidor.FueraDeServicio)
+                {
+                    pedido.Repartidor.Disponible = true;
+                    _logger.LogInformation("Repartidor #{RepartidorId} marcado como disponible (libre) al finalizar todos sus pedidos", pedido.RepartidorId);
+                }
+                else if (!tienePedidosActivos && pedido.Repartidor.FueraDeServicio)
+                {
+                    _logger.LogInformation("Repartidor #{RepartidorId} finalizó sus pedidos pero se mantiene NO disponible por estar Fuera de Servicio", pedido.RepartidorId);
+                }
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -199,6 +247,9 @@ public class PedidoService : IPedidoService
 
         if (repartidor.Rol.Nombre != "Repartidor")
             throw new InvalidOperationException($"El usuario #{repartidorId} no tiene rol de repartidor.");
+
+        if (repartidor.FueraDeServicio)
+            throw new InvalidOperationException($"El repartidor #{repartidorId} está fuera de servicio por una avería o contingencia.");
 
         if (!repartidor.Disponible)
             throw new InvalidOperationException($"El repartidor #{repartidorId} no está disponible.");

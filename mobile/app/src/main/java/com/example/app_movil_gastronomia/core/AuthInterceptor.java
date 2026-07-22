@@ -32,16 +32,22 @@ public class AuthInterceptor implements Interceptor {
     public Response intercept(@NonNull Chain chain) throws IOException {
         Request originalRequest = chain.request();
 
-        String token = tokenManager.getToken();
+        // Only inject the JWT if the request is going to our backend API.
+        // Third-party APIs (like OSRM or MapTiler) will reject the SSL handshake or return 400s if sent unexpected Authorization headers.
+        boolean isOurApi = originalRequest.url().toString().contains("api/") || originalRequest.url().toString().contains("hubs/");
+
         Request.Builder requestBuilder = originalRequest.newBuilder();
 
-        if (token != null) {
-            requestBuilder.header("Authorization", "Bearer " + token);
+        if (isOurApi) {
+            String token = tokenManager.getToken();
+            if (token != null) {
+                requestBuilder.header("Authorization", "Bearer " + token);
+            }
         }
 
         Response response = chain.proceed(requestBuilder.build());
 
-        if (response.code() == 401) {
+        if (response.code() == 401 && isOurApi) {
             tokenManager.clearToken();
             sessionManager.expireSession();
         }

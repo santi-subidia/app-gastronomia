@@ -88,6 +88,23 @@
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- maxPedidosPorRepartidor -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_max_pedidos_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/config_max_pedidos_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_max_pedidos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
             <!-- Map location picker -->
             <TextView
                 android:layout_width="match_parent"

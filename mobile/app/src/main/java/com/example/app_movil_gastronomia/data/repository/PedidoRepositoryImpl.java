@@ -29,7 +29,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Owns a single {@link MutableLiveData} instance per method — one for
+ * Owns a single {@link MutableLiveData} instance per method â€” one for
  * each of the 6 repository methods. Every instance is reset to LOADING
  * on its method call and then posted SUCCESS or ERROR. Instances are
  * never reallocated, so observers registered in the ViewModel
@@ -94,17 +94,38 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     _pedidosState.setValue(UiState.success(response.body()));
                 } else {
                     _pedidosState.setValue(UiState.error(
-                            parseMensaje(response, "Error del servidor, intente más tarde")));
+                            parseMensaje(response, "Error del servidor, intente mÃ¡s tarde")));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<PedidoResumenDto>> call, @NonNull Throwable t) {
                 Log.e(TAG, "GetPedidos network failure", t);
-                _pedidosState.setValue(UiState.error("No hay conexión a internet"));
+                _pedidosState.setValue(UiState.error("No hay conexiÃ³n a internet"));
             }
         });
 
+        return getPedidosState();
+    }
+
+    @Override
+    public LiveData<UiState<List<PedidoResumenDto>>> getPedidosPorRepartidor(int repartidorId) {
+        _pedidosState.setValue(UiState.loading());
+        pedidoApi.getPedidosPorRepartidor(repartidorId).enqueue(new Callback<List<PedidoResumenDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<PedidoResumenDto>> call, @NonNull Response<List<PedidoResumenDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    _pedidosState.setValue(UiState.success(response.body()));
+                } else {
+                    _pedidosState.setValue(UiState.error(parseMensaje(response, "Error obteniendo pedidos del repartidor")));
+                }
+            }
+            @Override
+            public void onFailure(@NonNull Call<List<PedidoResumenDto>> call, @NonNull Throwable t) {
+                Log.e(TAG, "getPedidosPorRepartidor failure", t);
+                _pedidosState.setValue(UiState.error("No hay conexion a internet"));
+            }
+        });
         return getPedidosState();
     }
 
@@ -129,14 +150,14 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     _pedidoState.setValue(UiState.success(response.body()));
                 } else {
                     _pedidoState.setValue(UiState.error(
-                            parseMensaje(response, "Error del servidor, intente más tarde")));
+                            parseMensaje(response, "Error del servidor, intente mÃ¡s tarde")));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<PedidoDetalleDto> call, @NonNull Throwable t) {
                 Log.e(TAG, "GetPedido network failure", t);
-                _pedidoState.setValue(UiState.error("No hay conexión a internet"));
+                _pedidoState.setValue(UiState.error("No hay conexiÃ³n a internet"));
             }
         });
 
@@ -168,14 +189,14 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     _byEstadoState.setValue(UiState.success(response.body()));
                 } else {
                     _byEstadoState.setValue(UiState.error(
-                            parseMensaje(response, "Error del servidor, intente más tarde")));
+                            parseMensaje(response, "Error del servidor, intente mÃ¡s tarde")));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<PedidoResumenDto>> call, @NonNull Throwable t) {
                 Log.e(TAG, "GetByEstado network failure", t);
-                _byEstadoState.setValue(UiState.error("No hay conexión a internet"));
+                _byEstadoState.setValue(UiState.error("No hay conexiÃ³n a internet"));
             }
         });
 
@@ -223,7 +244,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
             @Override
             public void onFailure(@NonNull Call<PedidoDetalleDto> call, @NonNull Throwable t) {
                 Log.e(TAG, "CrearPedido network failure", t);
-                _crearState.setValue(UiState.error("No hay conexión a internet"));
+                _crearState.setValue(UiState.error("No hay conexiÃ³n a internet"));
             }
         });
 
@@ -251,13 +272,13 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         // a missing / unloaded cache fails fast with a clear error.
         if (!catalogoRepository.isReady()) {
             _cambiarEstadoState.setValue(UiState.error(
-                    "El catálogo de estados aún no está disponible, intente nuevamente"));
+                    "El catÃ¡logo de estados aÃºn no estÃ¡ disponible, intente nuevamente"));
             return getCambiarEstadoState();
         }
         final int nuevoEstadoId = catalogoRepository.resolveEstadoId(estado.getDbValue());
         if (nuevoEstadoId <= 0) {
             _cambiarEstadoState.setValue(UiState.error(
-                    "Estado no reconocido por el catálogo: " + estado.getApiValue()));
+                    "Estado no reconocido por el catÃ¡logo: " + estado.getApiValue()));
             return getCambiarEstadoState();
         }
 
@@ -271,14 +292,14 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     _cambiarEstadoState.setValue(UiState.success(response.body()));
                 } else {
                     _cambiarEstadoState.setValue(UiState.error(
-                            parseMensaje(response, "Error del servidor, intente más tarde")));
+                            parseMensaje(response, "Error del servidor, intente mÃ¡s tarde")));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<PedidoDetalleDto> call, @NonNull Throwable t) {
                 Log.e(TAG, "CambiarEstado network failure", t);
-                _cambiarEstadoState.setValue(UiState.error("No hay conexión a internet"));
+                _cambiarEstadoState.setValue(UiState.error("No hay conexiÃ³n a internet"));
             }
         });
 
@@ -313,14 +334,14 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     _asignarRepartidorState.setValue(UiState.success(response.body()));
                 } else {
                     _asignarRepartidorState.setValue(UiState.error(
-                            parseMensaje(response, "Error del servidor, intente más tarde")));
+                            parseMensaje(response, "Error del servidor, intente mÃ¡s tarde")));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<PedidoDetalleDto> call, @NonNull Throwable t) {
                 Log.e(TAG, "AsignarRepartidor network failure", t);
-                _asignarRepartidorState.setValue(UiState.error("No hay conexión a internet"));
+                _asignarRepartidorState.setValue(UiState.error("No hay conexiÃ³n a internet"));
             }
         });
 
@@ -357,7 +378,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
     }
 
     private static ParsedError parseCrearError(Response<?> response) {
-        final String fallback = "Error del servidor, intente más tarde";
+        final String fallback = "Error del servidor, intente mÃ¡s tarde";
         try {
             if (response.errorBody() != null) {
                 String errorBody = response.errorBody().string();
@@ -365,7 +386,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                 if (errorResponse != null) {
                     String code = errorResponse.getCodigo();
                     if ("NO_OPEN_REGISTER".equalsIgnoreCase(code)) {
-                        return new ParsedError(code, "Abrí una caja antes de crear un pedido");
+                        return new ParsedError(code, "AbrÃ­ una caja antes de crear un pedido");
                     }
                     if (errorResponse.getMensaje() != null) {
                         return new ParsedError(code, errorResponse.getMensaje());
@@ -388,3 +409,4 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         }
     }
 }
+

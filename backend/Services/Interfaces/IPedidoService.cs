@@ -9,6 +9,7 @@ public interface IPedidoService
     Task<Pedido?> ObtenerPedidoPorIdAsync(int id);
     Task<IEnumerable<Pedido>> ObtenerPedidosAsync();
     Task<IEnumerable<Pedido>> ObtenerPedidosPorEstadoAsync(EstadoPedidoEnum estado);
+    Task<IEnumerable<Pedido>> ObtenerPedidosPorRepartidorAsync(int repartidorId);
     Task<Pedido> CambiarEstadoAsync(int pedidoId, EstadoPedidoEnum nuevoEstado);
     Task<Pedido> AsignarRepartidorAsync(int pedidoId, int repartidorId);
 }

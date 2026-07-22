@@ -13,11 +13,13 @@ import com.example.app_movil_gastronomia.data.api.MetodoPagoApi;
 import com.example.app_movil_gastronomia.data.api.MetodoVentaApi;
 import com.example.app_movil_gastronomia.data.api.UsuarioApi;
 import com.example.app_movil_gastronomia.data.api.PedidoApi;
+import com.example.app_movil_gastronomia.data.api.OsrmApi;
 import com.example.app_movil_gastronomia.data.api.ProductoApi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import javax.inject.Singleton;
+import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
@@ -81,6 +83,17 @@ public class NetworkModule {
 
     @Provides
     @Singleton
+    @Named("osrm")
+    public Retrofit provideOsrmRetrofit(OkHttpClient client, Gson gson) {
+        return new Retrofit.Builder()
+                .baseUrl(BuildConfig.OSRM_BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+    }
+
+    @Provides
+    @Singleton
     public AuthApi provideAuthApi(Retrofit retrofit) {
         return retrofit.create(AuthApi.class);
     }
@@ -137,5 +150,11 @@ public class NetworkModule {
     @Singleton
     public UsuarioApi provideUsuarioApi(Retrofit retrofit) {
         return retrofit.create(UsuarioApi.class);
+    }
+
+    @Provides
+    @Singleton
+    public OsrmApi provideOsrmApi(@Named("osrm") Retrofit retrofit) {
+        return retrofit.create(OsrmApi.class);
     }
 }

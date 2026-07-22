@@ -102,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
                 performLogout();
             } else if (id == R.id.nav_configuracion) {
                 navController.navigate(R.id.nav_configuracion);
+            } else if (id == R.id.nav_repartidores_mapa) {
+                navController.navigate(R.id.nav_repartidores_mapa);
             }
             binding.drawerLayout.closeDrawer(GravityCompat.START);
             return true;
@@ -301,10 +303,7 @@ public class MainActivity extends AppCompatActivity {
                         .add(0, R.id.nav_repartidor_home, 0, R.string.repartidor_title)
                         .setIcon(R.drawable.ic_home_24dp);
                 bottomNav.getMenu()
-                        .add(0, R.id.nav_pedido_list, 1, R.string.all_orders)
-                        .setIcon(R.drawable.ic_pedidos_24dp);
-                bottomNav.getMenu()
-                        .add(0, R.id.nav_mapa, 2, R.string.mapa_title)
+                        .add(0, R.id.nav_mapa, 1, R.string.mapa_title)
                         .setIcon(R.drawable.ic_mapa_24dp);
                 break;
             default:
@@ -322,6 +321,7 @@ public class MainActivity extends AppCompatActivity {
         
         Menu drawerMenu = binding.navView.getMenu();
         MenuItem configItem = drawerMenu.findItem(R.id.nav_configuracion);
+        MenuItem driversMapItem = drawerMenu.findItem(R.id.nav_repartidores_mapa);
         
         if (configItem != null) {
             String normalized = role.trim().toLowerCase(Locale.ROOT);
@@ -331,6 +331,9 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 configItem.setVisible(true);
             }
+        }
+        if (driversMapItem != null) {
+            driversMapItem.setVisible("cajero".equals(role.trim().toLowerCase(Locale.ROOT)));
         }
     }
 

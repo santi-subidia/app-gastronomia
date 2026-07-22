@@ -80,6 +80,10 @@
     <string name="last_sent">Último envío: %s</string>
     <string name="waiting_gps">Esperando GPS...</string>
     <string name="gps_unavailable">GPS no disponible</string>
+    <string name="route_calculating">Calculando ruta...</string>
+    <string name="route_ready">Ruta lista</string>
+    <string name="route_waiting_location">Esperando ubicación actual...</string>
+    <string name="route_location_permission_denied">Se necesita permiso de ubicación para calcular la ruta</string>
 
     <!-- Cajero home -->
     <string name="cajero_title">Cajero</string>
@@ -93,6 +97,11 @@
     <string name="go_to_config">Configuraci\u00f3n</string>
     <string name="coming_soon">Pr\u00f3ximamente</string>
     <string name="go_to_create_order">Crear Pedido</string>
+
+    <!-- Cajero driver monitoring -->
+    <string name="repartidores_mapa_title">Estado de Repartidores</string>
+    <string name="no_repartidores">No hay repartidores registrados</string>
+    <string name="driver_location_unavailable">Ubicación no disponible</string>
 
     <!-- Crear pedido form -->
     <string name="create_order_title">Crear Pedido</string>
@@ -151,6 +160,7 @@
     <string name="config_metodo_pago_nombre_hint">Método de pago por defecto</string>
     <string name="config_latitud_hint">Latitud de partida</string>
     <string name="config_longitud_hint">Longitud de partida</string>
+    <string name="config_max_pedidos_hint">Máximo de pedidos por repartidor</string>
 
     <!-- Navigation UX: drawer, toolbar overflow, splash, role labels, header fallback -->
     <string name="drawer_config">Configuraci\u00f3n</string>

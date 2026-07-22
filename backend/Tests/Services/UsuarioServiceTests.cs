@@ -136,6 +136,25 @@ public class UsuarioServiceTests
         context.Dispose();
     }
 
+    [Fact]
+    public async Task ObtenerUsuariosAsync_WithRoleFilter_ReturnsOnlyMatchingRole()
+    {
+        var context = CreateDbContext();
+        SeedUser(context, username: "cashier", plainPassword: "pass123", rolId: 1);
+        SeedUser(context, username: "driver", plainPassword: "pass123", rolId: 3);
+        var service = new UsuarioService(context);
+
+        var result = await service.ObtenerUsuariosAsync("Repartidor");
+
+        var users = result.ToList();
+        Assert.Single(users);
+        Assert.Equal("driver", users[0].UsuarioNombre);
+        Assert.Equal("Repartidor", users[0].RolNombre);
+
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
     // ================================================================
     // ObtenerUsuarioPorIdAsync: returns user when found, null when not
     // ================================================================

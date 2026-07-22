@@ -173,7 +173,7 @@ builder.Services.AddRateLimiter(options =>
         if (HttpMethods.IsOptions(ctx.Request.Method))
             return RateLimitPartition.GetNoLimiter("OPTIONS");
 
-        var key = ctx.User.FindFirstValue("sub")
+        var key = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? ctx.User.FindFirstValue("sub")
             ?? ctx.Connection.RemoteIpAddress?.ToString()
             ?? "unknown";
 

@@ -7,6 +7,7 @@ public class UsuarioDto {
     private String rolNombre;
     private boolean disponible;
     private boolean activo;
+    private boolean fueraDeServicio;
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -20,4 +21,6 @@ public class UsuarioDto {
     public void setDisponible(boolean disponible) { this.disponible = disponible; }
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
+    public boolean isFueraDeServicio() { return fueraDeServicio; }
+    public void setFueraDeServicio(boolean fueraDeServicio) { this.fueraDeServicio = fueraDeServicio; }
 }

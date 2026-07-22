@@ -5,6 +5,10 @@ using ApiGastronomia.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Microsoft.EntityFrameworkCore;
+using ApiGastronomia.Infrastructure.Data;
+using ApiGastronomia.Domain.Entities;
+using ApiGastronomia.Domain.Enums;
 
 namespace ApiGastronomia.Tests.Controllers;
 
@@ -384,6 +388,25 @@ public class UsuariosControllerTests
         Assert.Empty(users);
     }
 
+    [Fact]
+    public async Task GetAll_WithRoleFilter_PassesRoleToService()
+    {
+        var mockService = new Mock<IUsuarioService>();
+        mockService
+            .Setup(s => s.ObtenerUsuariosAsync("Repartidor"))
+            .ReturnsAsync([RegularUser]);
+
+        var controller = new UsuariosController(mockService.Object);
+
+        var result = await controller.GetAll("Repartidor");
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var users = Assert.IsAssignableFrom<IEnumerable<UsuarioResponse>>(okResult.Value!);
+        Assert.Single(users);
+        Assert.Equal("Repartidor", users.Single().RolNombre);
+        mockService.Verify(s => s.ObtenerUsuariosAsync("Repartidor"), Times.Once);
+    }
+
     // ================================================================
     // Triangulation: Create with different role
     // ================================================================
@@ -411,5 +434,59 @@ public class UsuariosControllerTests
         var response = Assert.IsType<UsuarioResponse>(createdResult.Value!);
         Assert.Equal("Repartidor", response.RolNombre);
         Assert.Equal(3, response.RolId);
+    }
+
+    [Fact]
+    public async Task GetRepartidoresDisponibles_FiltersByMaxPedidosPorRepartidor()
+    {
+        // Arrange
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        using var context = new AppDbContext(options);
+        
+        // Seed configuration with MaxPedidosPorRepartidor = 2
+        context.Configuracion.Add(new Configuracion { Id = 1, MaxPedidosPorRepartidor = 2 });
+
+        // Seed orders
+        // Repartidor 10 (has 1 active order) -> should be returned
+        context.Pedidos.Add(new Pedido { Id = 1, RepartidorId = 10, EstadoId = (int)EstadoPedidoEnum.EnCamino, MetodoPagoId = 1, MetodoVentaId = 1 });
+        
+        // Repartidor 11 (has 2 active orders) -> should NOT be returned
+        context.Pedidos.Add(new Pedido { Id = 2, RepartidorId = 11, EstadoId = (int)EstadoPedidoEnum.ListoParaRetirar, MetodoPagoId = 1, MetodoVentaId = 1 });
+        context.Pedidos.Add(new Pedido { Id = 3, RepartidorId = 11, EstadoId = 2, MetodoPagoId = 1, MetodoVentaId = 1 }); // 2 is EnPreparacion (corresponds to user's requested number 2)
+
+        // Repartidor 12 (has 2 active orders but under different definition)
+        context.Pedidos.Add(new Pedido { Id = 4, RepartidorId = 12, EstadoId = 3, MetodoPagoId = 1, MetodoVentaId = 1 });
+        context.Pedidos.Add(new Pedido { Id = 5, RepartidorId = 12, EstadoId = 4, MetodoPagoId = 1, MetodoVentaId = 1 });
+
+        await context.SaveChangesAsync();
+
+        var mockService = new Mock<IUsuarioService>();
+        mockService.Setup(s => s.ObtenerUsuariosAsync()).ReturnsAsync(new List<UsuarioResponse>
+        {
+            new(Id: 10, UsuarioNombre: "rep10", RolId: 3, RolNombre: "Repartidor", Disponible: true, Activo: true),
+            new(Id: 11, UsuarioNombre: "rep11", RolId: 3, RolNombre: "Repartidor", Disponible: true, Activo: true),
+            new(Id: 12, UsuarioNombre: "rep12", RolId: 3, RolNombre: "Repartidor", Disponible: true, Activo: true),
+            new(Id: 13, UsuarioNombre: "rep13", RolId: 3, RolNombre: "Repartidor", Disponible: true, Activo: true),
+        });
+
+        var controller = new UsuariosController(mockService.Object, context);
+
+        // Act
+        var result = await controller.GetRepartidoresDisponibles();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var repartidores = Assert.IsAssignableFrom<IEnumerable<UsuarioResponse>>(okResult.Value!).ToList();
+
+        // rep10 (1 order) and rep13 (0 orders) should be returned.
+        // rep11 (2 orders) and rep12 (2 orders) should be filtered out because they reached max (2).
+        Assert.Equal(2, repartidores.Count);
+        Assert.Contains(repartidores, r => r.Id == 10);
+        Assert.Contains(repartidores, r => r.Id == 13);
+        Assert.DoesNotContain(repartidores, r => r.Id == 11);
+        Assert.DoesNotContain(repartidores, r => r.Id == 12);
     }
 }

@@ -31,4 +31,7 @@ public class Configuracion
     /// </summary>
     [Column("longitud_partida")]
     public double? LongitudPartida { get; set; }
+
+    [Column("max_pedidos_por_repartidor")]
+    public int? MaxPedidosPorRepartidor { get; set; }
 }

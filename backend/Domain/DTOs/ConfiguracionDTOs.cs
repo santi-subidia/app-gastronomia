@@ -10,7 +10,8 @@ public record ConfiguracionResponse(
     string? MetodoPagoDefaultNombre,
     string? NombreGastronomico,
     double? LatitudPartida,
-    double? LongitudPartida
+    double? LongitudPartida,
+    int? MaxPedidosPorRepartidor = null
 );
 
 /// <summary>
@@ -21,4 +22,4 @@ public record CrearConfiguracionRequest(int? MetodoPagoDefaultId, string? Nombre
 /// <summary>
 /// Request DTO for partially updating the singleton configuration. All fields are optional.
 /// </summary>
-public record ActualizarConfiguracionRequest(int? MetodoPagoDefaultId, string? NombreGastronomico, double? LatitudPartida, double? LongitudPartida);
+public record ActualizarConfiguracionRequest(int? MetodoPagoDefaultId, string? NombreGastronomico, double? LatitudPartida, double? LongitudPartida, int? MaxPedidosPorRepartidor = null);

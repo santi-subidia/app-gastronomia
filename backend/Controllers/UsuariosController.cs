@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
+using System.Security.Claims;
+using ApiGastronomia.Infrastructure.Data;
+using ApiGastronomia.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiGastronomia.Controllers;
 
@@ -11,20 +15,23 @@ namespace ApiGastronomia.Controllers;
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
+    private readonly AppDbContext? _context;
 
-    public UsuariosController(IUsuarioService usuarioService)
+    public UsuariosController(IUsuarioService usuarioService, AppDbContext? context = null)
     {
         _usuarioService = usuarioService;
+        _context = context;
     }
 
     /// <summary>
-    /// Obtiene todos los usuarios activos. Solo accesible para Admin.
+    /// Obtiene todos los usuarios activos. Accesible para Admin y Cajero.
+    /// Puede filtrar por rol usando el query string ?role=Repartidor.
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<IEnumerable<UsuarioResponse>>> GetAll()
+    [Authorize(Roles = "Admin,Cajero")]
+    public async Task<ActionResult<IEnumerable<UsuarioResponse>>> GetAll([FromQuery] string? role = null)
     {
-        var usuarios = await _usuarioService.ObtenerUsuariosAsync();
+        var usuarios = await _usuarioService.ObtenerUsuariosAsync(role);
         return Ok(usuarios);
     }
 
@@ -39,8 +46,8 @@ public class UsuariosController : ControllerBase
         if (usuario is null)
             return NotFound(new { Mensaje = $"Usuario #{id} no encontrado." });
 
-        var currentUserId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-        var currentUserRole = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var currentUserRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role");
 
         if (currentUserRole != "Admin" && currentUserId != id.ToString())
             return Forbid();
@@ -74,14 +81,14 @@ public class UsuariosController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<UsuarioResponse>> Update(int id, [FromBody] UpdateUserRequest request)
     {
-        var currentUserId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-        var currentUserRole = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var currentUserRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role");
 
         if (currentUserRole != "Admin" && currentUserId != id.ToString())
             return Forbid();
 
         var result = await _usuarioService.ActualizarUsuarioAsync(
-            id, request.UsuarioNombre, request.Password, request.RolId, request.Disponible);
+            id, request.UsuarioNombre, request.Password, request.RolId, request.Disponible, request.FueraDeServicio);
 
         if (result is null)
             return NotFound(new { Mensaje = $"Usuario #{id} no encontrado." });
@@ -110,8 +117,37 @@ public class UsuariosController : ControllerBase
     [Authorize(Roles = "Admin,Cajero")]
     public async Task<ActionResult<IEnumerable<UsuarioResponse>>> GetRepartidoresDisponibles()
     {
+        var maxPedidos = 1;
+        if (_context != null)
+        {
+            var config = await _context.Configuracion.FirstOrDefaultAsync();
+            maxPedidos = config?.MaxPedidosPorRepartidor ?? 1;
+        }
+
         var usuarios = await _usuarioService.ObtenerUsuariosAsync();
         var repartidores = usuarios.Where(u => u.RolNombre == "Repartidor" && u.Disponible);
-        return Ok(repartidores);
+
+        if (_context == null)
+        {
+            return Ok(repartidores);
+        }
+
+        var filteredRepartidores = new List<UsuarioResponse>();
+        foreach (var repartidor in repartidores)
+        {
+            var count = await _context.Pedidos.CountAsync(p =>
+                p.RepartidorId == repartidor.Id &&
+                (p.EstadoId == (int)EstadoPedidoEnum.ListoParaRetirar || 
+                 p.EstadoId == (int)EstadoPedidoEnum.EnCamino ||
+                 p.EstadoId == 2 ||
+                 p.EstadoId == 3));
+
+            if (count < maxPedidos)
+            {
+                filteredRepartidores.Add(repartidor);
+            }
+        }
+
+        return Ok(filteredRepartidores);
     }
 }

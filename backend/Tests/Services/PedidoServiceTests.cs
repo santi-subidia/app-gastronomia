@@ -37,6 +37,7 @@ public class PedidoServiceTests
 
         var mockClients = new Mock<IHubClients>();
         mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockProxy.Object);
+        mockClients.Setup(c => c.All).Returns(mockProxy.Object);
 
         return (mockClients, mockProxy);
     }

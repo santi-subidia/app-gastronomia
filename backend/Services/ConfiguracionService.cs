@@ -57,7 +57,7 @@ public class ConfiguracionService : IConfiguracionService
         return Map(config);
     }
 
-    public async Task<ConfiguracionResponse?> ActualizarAsync(int? metodoPagoDefaultId, string? nombreGastronomico, double? latitudPartida, double? longitudPartida)
+    public async Task<ConfiguracionResponse?> ActualizarAsync(int? metodoPagoDefaultId, string? nombreGastronomico, double? latitudPartida, double? longitudPartida, int? maxPedidosPorRepartidor = null)
     {
         var config = await _context.Configuracion
             .Include(c => c.MetodoPagoDefault)
@@ -69,6 +69,7 @@ public class ConfiguracionService : IConfiguracionService
         if (nombreGastronomico is not null) config.NombreGastronomico = nombreGastronomico;
         if (latitudPartida.HasValue) config.LatitudPartida = latitudPartida.Value;
         if (longitudPartida.HasValue) config.LongitudPartida = longitudPartida.Value;
+        if (maxPedidosPorRepartidor.HasValue) config.MaxPedidosPorRepartidor = maxPedidosPorRepartidor.Value;
 
         await _context.SaveChangesAsync();
 
@@ -87,5 +88,6 @@ public class ConfiguracionService : IConfiguracionService
             c.MetodoPagoDefault?.Nombre,
             c.NombreGastronomico,
             c.LatitudPartida,
-            c.LongitudPartida);
+            c.LongitudPartida,
+            c.MaxPedidosPorRepartidor);
 }

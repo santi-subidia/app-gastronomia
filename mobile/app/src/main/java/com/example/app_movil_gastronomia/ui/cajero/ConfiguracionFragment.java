@@ -42,6 +42,10 @@ import com.example.app_movil_gastronomia.data.dto.configuracion.ConfiguracionDto
 import com.example.app_movil_gastronomia.databinding.FragmentConfiguracionBinding;
 import com.google.android.material.snackbar.Snackbar;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+
 import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -241,6 +245,7 @@ public class ConfiguracionFragment extends Fragment {
             case SUCCESS:
                 binding.buttonSave.setEnabled(true);
                 Toast.makeText(requireContext(), R.string.config_saved, Toast.LENGTH_SHORT).show();
+                viewModel.clearSaveState();
                 navigateBack();
                 break;
             case ERROR:
@@ -262,6 +267,7 @@ public class ConfiguracionFragment extends Fragment {
         binding.buttonSave.setText(R.string.save_config);
         binding.inputNombre.setText("");
         binding.inputMetodoPago.setText("", false);
+        binding.inputMaxPedidos.setText("");
         selectedLat = null;
         selectedLng = null;
     }
@@ -273,6 +279,9 @@ public class ConfiguracionFragment extends Fragment {
         );
         binding.inputMetodoPago.setText(
                 dto.getMetodoPagoDefaultNombre() != null ? dto.getMetodoPagoDefaultNombre() : "", false
+        );
+        binding.inputMaxPedidos.setText(
+                dto.getMaxPedidosPorRepartidor() != null ? String.valueOf(dto.getMaxPedidosPorRepartidor()) : ""
         );
         selectedLat = dto.getLatitudPartida();
         selectedLng = dto.getLongitudPartida();
@@ -306,6 +315,10 @@ public class ConfiguracionFragment extends Fragment {
 
         dto.setLatitudPartida(selectedLat);
         dto.setLongitudPartida(selectedLng);
+        
+        String maxPedidosStr = textOf(binding.inputMaxPedidos);
+        dto.setMaxPedidosPorRepartidor(parseInteger(maxPedidosStr));
+        
         // id is intentionally not read from the form ?" the VM copies it
         // from the cached config when this is an update, so the server
         // receives a body that matches the previously saved row.
@@ -354,22 +367,20 @@ public class ConfiguracionFragment extends Fragment {
     private void centerMapOnCurrentLocation() {
         if (mapLibreMap == null) return;
         
-        LocationManager lm = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
-        if (lm != null) {
-            Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (loc == null) loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            
-            if (loc != null) {
-                mapLibreMap.setCameraPosition(new CameraPosition.Builder()
-                        .target(new LatLng(loc.getLatitude(), loc.getLongitude()))
-                        .zoom(16)
-                        .build());
-                return;
-            }
-        }
-        
-        // Fallback if no location found
-        centerMapOnDefaultLocation();
+        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(requireActivity(), location -> {
+                    if (location != null && mapLibreMap != null) {
+                        mapLibreMap.setCameraPosition(new CameraPosition.Builder()
+                                .target(new LatLng(location.getLatitude(), location.getLongitude()))
+                                .zoom(16)
+                                .build());
+                    } else {
+                        // Fallback in case Google Services can't determine location
+                        centerMapOnDefaultLocation();
+                    }
+                })
+                .addOnFailureListener(e -> centerMapOnDefaultLocation());
     }
 
     private void centerMapOnDefaultLocation() {

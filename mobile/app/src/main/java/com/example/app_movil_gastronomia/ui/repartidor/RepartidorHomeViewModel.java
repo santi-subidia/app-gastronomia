@@ -7,6 +7,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.app_movil_gastronomia.core.SignalRService;
+import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
@@ -30,13 +31,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
  * reacts in real time to three things:
  *
  * <ul>
- *   <li>{@code RepartidorAsignadoMessage} → reload the pedido list so
+ *   <li>{@code RepartidorAsignadoMessage} â†’ reload the pedido list so
  *       a new assignment shows up immediately.</li>
- *   <li>{@code PedidoFinalizadoMessage} → surface a toast on the
+ *   <li>{@code PedidoFinalizadoMessage} â†’ surface a toast on the
  *       fragment via a separate {@link LiveData} stream, so the
  *       fragment can render transient UI without polluting the list
  *       state.</li>
- *   <li>{@code getConnected()} flips true (reconnect) → re-join the
+ *   <li>{@code getConnected()} flips true (reconnect) â†’ re-join the
  *       per-pedido SignalR group for every pedido currently
  *       {@code "En Camino"} in the visible list, so a transient hub
  *       reconnect after a network blip does not silently drop the
@@ -53,6 +54,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class RepartidorHomeViewModel extends ViewModel {
 
     private final PedidoRepository pedidoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final TokenManager tokenManager;
 
     /**
      * Optional SignalR transport. Injected when Hilt has wired
@@ -75,16 +78,20 @@ public class RepartidorHomeViewModel extends ViewModel {
 
     @Inject
     public RepartidorHomeViewModel(PedidoRepository pedidoRepository,
+                                   UsuarioRepository usuarioRepository,
+                                   TokenManager tokenManager,
                                    @Nullable SignalRService signalRService) {
         this.pedidoRepository = pedidoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.tokenManager = tokenManager;
         this.signalRService = signalRService;
 
         this.repositoryObserver = state::setValue;
         pedidoRepository.getPedidosState().observeForever(repositoryObserver);
-        pedidoRepository.getPedidos();
+        fetchPedidos();
 
         if (signalRService != null) {
-            this.repartidorAsignadoObserver = msg -> pedidoRepository.getPedidos();
+            this.repartidorAsignadoObserver = msg -> fetchPedidos();
             signalRService.getRepartidorAsignado().observeForever(repartidorAsignadoObserver);
 
             this.pedidoFinalizadoObserver = pedidoFinalizado::setValue;
@@ -129,8 +136,17 @@ public class RepartidorHomeViewModel extends ViewModel {
         }
     }
 
+        private void fetchPedidos() {
+        int userId = tokenManager.getUserId();
+        if (userId > 0) {
+            pedidoRepository.getPedidosPorRepartidor(userId);
+        } else {
+            pedidoRepository.getPedidos();
+        }
+    }
+
     public void retry() {
-        pedidoRepository.getPedidos();
+        fetchPedidos();
     }
 
     /**
@@ -148,22 +164,17 @@ public class RepartidorHomeViewModel extends ViewModel {
         List<PedidoResumenDto> pedidos = current.getData();
         if (pedidos == null) return;
         for (PedidoResumenDto p : pedidos) {
-            if (isEnCamino(p.getEstado())) {
+            if (isEnCaminoOrListo(p.getEstado())) {
                 signalRService.unirseAPedido(p.getId());
             }
         }
     }
 
-    /**
-     * Case-insensitive matcher for the "En Camino" estado. Accepts
-     * both the canonical API value ({@code "EnCamino"}) and the
-     * human-friendly display label ({@code "En Camino"}), the same
-     * way {@code CocinaHomeFragment} does for its estados.
-     */
-    static boolean isEnCamino(String estado) {
+    static boolean isEnCaminoOrListo(String estado) {
         if (estado == null) return false;
         String normalized = estado.trim().toLowerCase();
-        return "encamino".equals(normalized) || "en camino".equals(normalized);
+        return "encamino".equals(normalized) || "en camino".equals(normalized) 
+            || "listoparetirar".equals(normalized) || "listo para retirar".equals(normalized);
     }
 
     @Override
@@ -184,3 +195,4 @@ public class RepartidorHomeViewModel extends ViewModel {
     }
 
 }
+

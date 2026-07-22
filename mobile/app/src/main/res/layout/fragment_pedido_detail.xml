@@ -110,7 +110,31 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/label_cliente"
-                        tools:text="Juan Pérez" />
+                        tools:text="Juan PǸrez" />
+
+                    <TextView
+                        android:id="@+id/label_direccion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Direccin"
+                        android:textAppearance="?attr/textAppearanceCaption"
+                        android:textColor="@color/text_muted"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/cliente_nombre" />
+
+                    <TextView
+                        android:id="@+id/cliente_direccion"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textAppearance="?attr/textAppearanceBody1"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/label_direccion"
+                        tools:text="Calle Falsa 123" />
 
                     <TextView
                         android:id="@+id/label_metodo"
@@ -121,7 +145,7 @@
                         android:textAppearance="?attr/textAppearanceCaption"
                         android:textColor="@color/text_muted"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/cliente_nombre" />
+                        app:layout_constraintTop_toBottomOf="@id/cliente_direccion" />
 
                     <TextView
                         android:id="@+id/metodo_venta"
@@ -226,6 +250,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/change_status" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_ver_ruta"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Ver Ruta en Mapa"
+                    android:visibility="gone" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/button_cancelar_pedido"

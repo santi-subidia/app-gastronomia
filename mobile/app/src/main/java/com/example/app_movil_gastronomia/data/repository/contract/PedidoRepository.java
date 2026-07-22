@@ -30,6 +30,12 @@ public interface PedidoRepository {
     LiveData<UiState<List<PedidoResumenDto>>> getPedidos();
 
     /**
+     * Fetches the list of pedidos assigned to a specific driver.
+     * Reuses getPedidosState() so observers don't need changing.
+     */
+    LiveData<UiState<List<PedidoResumenDto>>> getPedidosPorRepartidor(int repartidorId);
+
+    /**
      * Returns the single {@link LiveData} instance that holds the current
      * state of {@link #getPedidos()} calls.
      */

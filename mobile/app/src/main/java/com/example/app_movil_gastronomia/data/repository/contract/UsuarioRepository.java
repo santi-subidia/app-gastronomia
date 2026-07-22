@@ -6,6 +6,9 @@ import java.util.List;
 import androidx.lifecycle.LiveData;
 
 public interface UsuarioRepository {
+    LiveData<UiState<List<UsuarioDto>>> getRepartidoresState();
+    void fetchRepartidores();
+
     LiveData<UiState<List<UsuarioDto>>> getRepartidoresDisponiblesState();
     void fetchRepartidoresDisponibles();
     

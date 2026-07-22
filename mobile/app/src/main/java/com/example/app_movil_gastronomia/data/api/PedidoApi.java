@@ -41,6 +41,9 @@ public interface PedidoApi {
     @GET("api/pedidos/estado/{estado}")
     Call<List<PedidoResumenDto>> getByEstado(@Path("estado") String estado);
 
+    @GET("api/pedidos/repartidor/{repartidorId}")
+    Call<List<PedidoResumenDto>> getPedidosPorRepartidor(@Path("repartidorId") int repartidorId);
+
     @POST("api/pedidos")
     Call<PedidoDetalleDto> crearPedido(@Body CrearPedidoRequest request);
 

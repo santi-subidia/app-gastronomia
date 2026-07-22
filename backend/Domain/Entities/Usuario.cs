@@ -24,6 +24,9 @@ public class Usuario
     [Column("activo")]
     public bool Activo { get; set; } = true;
 
+    [Column("fuera_de_servicio")]
+    public bool FueraDeServicio { get; set; } = false;
+
     [Column("rol_id")]
     public int RolId { get; set; }
 

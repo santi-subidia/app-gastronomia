@@ -9,6 +9,10 @@
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="@string/drawer_config" />
         <item
+            android:id="@+id/nav_repartidores_mapa"
+            android:icon="@drawable/ic_mapa_24dp"
+            android:title="@string/repartidores_mapa_title" />
+        <item
             android:id="@+id/nav_cerrar_sesion"
             android:icon="@drawable/ic_logout_24dp"
             android:title="@string/drawer_logout" />

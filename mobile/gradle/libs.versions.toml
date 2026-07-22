@@ -21,6 +21,7 @@ securityCrypto = "1.1.0"
 signalr = "8.0.0"
 orgJson = "20231013"
 maplibre = "11.11.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -46,6 +47,7 @@ security-crypto = { group = "androidx.security", name = "security-crypto", versi
 signalr = { group = "com.microsoft.signalr", name = "signalr", version.ref = "signalr" }
 org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 maplibre = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

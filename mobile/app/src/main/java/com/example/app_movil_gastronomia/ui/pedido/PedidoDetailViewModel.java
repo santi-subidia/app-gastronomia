@@ -32,29 +32,36 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class PedidoDetailViewModel extends ViewModel {
 
     private final PedidoRepository pedidoRepository;
+    private final UsuarioRepository usuarioRepository;
 
     private final MutableLiveData<UiState<PedidoDetalleDto>> detailState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> cambiarEstadoState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> asignarRepartidorState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<List<UsuarioDto>>> repartidoresDisponiblesState = new MutableLiveData<>();
 
     private final Observer<UiState<PedidoDetalleDto>> detailObserver;
     private final Observer<UiState<PedidoDetalleDto>> cambiarEstadoObserver;
     private final Observer<UiState<PedidoDetalleDto>> asignarRepartidorObserver;
+    private final Observer<UiState<List<UsuarioDto>>> repartidoresDisponiblesObserver;
 
     private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
-    public PedidoDetailViewModel(PedidoRepository pedidoRepository) {
+    public PedidoDetailViewModel(PedidoRepository pedidoRepository, UsuarioRepository usuarioRepository) {
         this.pedidoRepository = pedidoRepository;
+        this.usuarioRepository = usuarioRepository;
+        
         this.detailObserver = detailState::setValue;
         this.cambiarEstadoObserver = cambiarEstadoState::setValue;
         this.asignarRepartidorObserver = asignarRepartidorState::setValue;
+        this.repartidoresDisponiblesObserver = repartidoresDisponiblesState::setValue;
 
         pedidoRepository.getPedidoState().observeForever(detailObserver);
         pedidoRepository.getCambiarEstadoState().observeForever(cambiarEstadoObserver);
         pedidoRepository.getAsignarRepartidorState().observeForever(asignarRepartidorObserver);
+        usuarioRepository.getRepartidoresDisponiblesState().observeForever(repartidoresDisponiblesObserver);
 
-        observerRegistrationCount.addAndGet(3);
+        observerRegistrationCount.addAndGet(4);
     }
 
     public LiveData<UiState<PedidoDetalleDto>> getDetailState() {
@@ -85,12 +92,21 @@ public class PedidoDetailViewModel extends ViewModel {
         pedidoRepository.asignarRepartidor(id, repartidorId);
     }
 
+    public LiveData<UiState<List<UsuarioDto>>> getRepartidoresDisponiblesState() {
+        return repartidoresDisponiblesState;
+    }
+
+    public void fetchRepartidoresDisponibles() {
+        usuarioRepository.fetchRepartidoresDisponibles();
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();
         pedidoRepository.getPedidoState().removeObserver(detailObserver);
         pedidoRepository.getCambiarEstadoState().removeObserver(cambiarEstadoObserver);
         pedidoRepository.getAsignarRepartidorState().removeObserver(asignarRepartidorObserver);
+        usuarioRepository.getRepartidoresDisponiblesState().removeObserver(repartidoresDisponiblesObserver);
     }
 
     /** Test-only diagnostic: how many times the VM registered an observer. */

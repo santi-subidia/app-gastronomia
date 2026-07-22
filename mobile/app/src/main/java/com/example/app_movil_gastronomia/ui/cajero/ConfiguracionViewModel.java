@@ -65,6 +65,7 @@ public class ConfiguracionViewModel extends ViewModel {
     private final Observer<UiState<ConfiguracionDto>> actualizarObserver;
 
     private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
+    private boolean isSaving = false;
 
     @Inject
     public ConfiguracionViewModel(ConfiguracionRepository repository, CatalogoRepository catalogoRepository) {
@@ -125,6 +126,10 @@ public class ConfiguracionViewModel extends ViewModel {
         return saveState;
     }
 
+    public void clearSaveState() {
+        saveState.setValue(null);
+    }
+
     public LiveData<List<CatalogoItemDto>> getMetodosPago() {
         return catalogoRepository.getMetodosPago();
     }
@@ -153,6 +158,7 @@ public class ConfiguracionViewModel extends ViewModel {
      */
     public void saveConfiguracion(ConfiguracionDto dto) {
         if (dto == null) return;
+        isSaving = true;
         UiState<ConfiguracionDto> current = configState.getValue();
         if (current != null
                 && current.getStatus() == UiState.Status.SUCCESS
@@ -174,18 +180,20 @@ public class ConfiguracionViewModel extends ViewModel {
      * next render reflects the new id and timestamps.
      */
     private void bridgeSave(UiState<ConfiguracionDto> state, boolean reloadOnSuccess) {
-        if (state == null) return;
+        if (state == null || !isSaving) return;
         switch (state.getStatus()) {
             case LOADING:
                 saveState.setValue(UiState.loading());
                 break;
             case SUCCESS:
+                isSaving = false;
                 saveState.setValue(UiState.success(state.getData()));
                 if (reloadOnSuccess) {
                     repository.getConfiguracion();
                 }
                 break;
             case ERROR:
+                isSaving = false;
                 saveState.setValue(UiState.error(state.getError()));
                 break;
         }

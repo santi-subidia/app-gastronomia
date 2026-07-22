@@ -20,18 +20,26 @@ public class UsuarioService : IUsuarioService
         _context = context;
     }
 
-    public async Task<IEnumerable<UsuarioResponse>> ObtenerUsuariosAsync()
+    public async Task<IEnumerable<UsuarioResponse>> ObtenerUsuariosAsync(string? role = null)
     {
-        return await _context.Usuarios
+        var query = _context.Usuarios
             .Include(u => u.Rol)
-            .Where(u => u.Activo)
+            .Where(u => u.Activo);
+
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            query = query.Where(u => u.Rol.Nombre == role.Trim());
+        }
+
+        return await query
             .Select(u => new UsuarioResponse(
                 u.Id,
                 u.UsuarioNombre,
                 u.RolId,
                 u.Rol.Nombre,
                 u.Disponible,
-                u.Activo))
+                u.Activo,
+                u.FueraDeServicio))
             .ToListAsync();
     }
 
@@ -50,7 +58,8 @@ public class UsuarioService : IUsuarioService
             user.RolId,
             user.Rol.Nombre,
             user.Disponible,
-            user.Activo);
+            user.Activo,
+            user.FueraDeServicio);
     }
 
     public async Task<UsuarioResponse> CrearUsuarioAsync(string usuarioNombre, string password, int rolId)
@@ -67,7 +76,8 @@ public class UsuarioService : IUsuarioService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             RolId = rolId,
             Activo = true,
-            Disponible = true
+            Disponible = true,
+            FueraDeServicio = false
         };
 
         _context.Usuarios.Add(user);
@@ -82,10 +92,11 @@ public class UsuarioService : IUsuarioService
             user.RolId,
             user.Rol.Nombre,
             user.Disponible,
-            user.Activo);
+            user.Activo,
+            user.FueraDeServicio);
     }
 
-    public async Task<UsuarioResponse?> ActualizarUsuarioAsync(int id, string? usuarioNombre, string? password, int? rolId, bool? disponible)
+    public async Task<UsuarioResponse?> ActualizarUsuarioAsync(int id, string? usuarioNombre, string? password, int? rolId, bool? disponible, bool? fueraDeServicio = null)
     {
         var user = await _context.Usuarios.Include(u => u.Rol).FirstOrDefaultAsync(u => u.Id == id);
 
@@ -104,6 +115,16 @@ public class UsuarioService : IUsuarioService
         if (disponible.HasValue)
             user.Disponible = disponible.Value;
 
+        if (fueraDeServicio.HasValue)
+        {
+            user.FueraDeServicio = fueraDeServicio.Value;
+            // Si lo marcan fuera de servicio, forzamos a que no esté disponible
+            if (fueraDeServicio.Value)
+            {
+                user.Disponible = false;
+            }
+        }
+
         // Note: Activo is NOT updated here. Use EliminarUsuarioAsync for soft delete.
 
         await _context.SaveChangesAsync();
@@ -118,7 +139,8 @@ public class UsuarioService : IUsuarioService
             user.RolId,
             user.Rol.Nombre,
             user.Disponible,
-            user.Activo);
+            user.Activo,
+            user.FueraDeServicio);
     }
 
     public async Task<bool> EliminarUsuarioAsync(int id)

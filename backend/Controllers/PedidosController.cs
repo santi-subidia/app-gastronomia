@@ -53,6 +53,16 @@ public class PedidosController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene pedidos asignados a un repartidor específico.
+    /// </summary>
+    [HttpGet("repartidor/{repartidorId:int}")]
+    public async Task<ActionResult<IEnumerable<PedidoResumenDTO>>> GetPedidosPorRepartidor(int repartidorId)
+    {
+        var pedidos = await _pedidoService.ObtenerPedidosPorRepartidorAsync(repartidorId);
+        return Ok(pedidos.Select(MapToResumen));
+    }
+
+    /// <summary>
     /// Crea un nuevo pedido.
     /// </summary>
     [HttpPost]

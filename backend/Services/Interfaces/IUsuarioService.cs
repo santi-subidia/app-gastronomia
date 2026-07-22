@@ -10,9 +10,10 @@ public interface IUsuarioService
 {
     /// <summary>
     /// Returns all active users (Activo == true), including their Rol navigation.
+    /// When role is provided, only users with that role are returned.
     /// Inactive users are excluded from the result.
     /// </summary>
-    Task<IEnumerable<UsuarioResponse>> ObtenerUsuariosAsync();
+    Task<IEnumerable<UsuarioResponse>> ObtenerUsuariosAsync(string? role = null);
 
     /// <summary>
     /// Returns a single user by ID with Rol navigation, or null if not found.
@@ -31,7 +32,7 @@ public interface IUsuarioService
     /// Activo cannot be changed via this method (use EliminarUsuarioAsync for soft delete).
     /// Returns null if user not found.
     /// </summary>
-    Task<UsuarioResponse?> ActualizarUsuarioAsync(int id, string? usuarioNombre, string? password, int? rolId, bool? disponible);
+    Task<UsuarioResponse?> ActualizarUsuarioAsync(int id, string? usuarioNombre, string? password, int? rolId, bool? disponible, bool? fueraDeServicio = null);
 
     /// <summary>
     /// Soft deletes a user by setting Activo = false.
