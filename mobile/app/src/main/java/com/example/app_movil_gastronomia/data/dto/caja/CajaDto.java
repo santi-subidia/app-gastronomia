@@ -47,6 +47,15 @@ public class CajaDto {
     @SerializedName("estado")
     private String estado;
 
+    @SerializedName("ingresosEfectivo")
+    private double ingresosEfectivo;
+
+    @SerializedName("ingresosTransferencia")
+    private double ingresosTransferencia;
+
+    @SerializedName("ingresosTarjeta")
+    private double ingresosTarjeta;
+
     public int getId() {
         return id;
     }
@@ -117,5 +126,29 @@ public class CajaDto {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public double getIngresosEfectivo() {
+        return ingresosEfectivo;
+    }
+
+    public void setIngresosEfectivo(double ingresosEfectivo) {
+        this.ingresosEfectivo = ingresosEfectivo;
+    }
+
+    public double getIngresosTransferencia() {
+        return ingresosTransferencia;
+    }
+
+    public void setIngresosTransferencia(double ingresosTransferencia) {
+        this.ingresosTransferencia = ingresosTransferencia;
+    }
+
+    public double getIngresosTarjeta() {
+        return ingresosTarjeta;
+    }
+
+    public void setIngresosTarjeta(double ingresosTarjeta) {
+        this.ingresosTarjeta = ingresosTarjeta;
     }
 }

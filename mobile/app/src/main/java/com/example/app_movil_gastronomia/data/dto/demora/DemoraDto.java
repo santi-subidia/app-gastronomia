@@ -5,10 +5,8 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Response body for {@code GET/POST/PUT /api/demoras}.
  *
- * <p>Spec DEM-DTO-001 (v2): serialized JSON must contain exactly the
- * keys {@code id}, {@code pedidoId}, {@code usuarioId},
- * {@code demoraMinutos} and {@code observaciones} — the
- * {@code sector} field was removed. All fields are primitives
+ * <p>The response includes the sector assigned by the server from the
+ * authenticated user's role. All fields are primitives
  * or {@code String} (no boxing required because a {@code DemoraDto}
  * is always returned fully populated by the server).</p>
  */
@@ -25,6 +23,9 @@ public class DemoraDto {
 
     @SerializedName("demoraMinutos")
     private int demoraMinutos;
+
+    @SerializedName("sector")
+    private String sector;
 
     @SerializedName("observaciones")
     private String observaciones;
@@ -59,6 +60,14 @@ public class DemoraDto {
 
     public void setDemoraMinutos(int demoraMinutos) {
         this.demoraMinutos = demoraMinutos;
+    }
+
+    public String getSector() {
+        return sector;
+    }
+
+    public void setSector(String sector) {
+        this.sector = sector;
     }
 
     public String getObservaciones() {

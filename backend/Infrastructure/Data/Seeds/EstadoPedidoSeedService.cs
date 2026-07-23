@@ -17,7 +17,8 @@ public class EstadoPedidoSeedService
         (5, "Entregado"),
         (6, "Retirado"),
         (7, "Cancelado"),
-        (8, "Devuelto")
+        (8, "Devuelto"),
+        (9, "Contingencia")
     ];
 
     public EstadoPedidoSeedService(AppDbContext context, ILogger<EstadoPedidoSeedService> logger)

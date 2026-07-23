@@ -36,8 +36,8 @@ public class AuthService : IAuthService
         if (user is null)
             return null;
 
-        // Inactive or unavailable user → null (controller returns 401)
-        if (!user.Activo || !user.Disponible)
+        // Inactive user -> null (controller returns 401)
+        if (!user.Activo)
             return null;
 
         // Verify password against BCrypt hash

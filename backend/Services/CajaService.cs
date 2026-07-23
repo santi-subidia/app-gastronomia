@@ -17,6 +17,14 @@ public class CajaService : ICajaService
 {
     private readonly AppDbContext _context;
 
+    private static readonly int[] _estadosFinales = 
+    [
+        (int)EstadoPedidoEnum.Entregado,
+        (int)EstadoPedidoEnum.Retirado,
+        (int)EstadoPedidoEnum.Cancelado,
+        (int)EstadoPedidoEnum.Devuelto
+    ];
+
     public CajaService(AppDbContext context)
     {
         _context = context;
@@ -27,9 +35,8 @@ public class CajaService : ICajaService
         if (montoApertura < 0)
             throw new InvalidOperationException("El monto de apertura no puede ser negativo.");
 
-        var usuario = await _context.Usuarios.FindAsync(usuarioAperturaId);
-        if (usuario == null)
-            throw new KeyNotFoundException("Usuario no encontrado.");
+        var usuario = await _context.Usuarios.FindAsync(usuarioAperturaId) 
+            ?? throw new KeyNotFoundException("Usuario no encontrado.");
 
         if (await _context.Cajas.AnyAsync(c => c.FechaCierre == null))
             throw new InvalidOperationException("Ya existe una caja abierta.");
@@ -44,17 +51,16 @@ public class CajaService : ICajaService
         _context.Cajas.Add(caja);
         await _context.SaveChangesAsync();
 
-        return MapToResponse(caja, usuario.UsuarioNombre, null);
+        return MapToResponse(caja, usuario.UsuarioNombre, null, 0, 0, 0);
     }
 
     public async Task<CajaResponse> CierreAsync(int cajaId, int usuarioCierreId, decimal montoCierreTeorico, decimal montoCierreReal)
     {
         var caja = await _context.Cajas
             .Include(c => c.UsuarioApertura)
-            .FirstOrDefaultAsync(c => c.Id == cajaId);
-
-        if (caja == null)
-            throw new KeyNotFoundException("Caja no encontrada.");
+            .Include(c => c.Pedidos).ThenInclude(p => p.MetodoPago)
+            .FirstOrDefaultAsync(c => c.Id == cajaId) 
+            ?? throw new KeyNotFoundException("Caja no encontrada.");
 
         if (caja.FechaCierre != null)
             throw new InvalidOperationException("La caja ya se encuentra cerrada.");
@@ -62,20 +68,10 @@ public class CajaService : ICajaService
         if (montoCierreTeorico < 0 || montoCierreReal < 0)
             throw new InvalidOperationException("Los montos de cierre no pueden ser negativos.");
 
-        var usuarioCierre = await _context.Usuarios.FindAsync(usuarioCierreId);
-        if (usuarioCierre == null)
-            throw new KeyNotFoundException("Usuario no encontrado.");
+        var usuarioCierre = await _context.Usuarios.FindAsync(usuarioCierreId) 
+            ?? throw new KeyNotFoundException("Usuario no encontrado.");
 
-        var estadosFinales = new[]
-        {
-            (int)EstadoPedidoEnum.Entregado,
-            (int)EstadoPedidoEnum.Retirado,
-            (int)EstadoPedidoEnum.Cancelado,
-            (int)EstadoPedidoEnum.Devuelto
-        };
-
-        var pedidosPendientes = await _context.Pedidos
-            .CountAsync(p => p.CajaId == cajaId && !estadosFinales.Contains(p.EstadoId));
+        var pedidosPendientes = caja.Pedidos.Count(p => !_estadosFinales.Contains(p.EstadoId));
 
         if (pedidosPendientes > 0)
         {
@@ -91,12 +87,17 @@ public class CajaService : ICajaService
 
         await _context.SaveChangesAsync();
 
-        return MapToResponse(caja, caja.UsuarioApertura.UsuarioNombre, usuarioCierre.UsuarioNombre);
+        var (ingEfectivo, ingTransferencia, ingTarjeta) = CalcularIngresos(caja.Pedidos);
+
+        return MapToResponse(caja, caja.UsuarioApertura.UsuarioNombre, usuarioCierre.UsuarioNombre, ingEfectivo, ingTransferencia, ingTarjeta);
     }
 
     public async Task<IEnumerable<CajaResponse>> ObtenerTodasAsync(string? estado = null)
     {
-        IQueryable<Caja> query = _context.Cajas;
+        IQueryable<Caja> query = _context.Cajas
+            .Include(c => c.UsuarioApertura)
+            .Include(c => c.UsuarioCierre)
+            .Include(c => c.Pedidos).ThenInclude(p => p.MetodoPago);
 
         if (estado == "abiertas")
             query = query.Where(c => c.FechaCierre == null);
@@ -105,20 +106,13 @@ public class CajaService : ICajaService
 
         query = query.OrderByDescending(c => c.FechaApertura);
 
-        return await query
-            .Select(c => new CajaResponse(
-                c.Id,
-                c.UsuarioAperturaId,
-                c.UsuarioApertura.UsuarioNombre,
-                c.UsuarioCierreId,
-                c.UsuarioCierre != null ? c.UsuarioCierre.UsuarioNombre : null,
-                c.FechaApertura,
-                c.FechaCierre,
-                c.MontoApertura,
-                c.MontoCierreTeorico,
-                c.MontoCierreReal
-            ))
-            .ToListAsync();
+        var cajas = await query.ToListAsync();
+
+        return cajas.Select(c =>
+        {
+            var (efectivo, trans, tarjeta) = CalcularIngresos(c.Pedidos);
+            return MapToResponse(c, c.UsuarioApertura.UsuarioNombre, c.UsuarioCierre?.UsuarioNombre, efectivo, trans, tarjeta);
+        });
     }
 
     public async Task<CajaResponse?> ObtenerPorIdAsync(int id)
@@ -126,15 +120,50 @@ public class CajaService : ICajaService
         var caja = await _context.Cajas
             .Include(c => c.UsuarioApertura)
             .Include(c => c.UsuarioCierre)
+            .Include(c => c.Pedidos).ThenInclude(p => p.MetodoPago)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (caja == null)
             return null;
 
-        return MapToResponse(caja, caja.UsuarioApertura.UsuarioNombre, caja.UsuarioCierre?.UsuarioNombre);
+        var (efectivo, trans, tarjeta) = CalcularIngresos(caja.Pedidos);
+
+        return MapToResponse(caja, caja.UsuarioApertura.UsuarioNombre, caja.UsuarioCierre?.UsuarioNombre, efectivo, trans, tarjeta);
     }
 
-    private static CajaResponse MapToResponse(Caja caja, string usuarioAperturaNombre, string? usuarioCierreNombre) => new(
+    private static (decimal Efectivo, decimal Transferencia, decimal Tarjeta) CalcularIngresos(IEnumerable<Pedido> pedidos)
+    {
+        decimal efectivo = 0, transferencia = 0, tarjeta = 0;
+
+        // Solo sumar pedidos que representen un ingreso real (ignoramos cancelados o devueltos)
+        var pedidosValidos = pedidos.Where(p => 
+            p.EstadoId != (int)EstadoPedidoEnum.Cancelado && 
+            p.EstadoId != (int)EstadoPedidoEnum.Devuelto);
+
+        foreach (var p in pedidosValidos)
+        {
+            var monto = (decimal)p.TotalEstimado;
+            var metodo = p.MetodoPago?.Nombre?.ToLower() ?? "";
+
+            if (metodo.Contains("trans"))
+            {
+                transferencia += monto;
+            }
+            else if (metodo.Contains("tarjeta"))
+            {
+                tarjeta += monto;
+            }
+            else
+            {
+                // Fallback por defecto: Efectivo
+                efectivo += monto;
+            }
+        }
+
+        return (efectivo, transferencia, tarjeta);
+    }
+
+    private static CajaResponse MapToResponse(Caja caja, string usuarioAperturaNombre, string? usuarioCierreNombre, decimal ingresosEfectivo, decimal ingresosTransferencia, decimal ingresosTarjeta) => new(
         caja.Id,
         caja.UsuarioAperturaId,
         usuarioAperturaNombre,
@@ -144,6 +173,9 @@ public class CajaService : ICajaService
         caja.FechaCierre,
         caja.MontoApertura,
         caja.MontoCierreTeorico,
-        caja.MontoCierreReal
+        caja.MontoCierreReal,
+        ingresosEfectivo,
+        ingresosTransferencia,
+        ingresosTarjeta
     );
 }

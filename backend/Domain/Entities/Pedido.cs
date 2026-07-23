@@ -55,6 +55,15 @@ public class Pedido
     [Column("demora_aprox")]
     public int? DemoraAprox { get; set; }
 
+    [Column("demora_preparacion_aprox")]
+    public int? DemoraPreparacionAprox { get; set; }
+
+    [Column("demora_demoras_aprox")]
+    public int? DemoraDemorasAprox { get; set; }
+
+    [Column("demora_delivery_aprox")]
+    public int? DemoraDeliveryAprox { get; set; }
+
     [Column("latitud_destino")]
     public double? LatitudDestino { get; set; }
 

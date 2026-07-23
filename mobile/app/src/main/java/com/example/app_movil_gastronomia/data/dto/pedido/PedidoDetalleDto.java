@@ -54,6 +54,15 @@ public class PedidoDetalleDto {
     @SerializedName("demoraAprox")
     private Integer demoraAprox;
 
+    @SerializedName("demoraPreparacionAprox")
+    private Integer demoraPreparacionAprox;
+
+    @SerializedName("demoraDemorasAprox")
+    private Integer demoraDemorasAprox;
+
+    @SerializedName("demoraDeliveryAprox")
+    private Integer demoraDeliveryAprox;
+
     @SerializedName("fechaIngreso")
     private String fechaIngreso;
 
@@ -169,6 +178,30 @@ public class PedidoDetalleDto {
 
     public void setDemoraAprox(Integer demoraAprox) {
         this.demoraAprox = demoraAprox;
+    }
+
+    public Integer getDemoraPreparacionAprox() {
+        return demoraPreparacionAprox;
+    }
+
+    public void setDemoraPreparacionAprox(Integer demoraPreparacionAprox) {
+        this.demoraPreparacionAprox = demoraPreparacionAprox;
+    }
+
+    public Integer getDemoraDemorasAprox() {
+        return demoraDemorasAprox;
+    }
+
+    public void setDemoraDemorasAprox(Integer demoraDemorasAprox) {
+        this.demoraDemorasAprox = demoraDemorasAprox;
+    }
+
+    public Integer getDemoraDeliveryAprox() {
+        return demoraDeliveryAprox;
+    }
+
+    public void setDemoraDeliveryAprox(Integer demoraDeliveryAprox) {
+        this.demoraDeliveryAprox = demoraDeliveryAprox;
     }
 
     public String getFechaIngreso() {

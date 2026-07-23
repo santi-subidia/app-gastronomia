@@ -111,6 +111,31 @@ public class UsuariosController : ControllerBase
     }
 
     /// <summary>
+    /// Permite a un repartidor reportar una contingencia (ej. moto rota).
+    /// El repartidor pasa a fuera de servicio y sus pedidos activos van a Contingencia.
+    /// </summary>
+    [HttpPost("{id:int}/contingencia")]
+    [Authorize(Roles = "Repartidor,Cajero")]
+    public async Task<ActionResult> ReportarContingencia(int id, [FromBody] ReportarContingenciaRequest request)
+    {
+        var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var currentUserRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role");
+
+        if (currentUserRole != "Cajero" && currentUserIdStr != id.ToString())
+            return Forbid();
+
+        try
+        {
+            await _usuarioService.ReportarContingenciaAsync(id, request.Motivo);
+            return Ok(new { Mensaje = "Contingencia reportada exitosamente." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Mensaje = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Obtiene todos los repartidores disponibles. Accesible para Cajero y Admin.
     /// </summary>
     [HttpGet("repartidores/disponibles")]

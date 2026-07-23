@@ -1,3 +1,6 @@
+﻿using System;
+using System.Text.Json.Serialization;
+
 namespace ApiGastronomia.Domain.DTOs;
 
 /// <summary>
@@ -13,7 +16,10 @@ public record CajaResponse(
     DateTime? FechaCierre,
     decimal MontoApertura,
     decimal? MontoCierreTeorico,
-    decimal? MontoCierreReal
+    decimal? MontoCierreReal,
+    [property: JsonPropertyName("ingresosEfectivo")] decimal IngresosEfectivo = 0,
+    [property: JsonPropertyName("ingresosTransferencia")] decimal IngresosTransferencia = 0,
+    [property: JsonPropertyName("ingresosTarjeta")] decimal IngresosTarjeta = 0
 )
 {
     /// <summary>

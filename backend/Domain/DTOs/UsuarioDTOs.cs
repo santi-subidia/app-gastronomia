@@ -29,7 +29,8 @@ public record UsuarioResponse(
     string RolNombre,
     bool Disponible,
     bool Activo,
-    bool FueraDeServicio = false
+    bool FueraDeServicio = false,
+    string? MotivoFueraDeServicio = null
 );
 
 /// <summary>
@@ -45,4 +46,9 @@ public record CreateUserRequest(string UsuarioNombre, [MinLength(6)] string Pass
 /// <summary>
 /// Request DTO for updating a user. All fields are optional (partial update).
 /// </summary>
-public record UpdateUserRequest(string? UsuarioNombre, [MinLength(6)] string? Password, int? RolId, bool? Disponible, bool? FueraDeServicio = null);
+public record UpdateUserRequest(string? UsuarioNombre, [MinLength(6)] string? Password, int? RolId, bool? Disponible, bool? FueraDeServicio = null, string? MotivoFueraDeServicio = null);
+
+/// <summary>
+/// Request DTO para que un repartidor reporte una contingencia en calle.
+/// </summary>
+public record ReportarContingenciaRequest(string Motivo);

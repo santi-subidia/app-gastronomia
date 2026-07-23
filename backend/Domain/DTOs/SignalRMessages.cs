@@ -31,10 +31,25 @@ public record PedidoActualizadoMessage(int PedidoId, string Estado, DateTime Fec
 public record RepartidorAsignadoMessage(int PedidoId, int RepartidorId, string NombreRepartidor, DateTime Fecha);
 
 /// <summary>
-/// Sent to pedido_{id} group when a demora is registered.
-/// JSON shape: {"PedidoId":1,"Motivo":"Cocina","TiempoEstimadoMinutos":15,"Fecha":"..."}
+/// Sent to pedido_{id} group and to the Cajeros group when a demora is registered.
+/// JSON shape: {"DemoraId":1,"PedidoId":1,"Sector":"Cocina","TiempoEstimadoMinutos":15,"Observaciones":"...","Fecha":"..."}
 /// </summary>
-public record DemoraRegistradaMessage(int PedidoId, string Motivo, int TiempoEstimadoMinutos, DateTime Fecha);
+public record DemoraRegistradaMessage(
+    int DemoraId,
+    int PedidoId,
+    string Sector,
+    int TiempoEstimadoMinutos,
+    string? Observaciones,
+    DateTime Fecha);
+
+public record EstimacionPedidoActualizadaMessage(
+    int PedidoId,
+    int DemoraAprox,
+    DateTime FechaEstimadoFin,
+    int DemoraPreparacionAprox,
+    int DemoraDemorasAprox,
+    int? DemoraDeliveryAprox,
+    DateTime Fecha);
 
 /// <summary>
 /// Sent to pedido_repartidor_{id} group from EnviarPosicionGPS.

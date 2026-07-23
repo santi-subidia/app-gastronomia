@@ -82,12 +82,13 @@ public class RutaRepartidorViewModel extends ViewModel {
 
     /** Package-private for deterministic unit tests and repository callbacks. */
     void applyDestination(PedidoDetalleDto pedido) {
-        destination = pedido;
         routeRequested = false;
         if (pedido == null || pedido.getLatitudDestino() == null || pedido.getLongitudDestino() == null) {
+            destination = null;
             destinationState.setValue(UiState.error("El pedido no tiene coordenadas de destino"));
             return;
         }
+        destination = pedido;
         destinationState.setValue(UiState.success(pedido));
         double[] current = driverLocation.getValue();
         if (current != null) {
@@ -110,6 +111,7 @@ public class RutaRepartidorViewModel extends ViewModel {
                 if (response.isSuccessful() && response.body() != null
                         && "Ok".equalsIgnoreCase(response.body().getCode())
                         && response.body().getRouteCoordinates().size() >= 2) {
+                    routeRequested = false;
                     routeState.setValue(UiState.success(response.body()));
                 } else {
                     routeRequested = false;
@@ -136,6 +138,7 @@ public class RutaRepartidorViewModel extends ViewModel {
         if (response.isSuccessful() && response.body() != null
                 && "Ok".equalsIgnoreCase(response.body().getCode())
                 && response.body().getRouteCoordinates().size() >= 2) {
+            routeRequested = false;
             routeState.setValue(UiState.success(response.body()));
         } else {
             routeRequested = false;

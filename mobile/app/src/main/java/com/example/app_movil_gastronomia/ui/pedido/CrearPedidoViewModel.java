@@ -289,7 +289,6 @@ public class CrearPedidoViewModel extends ViewModel {
         request.setClienteDireccion(clienteDireccion);
         request.setLatitudDestino(latitudDestino);
         request.setLongitudDestino(longitudDestino);
-        request.setDemoraAprox(null);
 
         List<CrearDetalleRequest> detalleDtos = mapDetalles(detalles);
         double total = 0d;

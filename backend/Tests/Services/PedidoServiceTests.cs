@@ -214,7 +214,7 @@ public class PedidoServiceTests
     }
 
     [Fact]
-    public async Task CambiarEstadoAsync_EntregadoIsTerminal_ThrowsInvalidOperationException()
+    public async Task CambiarEstadoAsync_EntregadoOnlyAllowsDevuelto()
     {
         // Arrange: seed a pedido in Entregado state
         var context = CreateDbContext();
@@ -225,7 +225,7 @@ public class PedidoServiceTests
         // Act + Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.CambiarEstadoAsync(pedido.Id, EstadoPedidoEnum.EnCamino));
-        Assert.Contains("No se puede cambiar el estado", ex.Message);
+        Assert.Contains("solo puede cambiar a estado 'Devuelto'", ex.Message);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -233,7 +233,7 @@ public class PedidoServiceTests
     }
 
     [Fact]
-    public async Task CambiarEstadoAsync_RetiradoIsTerminal_ThrowsInvalidOperationException()
+    public async Task CambiarEstadoAsync_RetiradoOnlyAllowsDevuelto()
     {
         // Arrange: seed a pedido in Retirado state
         var context = CreateDbContext();
@@ -244,7 +244,7 @@ public class PedidoServiceTests
         // Act + Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.CambiarEstadoAsync(pedido.Id, EstadoPedidoEnum.Pendiente));
-        Assert.Contains("No se puede cambiar el estado", ex.Message);
+        Assert.Contains("solo puede cambiar a estado 'Devuelto'", ex.Message);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();

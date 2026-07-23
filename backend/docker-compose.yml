@@ -21,23 +21,6 @@ services:
     restart: unless-stopped
 
   # =============================================
-  # Redis 7
-  # =============================================
-  redis:
-    image: redis:7-alpine
-    container_name: gastronomia-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-
-  # =============================================
   # API .NET 10
   # =============================================
   api:
@@ -49,13 +32,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=ApiGastronomiaDB;Username=postgres;Password=postgres
-      - ConnectionStrings__Redis=redis:6379,abortConnect=false
     ports:
       - "5000:80"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     volumes:
       # Hot reload: sincroniza código local con el contenedor
@@ -67,6 +47,4 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
     driver: local

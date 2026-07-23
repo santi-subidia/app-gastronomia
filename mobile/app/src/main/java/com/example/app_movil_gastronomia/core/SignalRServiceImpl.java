@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.app_movil_gastronomia.BuildConfig;
 import com.example.app_movil_gastronomia.data.dto.signalr.DemoraRegistradaMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
+import com.example.app_movil_gastronomia.data.dto.signalr.EstimacionPedidoActualizadaMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.NuevoPedidoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.PosicionGPSActualizadaMessage;
@@ -60,6 +61,7 @@ public class SignalRServiceImpl implements SignalRService {
 
     private final MutableLiveData<NuevoPedidoMessage> _nuevoPedido = new MutableLiveData<>();
     private final MutableLiveData<EstadoCambiadoMessage> _estadoCambiado = new MutableLiveData<>();
+    private final MutableLiveData<EstimacionPedidoActualizadaMessage> _estimacionPedidoActualizada = new MutableLiveData<>();
     private final MutableLiveData<RepartidorAsignadoMessage> _repartidorAsignado = new MutableLiveData<>();
     private final MutableLiveData<DemoraRegistradaMessage> _demoraRegistrada = new MutableLiveData<>();
     private final MutableLiveData<PosicionGPSActualizadaMessage> _posicionGPSActualizada = new MutableLiveData<>();
@@ -203,6 +205,11 @@ public class SignalRServiceImpl implements SignalRService {
     }
 
     @Override
+    public LiveData<EstimacionPedidoActualizadaMessage> getEstimacionPedidoActualizada() {
+        return _estimacionPedidoActualizada;
+    }
+
+    @Override
     public LiveData<RepartidorAsignadoMessage> getRepartidorAsignado() {
         return _repartidorAsignado;
     }
@@ -250,6 +257,10 @@ public class SignalRServiceImpl implements SignalRService {
         conn.on("EstadoCambiado",
                 (EstadoCambiadoMessage msg) -> _estadoCambiado.postValue(msg),
                 EstadoCambiadoMessage.class);
+
+        conn.on("EstimacionPedidoActualizada",
+                (EstimacionPedidoActualizadaMessage msg) -> _estimacionPedidoActualizada.postValue(msg),
+                EstimacionPedidoActualizadaMessage.class);
 
         conn.on("RepartidorAsignado",
                 (RepartidorAsignadoMessage msg) -> _repartidorAsignado.postValue(msg),

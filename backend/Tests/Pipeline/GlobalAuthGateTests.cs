@@ -151,15 +151,15 @@ public class GlobalAuthGateTests
     }
 
     // =========================================================
-    // Scenario: Wrong role receives 403 on Demoras POST (requires Cajero)
+    // Scenario: Repartidor is now allowed to POST Demoras
     // =========================================================
     [Fact]
-    public async Task WrongRole_DemorasPost_Returns403()
+    public async Task WrongRole_DemorasPost_Returns400()
     {
         // Arrange
         using var factory = new AuthGateWebApplicationFactory();
         var client = factory.CreateClient();
-        // Cajero role required on Demoras POST — Repartidor should be forbidden
+        // Any role is now allowed on Demoras POST
         var token = GenerateJwtToken($"user-repartidor-{Guid.NewGuid():N}", "Repartidor");
 
         // Act: POST /api/demoras with Repartidor-role JWT
@@ -168,8 +168,8 @@ public class GlobalAuthGateTests
         request.Content = JsonContent.Create(new { });
         var response = await client.SendAsync(request);
 
-        // Assert: authenticated but wrong role → 403 Forbidden
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        // Assert: authenticated, allowed, but payload is empty -> 400 BadRequest
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     // =========================================================

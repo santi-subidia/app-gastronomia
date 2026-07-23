@@ -1,9 +1,12 @@
-using ApiGastronomia.Domain.DTOs;
+﻿using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Infrastructure.Data;
 using ApiGastronomia.Services;
+using ApiGastronomia.Services.Hubs;
 using ApiGastronomia.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace ApiGastronomia.Tests.Services;
 
@@ -67,6 +70,19 @@ public class UsuarioServiceTests
         return (context, user);
     }
 
+    private static Mock<IHubContext<LogisticaHub>> CreateMockHubContext()
+    {
+        var mockClients = new Mock<IHubClients>();
+        var mockProxy = new Mock<IClientProxy>();
+        mockProxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockProxy.Object);
+        var mockHub = new Mock<IHubContext<LogisticaHub>>();
+        mockHub.Setup(h => h.Clients).Returns(mockClients.Object);
+        return mockHub;
+    }
+
     // ================================================================
     // IUsuarioService contract: interface can be resolved from implementation
     // ================================================================
@@ -76,7 +92,7 @@ public class UsuarioServiceTests
     {
         // Arrange: verify IUsuarioService can be assigned from UsuarioService
         var context = CreateDbContext();
-        IUsuarioService service = new UsuarioService(context);
+        IUsuarioService service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act: call ObtenerUsuariosAsync through the interface
         var result = await service.ObtenerUsuariosAsync();
@@ -100,7 +116,7 @@ public class UsuarioServiceTests
         var context = CreateDbContext();
         SeedUser(context, username: "active_user", plainPassword: "pass1", activo: true);
         SeedUser(context, username: "inactive_user", plainPassword: "pass2", activo: false);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.ObtenerUsuariosAsync();
@@ -122,7 +138,7 @@ public class UsuarioServiceTests
         // Arrange: seed user with Cajero role (Id=1)
         var context = CreateDbContext();
         SeedUser(context, username: "admin_user", plainPassword: "pass123", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.ObtenerUsuariosAsync();
@@ -142,7 +158,7 @@ public class UsuarioServiceTests
         var context = CreateDbContext();
         SeedUser(context, username: "cashier", plainPassword: "pass123", rolId: 1);
         SeedUser(context, username: "driver", plainPassword: "pass123", rolId: 3);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         var result = await service.ObtenerUsuariosAsync("Repartidor");
 
@@ -165,7 +181,7 @@ public class UsuarioServiceTests
         // Arrange
         var context = CreateDbContext();
         var (_, user) = SeedUser(context, username: "findme", plainPassword: "pass123", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.ObtenerUsuarioPorIdAsync(user.Id);
@@ -189,7 +205,7 @@ public class UsuarioServiceTests
     {
         // Arrange
         var context = CreateDbContext();
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act: search for an ID that doesn't exist
         var result = await service.ObtenerUsuarioPorIdAsync(999);
@@ -211,7 +227,7 @@ public class UsuarioServiceTests
     {
         // Arrange
         var context = CreateDbContext();
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.CrearUsuarioAsync("newuser", "securepass123", rolId: 1);
@@ -239,7 +255,7 @@ public class UsuarioServiceTests
         // Arrange: seed existing user
         var context = CreateDbContext();
         SeedUser(context, username: "duplicate_user", plainPassword: "pass1", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act + Assert: creating user with same username throws
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -260,7 +276,7 @@ public class UsuarioServiceTests
         // Arrange: seed user with known password
         var context = CreateDbContext();
         var (_, user) = SeedUser(context, username: "updateme", plainPassword: "oldpass", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act: update only the password
         var result = await service.ActualizarUsuarioAsync(
@@ -291,7 +307,7 @@ public class UsuarioServiceTests
         // Arrange
         var context = CreateDbContext();
         var (_, user) = SeedUser(context, username: "patchme", plainPassword: "pass123", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act: update only UsuarioNombre and Disponible, leave password and rolId unchanged
         var result = await service.ActualizarUsuarioAsync(
@@ -322,7 +338,7 @@ public class UsuarioServiceTests
     {
         // Arrange
         var context = CreateDbContext();
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.ActualizarUsuarioAsync(
@@ -346,7 +362,7 @@ public class UsuarioServiceTests
         // Arrange
         var context = CreateDbContext();
         var (_, user) = SeedUser(context, username: "deleteme", plainPassword: "pass123", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.EliminarUsuarioAsync(user.Id);
@@ -369,7 +385,7 @@ public class UsuarioServiceTests
     {
         // Arrange
         var context = CreateDbContext();
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.EliminarUsuarioAsync(999);
@@ -391,7 +407,7 @@ public class UsuarioServiceTests
     {
         // Arrange: create user with Cocina role (Id=2)
         var context = CreateDbContext();
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act
         var result = await service.CrearUsuarioAsync("cocinero1", "chefpass", rolId: 2);
@@ -412,7 +428,7 @@ public class UsuarioServiceTests
         var context = CreateDbContext();
         SeedUser(context, username: "visible_user", plainPassword: "pass1", rolId: 1);
         var (_, inactiveUser) = SeedUser(context, username: "to_delete", plainPassword: "pass2", rolId: 1);
-        var service = new UsuarioService(context);
+        var service = new UsuarioService(context, CreateMockHubContext().Object, new LoggerFactory().CreateLogger<UsuarioService>());
 
         // Act: soft delete one user
         await service.EliminarUsuarioAsync(inactiveUser.Id);

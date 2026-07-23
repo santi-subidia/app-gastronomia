@@ -14,4 +14,10 @@ public interface UsuarioRepository {
     
     LiveData<UiState<UsuarioDto>> getUpdateState();
     void updateDisponibilidad(int id, boolean disponible);
+    
+    LiveData<UiState<UsuarioDto>> getUsuarioState();
+    void fetchUsuario(int id);
+
+    LiveData<UiState<Void>> getContingenciaState();
+    void reportarContingencia(int id, String motivo);
 }

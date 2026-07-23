@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
+using ApiGastronomia.Domain.Enums;
 using ApiGastronomia.Infrastructure.Data;
+using ApiGastronomia.Services.Hubs;
 using ApiGastronomia.Services.Interfaces;
 
 namespace ApiGastronomia.Services;
@@ -14,10 +17,14 @@ namespace ApiGastronomia.Services;
 public class UsuarioService : IUsuarioService
 {
     private readonly AppDbContext _context;
+    private readonly IHubContext<LogisticaHub> _hubContext;
+    private readonly ILogger<UsuarioService> _logger;
 
-    public UsuarioService(AppDbContext context)
+    public UsuarioService(AppDbContext context, IHubContext<LogisticaHub> hubContext, ILogger<UsuarioService> logger)
     {
         _context = context;
+        _hubContext = hubContext;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<UsuarioResponse>> ObtenerUsuariosAsync(string? role = null)
@@ -39,7 +46,8 @@ public class UsuarioService : IUsuarioService
                 u.Rol.Nombre,
                 u.Disponible,
                 u.Activo,
-                u.FueraDeServicio))
+                u.FueraDeServicio,
+                u.MotivoFueraDeServicio))
             .ToListAsync();
     }
 
@@ -59,7 +67,8 @@ public class UsuarioService : IUsuarioService
             user.Rol.Nombre,
             user.Disponible,
             user.Activo,
-            user.FueraDeServicio);
+            user.FueraDeServicio,
+            user.MotivoFueraDeServicio);
     }
 
     public async Task<UsuarioResponse> CrearUsuarioAsync(string usuarioNombre, string password, int rolId)
@@ -93,7 +102,8 @@ public class UsuarioService : IUsuarioService
             user.Rol.Nombre,
             user.Disponible,
             user.Activo,
-            user.FueraDeServicio);
+            user.FueraDeServicio,
+            user.MotivoFueraDeServicio);
     }
 
     public async Task<UsuarioResponse?> ActualizarUsuarioAsync(int id, string? usuarioNombre, string? password, int? rolId, bool? disponible, bool? fueraDeServicio = null)
@@ -140,7 +150,8 @@ public class UsuarioService : IUsuarioService
             user.Rol.Nombre,
             user.Disponible,
             user.Activo,
-            user.FueraDeServicio);
+            user.FueraDeServicio,
+            user.MotivoFueraDeServicio);
     }
 
     public async Task<bool> EliminarUsuarioAsync(int id)
@@ -154,5 +165,42 @@ public class UsuarioService : IUsuarioService
         await _context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task ReportarContingenciaAsync(int usuarioId, string motivo)
+    {
+        var user = await _context.Usuarios.FindAsync(usuarioId) 
+            ?? throw new KeyNotFoundException("Usuario no encontrado.");
+
+        user.FueraDeServicio = true;
+        user.Disponible = false;
+        user.MotivoFueraDeServicio = motivo;
+
+        var pedidosActivos = await _context.Pedidos
+            .Where(p => p.RepartidorId == usuarioId && 
+                        (p.EstadoId == (int)EstadoPedidoEnum.ListoParaRetirar || 
+                         p.EstadoId == (int)EstadoPedidoEnum.EnCamino))
+            .ToListAsync();
+
+        foreach (var pedido in pedidosActivos)
+        {
+            var estadoAnterior = (EstadoPedidoEnum)pedido.EstadoId;
+            pedido.EstadoId = (int)EstadoPedidoEnum.Contingencia;
+
+            _logger.LogInformation("Pedido #{PedidoId} movido a Contingencia por falla de Repartidor #{RepartidorId}", pedido.Id, usuarioId);
+
+            await _hubContext.Clients.All.SendAsync("EstadoCambiado", new EstadoCambiadoMessage(
+                pedido.Id,
+                estadoAnterior.ToString(),
+                EstadoPedidoEnum.Contingencia.ToString(),
+                DateTime.UtcNow));
+
+            await _hubContext.Clients.All.SendAsync("PedidoActualizado", new PedidoActualizadoMessage(
+                pedido.Id,
+                EstadoPedidoEnum.Contingencia.ToString(),
+                DateTime.UtcNow));
+        }
+
+        await _context.SaveChangesAsync();
     }
 }

@@ -86,14 +86,7 @@ public class MapaFragment extends Fragment {
         viewModel.getPedidosState().observe(getViewLifecycleOwner(), this::handlePedidosState);
         viewModel.getGpsState().observe(getViewLifecycleOwner(), this::handleGpsState);
         viewModel.getLastSentState().observe(getViewLifecycleOwner(), this::handleLastSentState);
-        viewModel.getAutoSendEnabled().observe(getViewLifecycleOwner(), this::handleAutoSendToggle);
 
-        binding.buttonSendPosition.setOnClickListener(v -> viewModel.sendPositionNow());
-        binding.switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (buttonView.isPressed()) {
-                onAutoSendToggled(isChecked);
-            }
-        });
         binding.buttonRetry.setOnClickListener(v -> viewModel.retry());
 
         if (hasLocationPermission()) {
@@ -123,14 +116,12 @@ public class MapaFragment extends Fragment {
         if (viewModel != null) {
             viewModel.startGpsUpdates();
         }
-        binding.buttonSendPosition.setEnabled(true);
     }
 
     private void onLocationPermissionDenied() {
         if (viewModel != null) {
             viewModel.stopGpsUpdates();
         }
-        binding.buttonSendPosition.setEnabled(false);
         binding.textGpsCoords.setText(R.string.gps_unavailable);
         if (binding != null) {
             Snackbar.make(binding.getRoot(),
@@ -138,30 +129,6 @@ public class MapaFragment extends Fragment {
                     Snackbar.LENGTH_LONG).show();
         }
     }
-
-
-    private void onAutoSendToggled(boolean isChecked) {
-        if (isChecked && !hasLocationPermission()) {
-            binding.switchAutoSend.setChecked(false);
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
-            return;
-        }
-        viewModel.setAutoSendEnabled(isChecked);
-    }
-
-    private void handleAutoSendToggle(Boolean enabled) {
-        if (binding == null || enabled == null) return;
-        if (binding.switchAutoSend.isChecked() != enabled) {
-            binding.switchAutoSend.setOnCheckedChangeListener(null);
-            binding.switchAutoSend.setChecked(enabled);
-            binding.switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (buttonView.isPressed()) {
-                    onAutoSendToggled(isChecked);
-                }
-            });
-        }
-    }
-
 
     private void handlePedidosState(UiState<List<PedidoResumenDto>> state) {
         if (state == null || binding == null) return;

@@ -257,7 +257,7 @@ public class RateLimitingIntegrationTests
 
 /// <summary>
 /// Custom WebApplicationFactory for rate limiting integration tests.
-/// Overrides PostgreSQL with InMemory database and removes Redis dependencies.
+/// Overrides PostgreSQL with an in-memory database and keeps SignalR in memory.
 /// </summary>
 public class RateLimitingWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -303,25 +303,9 @@ public class RateLimitingWebApplicationFactory : WebApplicationFactory<Program>,
                 options.EnableSensitiveDataLogging();
             });
 
-            // Remove Redis IConnectionMultiplexer (fails without Redis server)
-            foreach (var desc in services.Where(
-                d => d.ServiceType == typeof(StackExchange.Redis.IConnectionMultiplexer)).ToList())
-            {
-                services.Remove(desc);
-            }
-
-            // Remove Redis distributed cache and related registrations
-            foreach (var desc in services.Where(
-                d => d.ServiceType.FullName != null &&
-                     (d.ServiceType.FullName.Contains("DistributedCache") ||
-                      d.ServiceType.FullName.Contains("StackExchange"))).ToList())
-            {
-                services.Remove(desc);
-            }
-
             services.AddDistributedMemoryCache();
 
-            // Remove SignalR Redis backplane — replace with in-memory SignalR
+            // Keep SignalR in memory for the single-instance test host.
             foreach (var desc in services.Where(
                 d => d.ServiceType.FullName != null &&
                      d.ServiceType.FullName.Contains("SignalR")).ToList())

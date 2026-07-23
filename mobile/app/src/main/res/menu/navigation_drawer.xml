@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
     <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_switch_disponible"
+            android:icon="@drawable/ic_mapa_24dp"
+            android:title="Estado Activo"
+            app:actionLayout="@layout/menu_switch_item" />
         <item
             android:id="@+id/nav_configuracion"
             android:icon="@drawable/ic_settings_black_24dp"
@@ -12,6 +18,10 @@
             android:id="@+id/nav_repartidores_mapa"
             android:icon="@drawable/ic_mapa_24dp"
             android:title="@string/repartidores_mapa_title" />
+        <item
+            android:id="@+id/nav_reportar_contingencia"
+            android:icon="@drawable/ic_warning_24dp"
+            android:title="@string/drawer_report_contingency" />
         <item
             android:id="@+id/nav_cerrar_sesion"
             android:icon="@drawable/ic_logout_24dp"

@@ -144,6 +144,10 @@ public class CajaFragment extends Fragment {
                 R.string.caja_label_usuario_apertura,
                 caja.getUsuarioAperturaNombre() != null ? caja.getUsuarioAperturaNombre() : ""));
 
+        binding.textCajaEfectivo.setText("Efectivo: " + formatCurrency(caja.getIngresosEfectivo()));
+        binding.textCajaTarjeta.setText("Tarjeta: " + formatCurrency(caja.getIngresosTarjeta()));
+        binding.textCajaTransferencia.setText("Transferencia: " + formatCurrency(caja.getIngresosTransferencia()));
+
         binding.inputMontoCierre.setText("");
         binding.buttonCerrar.setEnabled(true);
     }

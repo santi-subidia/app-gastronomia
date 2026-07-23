@@ -232,7 +232,7 @@ public class CajaRepositoryImpl implements CajaRepository {
                     return errorResponse.getMensaje();
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Error parsing error body", e);
         }
         return fallback;

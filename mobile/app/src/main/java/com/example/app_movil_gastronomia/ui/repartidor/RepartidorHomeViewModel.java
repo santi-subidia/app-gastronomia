@@ -12,6 +12,7 @@ import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.RepartidorAsignadoMessage;
+import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
 
 import com.example.app_movil_gastronomia.data.repository.contract.UsuarioRepository;
 import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
@@ -72,6 +73,7 @@ public class RepartidorHomeViewModel extends ViewModel {
 
     private final Observer<UiState<List<PedidoResumenDto>>> repositoryObserver;
     private final Observer<RepartidorAsignadoMessage> repartidorAsignadoObserver;
+    private final Observer<EstadoCambiadoMessage> estadoCambiadoObserver;
     private final Observer<PedidoFinalizadoMessage> pedidoFinalizadoObserver;
     private final Observer<Boolean> connectedObserver;
 
@@ -94,6 +96,9 @@ public class RepartidorHomeViewModel extends ViewModel {
             this.repartidorAsignadoObserver = msg -> fetchPedidos();
             signalRService.getRepartidorAsignado().observeForever(repartidorAsignadoObserver);
 
+            this.estadoCambiadoObserver = msg -> fetchPedidos();
+            signalRService.getEstadoCambiado().observeForever(estadoCambiadoObserver);
+
             this.pedidoFinalizadoObserver = pedidoFinalizado::setValue;
             signalRService.getPedidoFinalizado().observeForever(pedidoFinalizadoObserver);
 
@@ -105,6 +110,7 @@ public class RepartidorHomeViewModel extends ViewModel {
             signalRService.getConnected().observeForever(connectedObserver);
         } else {
             this.repartidorAsignadoObserver = null;
+            this.estadoCambiadoObserver = null;
             this.pedidoFinalizadoObserver = null;
             this.connectedObserver = null;
         }
@@ -177,6 +183,19 @@ public class RepartidorHomeViewModel extends ViewModel {
             || "listoparetirar".equals(normalized) || "listo para retirar".equals(normalized);
     }
 
+    static boolean isVisibleOnDashboard(String estado) {
+        if (isEnCaminoOrListo(estado)) {
+            return true;
+        }
+
+        if (estado == null) {
+            return false;
+        }
+
+        String normalized = estado.trim().toLowerCase();
+        return "entregado".equals(normalized);
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();
@@ -184,6 +203,9 @@ public class RepartidorHomeViewModel extends ViewModel {
         if (signalRService != null) {
             if (repartidorAsignadoObserver != null) {
                 signalRService.getRepartidorAsignado().removeObserver(repartidorAsignadoObserver);
+            }
+            if (estadoCambiadoObserver != null) {
+                signalRService.getEstadoCambiado().removeObserver(estadoCambiadoObserver);
             }
             if (pedidoFinalizadoObserver != null) {
                 signalRService.getPedidoFinalizado().removeObserver(pedidoFinalizadoObserver);

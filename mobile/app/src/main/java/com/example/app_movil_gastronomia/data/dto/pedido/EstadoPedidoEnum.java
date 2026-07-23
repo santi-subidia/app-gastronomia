@@ -40,7 +40,10 @@ public enum EstadoPedidoEnum {
     CANCELADO("Cancelado", "Cancelado"),
 
     @SerializedName("Devuelto")
-    DEVUELTO("Devuelto", "Devuelto");
+    DEVUELTO("Devuelto", "Devuelto"),
+
+    @SerializedName("Contingencia")
+    CONTINGENCIA("Contingencia", "Contingencia");
 
     private final String dbValue;
     private final String apiValue;

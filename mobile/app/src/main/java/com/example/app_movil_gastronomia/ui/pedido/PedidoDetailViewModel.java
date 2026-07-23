@@ -7,8 +7,10 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.app_movil_gastronomia.core.UiState;
+import com.example.app_movil_gastronomia.data.dto.demora.DemoraDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
+import com.example.app_movil_gastronomia.data.repository.contract.DemoraRepository;
 import com.example.app_movil_gastronomia.data.repository.contract.UsuarioRepository;
 import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
 import java.util.List;
@@ -33,35 +35,43 @@ public class PedidoDetailViewModel extends ViewModel {
 
     private final PedidoRepository pedidoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final DemoraRepository demoraRepository;
 
     private final MutableLiveData<UiState<PedidoDetalleDto>> detailState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> cambiarEstadoState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> asignarRepartidorState = new MutableLiveData<>();
     private final MutableLiveData<UiState<List<UsuarioDto>>> repartidoresDisponiblesState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<List<DemoraDto>>> demorasState = new MutableLiveData<>();
 
     private final Observer<UiState<PedidoDetalleDto>> detailObserver;
     private final Observer<UiState<PedidoDetalleDto>> cambiarEstadoObserver;
     private final Observer<UiState<PedidoDetalleDto>> asignarRepartidorObserver;
     private final Observer<UiState<List<UsuarioDto>>> repartidoresDisponiblesObserver;
+    private final Observer<UiState<List<DemoraDto>>> demorasObserver;
 
     private final AtomicInteger observerRegistrationCount = new AtomicInteger(0);
 
     @Inject
-    public PedidoDetailViewModel(PedidoRepository pedidoRepository, UsuarioRepository usuarioRepository) {
+    public PedidoDetailViewModel(PedidoRepository pedidoRepository,
+                                 UsuarioRepository usuarioRepository,
+                                 DemoraRepository demoraRepository) {
         this.pedidoRepository = pedidoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.demoraRepository = demoraRepository;
         
         this.detailObserver = detailState::setValue;
         this.cambiarEstadoObserver = cambiarEstadoState::setValue;
         this.asignarRepartidorObserver = asignarRepartidorState::setValue;
         this.repartidoresDisponiblesObserver = repartidoresDisponiblesState::setValue;
+        this.demorasObserver = demorasState::setValue;
 
         pedidoRepository.getPedidoState().observeForever(detailObserver);
         pedidoRepository.getCambiarEstadoState().observeForever(cambiarEstadoObserver);
         pedidoRepository.getAsignarRepartidorState().observeForever(asignarRepartidorObserver);
         usuarioRepository.getRepartidoresDisponiblesState().observeForever(repartidoresDisponiblesObserver);
+        demoraRepository.getDemorasState().observeForever(demorasObserver);
 
-        observerRegistrationCount.addAndGet(4);
+        observerRegistrationCount.addAndGet(5);
     }
 
     public LiveData<UiState<PedidoDetalleDto>> getDetailState() {
@@ -100,6 +110,14 @@ public class PedidoDetailViewModel extends ViewModel {
         usuarioRepository.fetchRepartidoresDisponibles();
     }
 
+    public LiveData<UiState<List<DemoraDto>>> getDemorasState() {
+        return demorasState;
+    }
+
+    public void loadDemoras(int pedidoId) {
+        demoraRepository.getDemoras(pedidoId);
+    }
+
     @Override
     protected void onCleared() {
         super.onCleared();
@@ -107,6 +125,7 @@ public class PedidoDetailViewModel extends ViewModel {
         pedidoRepository.getCambiarEstadoState().removeObserver(cambiarEstadoObserver);
         pedidoRepository.getAsignarRepartidorState().removeObserver(asignarRepartidorObserver);
         usuarioRepository.getRepartidoresDisponiblesState().removeObserver(repartidoresDisponiblesObserver);
+        demoraRepository.getDemorasState().removeObserver(demorasObserver);
     }
 
     /** Test-only diagnostic: how many times the VM registered an observer. */

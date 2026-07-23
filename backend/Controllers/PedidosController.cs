@@ -80,7 +80,6 @@ public class PedidosController : ControllerBase
                 LatitudDestino = request.LatitudDestino,
                 LongitudDestino = request.LongitudDestino,
                 TotalEstimado = request.TotalEstimado,
-                DemoraAprox = request.DemoraAprox,
                 DetallePedidos = request.Detalles.Select(d => new DetallePedido
                 {
                     ProductoId = d.ProductoId,
@@ -165,7 +164,7 @@ public class PedidosController : ControllerBase
         FechaIngreso: p.FechaIngreso
     );
 
-    private static PedidoDetalleDTO MapToDetalle(Pedido p) => new(
+    private static PedidoDetalleDTO MapToDetalle(Pedido p) => new PedidoDetalleDTO(
         Id: p.Id,
         Estado: p.Estado.Nombre,
         ClienteNombre: p.ClienteNombre,
@@ -191,5 +190,10 @@ public class PedidosController : ControllerBase
             Precio: d.Precio,
             TiempoMaquina: d.Producto?.Demora ?? 0
         )).ToList()
-    );
+    ) with
+    {
+        DemoraPreparacionAprox = p.DemoraPreparacionAprox,
+        DemoraDemorasAprox = p.DemoraDemorasAprox,
+        DemoraDeliveryAprox = p.DemoraDeliveryAprox
+    };
 }

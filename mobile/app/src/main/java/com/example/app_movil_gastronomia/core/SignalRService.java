@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 
 import com.example.app_movil_gastronomia.data.dto.signalr.DemoraRegistradaMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
+import com.example.app_movil_gastronomia.data.dto.signalr.EstimacionPedidoActualizadaMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.NuevoPedidoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.PosicionGPSActualizadaMessage;
@@ -73,6 +74,8 @@ public interface SignalRService {
 
     /** Emitted when a pedido (or one of its details) changes state. */
     LiveData<EstadoCambiadoMessage> getEstadoCambiado();
+
+    LiveData<EstimacionPedidoActualizadaMessage> getEstimacionPedidoActualizada();
 
     /** Emitted when a repartidor is assigned to a pedido. */
     LiveData<RepartidorAsignadoMessage> getRepartidorAsignado();

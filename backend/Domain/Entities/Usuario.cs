@@ -27,6 +27,10 @@ public class Usuario
     [Column("fuera_de_servicio")]
     public bool FueraDeServicio { get; set; } = false;
 
+    [Column("motivo_fuera_servicio")]
+    [MaxLength(255)]
+    public string? MotivoFueraDeServicio { get; set; }
+
     [Column("rol_id")]
     public int RolId { get; set; }
 

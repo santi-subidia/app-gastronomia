@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
 using ApiGastronomia.Infrastructure.Data;
@@ -79,11 +79,12 @@ public class DemoraServiceTests
     /// Creates a mock IHttpContextAccessor that returns a ClaimsPrincipal with
     /// the given userId in the "sub" claim.
     /// </summary>
-    private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(int userId)
+    private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(int userId, string role = "Desconocido")
     {
         var claims = new List<Claim>
         {
-            new("sub", userId.ToString())
+            new("sub", userId.ToString()),
+            new(ClaimTypes.Role, role)
         };
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var principal = new ClaimsPrincipal(identity);
@@ -116,13 +117,14 @@ public class DemoraServiceTests
     /// </summary>
     private static (DemoraService Service, Mock<IClientProxy> MockProxy) CreateService(
         AppDbContext context,
-        int userId = 1)
+        int userId = 1,
+        string role = "Desconocido")
     {
         var (mockClients, mockProxy) = CreateMockHubClients();
         var mockHub = new Mock<IHubContext<LogisticaHub>>();
         mockHub.Setup(h => h.Clients).Returns(mockClients.Object);
 
-        var mockAccessor = CreateMockHttpContextAccessor(userId);
+        var mockAccessor = CreateMockHttpContextAccessor(userId, role);
         var logger = new LoggerFactory().CreateLogger<DemoraService>();
 
         var service = new DemoraService(context, mockHub.Object, mockAccessor.Object, logger);
@@ -234,10 +236,10 @@ public class DemoraServiceTests
         // Arrange: seed pedido and usuario
         var context = CreateDbContext();
         var (_, pedido, usuario) = SeedPedidoYUsuario(context);
-        var (service, _) = CreateService(context, userId: usuario.Id);
+        var (service, _) = CreateService(context, userId: usuario.Id, role: "cocina");
 
         // Act
-        var result = await service.CrearAsync(pedido.Id, 20, "cocina", "falta stock");
+        var result = await service.CrearAsync(pedido.Id, 20, "falta stock");
 
         // Assert: returned DTO has correct fields
         Assert.Equal(pedido.Id, result.PedidoId);
@@ -266,12 +268,12 @@ public class DemoraServiceTests
         var (service, mockProxy) = CreateService(context, userId: usuario.Id);
 
         // Act
-        await service.CrearAsync(pedido.Id, 25, "reparto", null);
+        await service.CrearAsync(pedido.Id, 25, null);
 
-        // Assert: SignalR sent DemoraRegistrada event to the pedido group
+        // Assert: SignalR sent DemoraRegistrada event twice (pedido group + Cajeros group)
         mockProxy.Verify(
             proxy => proxy.SendCoreAsync("DemoraRegistrada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+            Times.Exactly(2));
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -288,7 +290,7 @@ public class DemoraServiceTests
 
         // Act + Assert: demoraMinutos = 0 is invalid
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.CrearAsync(pedido.Id, 0, null, null));
+            () => service.CrearAsync(pedido.Id, 0, null));
 
         Assert.Contains("mayor que cero", ex.Message);
 
@@ -307,7 +309,7 @@ public class DemoraServiceTests
 
         // Act + Assert: demoraMinutos < 0 is invalid
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.CrearAsync(pedido.Id, -5, null, null));
+            () => service.CrearAsync(pedido.Id, -5, null));
 
         Assert.Contains("mayor que cero", ex.Message);
 
@@ -325,7 +327,7 @@ public class DemoraServiceTests
 
         // Act + Assert
         var ex = await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => service.CrearAsync(999, 10, null, null));
+            () => service.CrearAsync(999, 10, null));
 
         Assert.Contains("999", ex.Message);
 
@@ -343,7 +345,7 @@ public class DemoraServiceTests
         var (service, _) = CreateService(context, userId: usuario.Id);
 
         // Act: userId comes from claims, NOT from parameters
-        var result = await service.CrearAsync(pedido.Id, 10, "cocina", null);
+        var result = await service.CrearAsync(pedido.Id, 10, null);
 
         // Assert: userId extracted from claims matches the seeded user
         Assert.Equal(usuario.Id, result.UsuarioId);
@@ -370,12 +372,12 @@ public class DemoraServiceTests
         var (service, _) = CreateService(context);
 
         // Act: update demoraMinutos and observaciones
-        var result = await service.ActualizarAsync(demora.Id, 30, "reparto", "actualizado");
+        var result = await service.ActualizarAsync(demora.Id, 30, "actualizado");
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(30, result!.DemoraMinutos);
-        Assert.Equal("reparto", result.Sector);
+        Assert.Equal("cocina", result.Sector);
         Assert.Equal("actualizado", result.Observaciones);
         Assert.Equal(demora.Id, result.Id);
 
@@ -392,7 +394,7 @@ public class DemoraServiceTests
         var (service, _) = CreateService(context);
 
         // Act
-        var result = await service.ActualizarAsync(999, 10, "test", null);
+        var result = await service.ActualizarAsync(999, 10, null);
 
         // Assert
         Assert.Null(result);
@@ -465,11 +467,11 @@ public class DemoraServiceTests
         var (service, _) = CreateService(context, userId: usuario.Id);
 
         // Act
-        var result = await service.CrearAsync(pedido.Id, 45, null, null);
+        var result = await service.CrearAsync(pedido.Id, 45, null);
 
         // Assert: null fields are accepted
         Assert.Equal(45, result.DemoraMinutos);
-        Assert.Null(result.Sector);
+        Assert.Equal("Desconocido", result.Sector);
         Assert.Null(result.Observaciones);
 
         // Cleanup
@@ -527,7 +529,7 @@ public class DemoraServiceTests
         var (service, _) = CreateService(context);
 
         // Act: update only demoraMinutos, pass null for others
-        var result = await service.ActualizarAsync(demora.Id, 45, null, null);
+        var result = await service.ActualizarAsync(demora.Id, 45, null);
 
         // Assert: demoraMinutos updated, sector and observaciones unchanged (null = no update)
         Assert.NotNull(result);
@@ -543,13 +545,14 @@ public class DemoraServiceTests
     [Fact]
     public async Task CrearAsync_DifferentData_ProducesDifferentResults()
     {
-        // Arrange: triangulation — different inputs produce different outputs
+        // Arrange: triangulation - different inputs produce different outputs
         var context = CreateDbContext();
         var (_, pedido, usuario) = SeedPedidoYUsuario(context);
-        var (service, _) = CreateService(context, userId: usuario.Id);
+        var (service1, _) = CreateService(context, userId: usuario.Id, role: "cocina");
+        var (service2, _) = CreateService(context, userId: usuario.Id, role: "reparto");
 
         // Act: create first demora
-        var result1 = await service.CrearAsync(pedido.Id, 10, "cocina", "test1");
+        var result1 = await service1.CrearAsync(pedido.Id, 10, "test1");
 
         // Assert: fields match input
         Assert.Equal(10, result1.DemoraMinutos);
@@ -557,7 +560,7 @@ public class DemoraServiceTests
         Assert.Equal("test1", result1.Observaciones);
 
         // Act: create second demora with different data
-        var result2 = await service.CrearAsync(pedido.Id, 30, "reparto", "test2");
+        var result2 = await service2.CrearAsync(pedido.Id, 30, "test2");
 
         // Assert: different results
         Assert.Equal(30, result2.DemoraMinutos);
@@ -598,7 +601,7 @@ public class DemoraServiceTests
     }
 
     // ================================================================
-    // Task 4.4 — CrearAsync sends DemoraRegistradaMessage typed DTO
+    // Task 4.4 â€” CrearAsync sends DemoraRegistradaMessage typed DTO
     // ================================================================
 
     [Fact]
@@ -607,7 +610,7 @@ public class DemoraServiceTests
         // Arrange
         var context = CreateDbContext();
         var (_, pedido, usuario) = SeedPedidoYUsuario(context);
-        var (service, mockProxy) = CreateService(context, userId: usuario.Id);
+        var (service, mockProxy) = CreateService(context, userId: usuario.Id, role: "reparto");
 
         object?[]? capturedArgs = null;
         mockProxy
@@ -616,14 +619,16 @@ public class DemoraServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.CrearAsync(pedido.Id, 25, "reparto", "falta stock");
+        await service.CrearAsync(pedido.Id, 25, "falta stock");
 
-        // Assert: DemoraRegistradaMessage typed DTO was sent
+        // Assert: DemoraRegistradaMessage typed DTO was sent with full contract
         Assert.NotNull(capturedArgs);
         var msg = Assert.IsType<DemoraRegistradaMessage>(capturedArgs![0]);
+        Assert.True(msg.DemoraId > 0);
         Assert.Equal(pedido.Id, msg.PedidoId);
-        Assert.Equal("reparto", msg.Motivo);
+        Assert.Equal("reparto", msg.Sector);
         Assert.Equal(25, msg.TiempoEstimadoMinutos);
+        Assert.Equal("falta stock", msg.Observaciones);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();
@@ -631,9 +636,58 @@ public class DemoraServiceTests
     }
 
     [Fact]
-    public async Task CrearAsync_NullSector_SendsNoEspecificado()
+    public async Task CrearAsync_SendsDemoraRegistradaMessageToCajerosGroup()
     {
-        // Arrange: null sector should default to "No especificado"
+        // Arrange
+        var context = CreateDbContext();
+        var (_, pedido, usuario) = SeedPedidoYUsuario(context);
+        var (service, mockProxy) = CreateService(context, userId: usuario.Id, role: "Cocina");
+
+        var sentTargets = new List<string>();
+        mockProxy
+            .Setup(proxy => proxy.SendCoreAsync("DemoraRegistrada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) =>
+            {
+                var clients = mockProxy.Object;
+                // We cannot inspect the group name directly from the proxy callback,
+                // so we verify the hub path through the IHubContext mock setup below.
+            })
+            .Returns(Task.CompletedTask);
+
+        var mockClients = new Moq.Mock<IHubClients>();
+        var mockGroupProxy = new Moq.Mock<IClientProxy>();
+        mockGroupProxy
+            .Setup(p => p.SendCoreAsync("DemoraRegistrada", It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object?[], CancellationToken>((_, args, _) =>
+            {
+                sentTargets.Add(args[0] is DemoraRegistradaMessage m ? $"group:{m.Sector}" : "unknown");
+            })
+            .Returns(Task.CompletedTask);
+        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockGroupProxy.Object);
+
+        var mockHubContext = new Moq.Mock<IHubContext<LogisticaHub>>();
+        mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+
+        var logger = new LoggerFactory().CreateLogger<DemoraService>();
+        var mockAccessor = CreateMockHttpContextAccessor(usuario.Id, "Cocina");
+        var serviceWithMock = new DemoraService(context, mockHubContext.Object, mockAccessor.Object, logger);
+
+        // Act
+        await serviceWithMock.CrearAsync(pedido.Id, 15, "falta stock");
+
+        // Assert: both groups were invoked
+        mockClients.Verify(c => c.Group($"pedido_{pedido.Id}"), Times.Once);
+        mockClients.Verify(c => c.Group("Cajeros"), Times.Once);
+
+        // Cleanup
+        await context.Database.EnsureDeletedAsync();
+        context.Dispose();
+    }
+
+    [Fact]
+    public async Task CrearAsync_NullSector_SendsDesconocido()
+    {
+        // Arrange: missing role should default to "Desconocido"
         var context = CreateDbContext();
         var (_, pedido, usuario) = SeedPedidoYUsuario(context);
         var (service, mockProxy) = CreateService(context, userId: usuario.Id);
@@ -645,12 +699,12 @@ public class DemoraServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await service.CrearAsync(pedido.Id, 10, null, null);
+        await service.CrearAsync(pedido.Id, 10, null);
 
-        // Assert: Motivo defaults to "No especificado"
+        // Assert: Sector defaults to "Desconocido"
         Assert.NotNull(capturedArgs);
         var msg = Assert.IsType<DemoraRegistradaMessage>(capturedArgs![0]);
-        Assert.Equal("No especificado", msg.Motivo);
+        Assert.Equal("Desconocido", msg.Sector);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();

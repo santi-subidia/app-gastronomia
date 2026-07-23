@@ -76,25 +76,15 @@ public class RepartidorHomeFragment extends Fragment {
 
         binding.buttonRetry.setOnClickListener(v -> viewModel.retry());
 
-        binding.switchDisponible.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (buttonView.isPressed()) {
-                viewModel.updateDisponibilidad(isChecked);
-            }
-        });
-
         viewModel.getUpdateState().observe(getViewLifecycleOwner(), state -> {
             if (state == null) return;
             switch (state.getStatus()) {
                 case LOADING:
-                    binding.switchDisponible.setEnabled(false);
                     break;
                 case SUCCESS:
-                    binding.switchDisponible.setEnabled(true);
                     Toast.makeText(requireContext(), "Estado actualizado", Toast.LENGTH_SHORT).show();
                     break;
                 case ERROR:
-                    binding.switchDisponible.setEnabled(true);
-                    binding.switchDisponible.setChecked(!binding.switchDisponible.isChecked());
                     Toast.makeText(requireContext(), "Error al actualizar estado: " + state.getError(), Toast.LENGTH_LONG).show();
                     break;
             }
@@ -159,7 +149,7 @@ public class RepartidorHomeFragment extends Fragment {
 
     /**
      * Keeps only pedidos the repartidor should see right now:
-     * those in the "En Camino" or "Listo para retirar" estado.
+     * those in the "En Camino", "Listo para retirar" or "Entregado" state.
      */
     static List<PedidoResumenDto> filterActivos(List<PedidoResumenDto> pedidos) {
         List<PedidoResumenDto> result = new ArrayList<>();
@@ -167,7 +157,7 @@ public class RepartidorHomeFragment extends Fragment {
             return result;
         }
         for (PedidoResumenDto p : pedidos) {
-            if (RepartidorHomeViewModel.isEnCaminoOrListo(p.getEstado())) {
+            if (RepartidorHomeViewModel.isVisibleOnDashboard(p.getEstado())) {
                 result.add(p);
             }
         }
@@ -175,17 +165,15 @@ public class RepartidorHomeFragment extends Fragment {
     }
 
     /**
-     * Renders a transient "Entrega completada" snackbar when the hub
-     * pushes a {@link PedidoFinalizadoMessage}. We do not auto-refresh
-     * the list here: the next {@code RepartidorAsignadoMessage} or
-     * explicit {@code retry()} will pull the fresh state and the
-     * finalizado row will drop out.
+     * Renders a transient "Entrega completada" snackbar and refreshes the
+     * dashboard so the finalizado row is removed immediately.
      */
     private void handlePedidoFinalizado(PedidoFinalizadoMessage message) {
         if (message == null || binding == null) return;
         Snackbar.make(binding.getRoot(),
                 R.string.delivery_completed,
                 Snackbar.LENGTH_SHORT).show();
+        viewModel.retry();
     }
 
     private void navigateToDetail(PedidoResumenDto pedido) {
@@ -202,6 +190,14 @@ public class RepartidorHomeFragment extends Fragment {
     private void navigateToMapa() {
         NavController controller = Navigation.findNavController(requireView());
         controller.navigate(R.id.action_nav_repartidor_home_to_nav_mapa);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.retry();
+        }
     }
 
     @Override

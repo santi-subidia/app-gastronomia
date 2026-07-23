@@ -35,16 +35,15 @@ public class DemorasController : ControllerBase
     }
 
     /// <summary>
-    /// Registra una nueva demora. Solo accesible para Cajero.
+    /// Registra una nueva demora. Accesible para cualquier rol.
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Cajero")]
     public async Task<ActionResult<DemoraResponse>> Create([FromBody] CrearDemoraRequest request)
     {
         try
         {
             var demora = await _demoraService.CrearAsync(
-                request.PedidoId, request.DemoraMinutos, request.Sector, request.Observaciones);
+                request.PedidoId, request.DemoraMinutos, request.Observaciones);
             return CreatedAtAction(nameof(GetByPedido), new { pedidoId = demora.PedidoId }, demora);
         }
         catch (KeyNotFoundException ex)
@@ -65,7 +64,7 @@ public class DemorasController : ControllerBase
     public async Task<ActionResult<DemoraResponse>> Update(int id, [FromBody] ActualizarDemoraRequest request)
     {
         var result = await _demoraService.ActualizarAsync(
-            id, request.DemoraMinutos, request.Sector, request.Observaciones);
+            id, request.DemoraMinutos, request.Observaciones);
 
         if (result is null)
             return NotFound(new { Mensaje = $"Demora #{id} no encontrada." });

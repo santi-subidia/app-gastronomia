@@ -21,7 +21,9 @@ import androidx.navigation.Navigation;
 
 import com.example.app_movil_gastronomia.R;
 import com.example.app_movil_gastronomia.core.TokenManager;
+import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.UiState;
+import com.example.app_movil_gastronomia.data.dto.demora.DemoraDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.DetallePedidoDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
@@ -34,6 +36,10 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Date;
+import java.util.TimeZone;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -47,6 +53,9 @@ public class PedidoDetailFragment extends Fragment {
 
     @javax.inject.Inject
     public TokenManager tokenManager;
+
+    @javax.inject.Inject
+    public SignalRService signalRService;
 
     private FragmentPedidoDetailBinding binding;
     private PedidoDetailViewModel viewModel;
@@ -72,10 +81,24 @@ public class PedidoDetailFragment extends Fragment {
         viewModel.getCambiarEstadoState().observe(getViewLifecycleOwner(), this::handleCambiarEstadoResult);
         viewModel.getAsignarRepartidorState().observe(getViewLifecycleOwner(), this::handleAsignarRepartidorResult);
         viewModel.getRepartidoresDisponiblesState().observe(getViewLifecycleOwner(), this::handleRepartidoresResult);
+        viewModel.getDemorasState().observe(getViewLifecycleOwner(), this::handleDemorasState);
+        signalRService.getEstimacionPedidoActualizada().observe(
+                getViewLifecycleOwner(),
+                message -> {
+                    if (message != null && message.getPedidoId() == pedidoId) {
+                        viewModel.loadPedido(pedidoId);
+                    }
+                });
+
+        if (pedidoId > 0) {
+            signalRService.unirseAPedido(pedidoId);
+        }
 
         binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
         binding.buttonCancelarPedido.setOnClickListener(v -> confirmCancelOrder());
         binding.buttonAsignarRepartidor.setOnClickListener(v -> viewModel.fetchRepartidoresDisponibles());
+        binding.buttonVerDemoras.setOnClickListener(v -> viewModel.loadDemoras(pedidoId));
+        binding.demorasButtonRetry.setOnClickListener(v -> viewModel.loadDemoras(pedidoId));
         binding.buttonRegistrarDemora.setOnClickListener(v -> {
             // Navigate to the Demora form, passing the current pedidoId
             // as a SafeArgs-equivalent Bundle argument. The Demora
@@ -155,6 +178,21 @@ public class PedidoDetailFragment extends Fragment {
         }
     }
 
+    private void handleDemorasState(UiState<List<DemoraDto>> state) {
+        if (state == null) return;
+        switch (state.getStatus()) {
+            case LOADING:
+                showDemorasLoading();
+                break;
+            case SUCCESS:
+                showDemorasContent(state.getData());
+                break;
+            case ERROR:
+                showDemorasError(state.getError());
+                break;
+        }
+    }
+
     private void showLoading() {
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.contentScroll.setVisibility(View.GONE);
@@ -196,9 +234,24 @@ public class PedidoDetailFragment extends Fragment {
         binding.clienteDireccion.setText(pedido.getClienteDireccion() != null ? pedido.getClienteDireccion() : "No especificada");
         String metodoVenta = pedido.getMetodoVenta() != null ? pedido.getMetodoVenta() : "";
         binding.metodoVenta.setText(metodoVenta);
-        binding.fechaIngreso.setText(pedido.getFechaIngreso() != null
-                ? pedido.getFechaIngreso() : "");
+
+        if (pedido.getRepartidorNombre() != null && !pedido.getRepartidorNombre().isEmpty()) {
+            binding.groupRepartidor.setVisibility(View.VISIBLE);
+            binding.repartidorNombre.setText(pedido.getRepartidorNombre());
+        } else {
+            binding.groupRepartidor.setVisibility(View.GONE);
+        }
+
+        binding.fechaIngreso.setText(formatApiDate(pedido.getFechaIngreso()));
         binding.total.setText(String.format(Locale.getDefault(), "$%.0f", pedido.getTotalEstimado()));
+
+        Integer demoraAprox = pedido.getDemoraAprox();
+        binding.demoraEstimada.setText(demoraAprox != null
+                ? getString(R.string.estimated_delay_minutes, demoraAprox)
+                : getString(R.string.estimated_delay_unavailable));
+        binding.fechaEstimada.setText(pedido.getFechaEstimadoFin() != null
+                ? getString(R.string.estimated_completion_time, formatApiDate(pedido.getFechaEstimadoFin()))
+                : "");
 
         // Configuración de botones de acción
         String role = tokenManager.getRole() != null ? tokenManager.getRole().toLowerCase(Locale.ROOT) : "";
@@ -208,6 +261,7 @@ public class PedidoDetailFragment extends Fragment {
         if (isCajero) {
             // Lógica específica para el Cajero
             binding.buttonRegistrarDemora.setVisibility(View.GONE);
+            binding.buttonVerDemoras.setVisibility(View.VISIBLE);
             
             if (estado == EstadoPedidoEnum.LISTO_PARA_RETIRAR) {
                 if (metodoVenta.toLowerCase(Locale.ROOT).contains("delivery")) {
@@ -223,14 +277,26 @@ public class PedidoDetailFragment extends Fragment {
                         viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.ENTREGADO);
                     });
                 }
+            } else if (estado == EstadoPedidoEnum.ENTREGADO || estado == EstadoPedidoEnum.RETIRADO) {
+                binding.buttonAsignarRepartidor.setVisibility(View.GONE);
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Devolver Pedido");
+                binding.buttonCambiarEstado.setOnClickListener(v -> confirmDevolverPedido(pedidoId));
+            } else if (estado == EstadoPedidoEnum.CONTINGENCIA) {
+                binding.buttonAsignarRepartidor.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Mandar a rehacer (Cocina)");
+                binding.buttonCambiarEstado.setOnClickListener(v -> viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.PENDIENTE));
             } else {
-                // Si no está listo, el cajero no puede hacer ninguna acción terminal en esta vista
+                // Si no está listo ni entregado/retirado, el cajero no puede hacer ninguna acción terminal en esta vista
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
                 binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             }
         } else if (isCocina) {
             // Lógica específica para Cocina
             binding.buttonAsignarRepartidor.setVisibility(View.GONE);
+            binding.buttonVerDemoras.setVisibility(View.GONE);
+            binding.demorasHistorySection.setVisibility(View.GONE);
             binding.buttonRegistrarDemora.setVisibility(View.VISIBLE);
 
             if (estado == EstadoPedidoEnum.PENDIENTE) {
@@ -251,6 +317,8 @@ public class PedidoDetailFragment extends Fragment {
         } else {
             // Lógica para Repartidor
             binding.buttonAsignarRepartidor.setVisibility(View.GONE);
+            binding.buttonVerDemoras.setVisibility(View.GONE);
+            binding.demorasHistorySection.setVisibility(View.GONE);
             binding.buttonVerRuta.setVisibility(View.VISIBLE);
             binding.buttonVerRuta.setOnClickListener(v -> {
                 Bundle args = new Bundle();
@@ -267,6 +335,10 @@ public class PedidoDetailFragment extends Fragment {
                 binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
                 binding.buttonCambiarEstado.setText("Marcar Entregado");
                 binding.buttonCambiarEstado.setOnClickListener(v -> viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.ENTREGADO));
+            } else if (estado == EstadoPedidoEnum.ENTREGADO) {
+                binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
+                binding.buttonCambiarEstado.setText("Devolver Pedido");
+                binding.buttonCambiarEstado.setOnClickListener(v -> confirmDevolverPedido(pedidoId));
             } else {
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
             }
@@ -280,6 +352,32 @@ public class PedidoDetailFragment extends Fragment {
         renderItems(pedido.getDetallePedidos());
     }
 
+    private static String formatApiDate(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+
+        String normalized = value;
+        int fractionStart = normalized.indexOf('.');
+        int timezoneStart = normalized.indexOf('Z', fractionStart);
+        if (fractionStart >= 0 && timezoneStart > fractionStart) {
+            String fraction = normalized.substring(fractionStart + 1, timezoneStart);
+            if (fraction.length() > 3) {
+                normalized = normalized.substring(0, fractionStart + 4) + normalized.substring(timezoneStart);
+            }
+        }
+
+        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.US);
+        inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        SimpleDateFormat outputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        try {
+            Date date = inputFormat.parse(normalized);
+            return date == null ? value : outputFormat.format(date);
+        } catch (ParseException ex) {
+            return value;
+        }
+    }
+
     private void confirmCancelOrder() {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.cancel_order)
@@ -287,6 +385,17 @@ public class PedidoDetailFragment extends Fragment {
                 .setPositiveButton(R.string.action_confirm,
                         (dialog, which) -> viewModel.cambiarEstado(
                                 pedidoId, EstadoPedidoEnum.CANCELADO))
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    private void confirmDevolverPedido(int currentPedidoId) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Devolver Pedido")
+                .setMessage("¿Está seguro que el cliente quiere devolver este pedido? Esta acción no se puede deshacer.")
+                .setPositiveButton("Sí, Devolver",
+                        (dialog, which) -> viewModel.cambiarEstado(
+                                currentPedidoId, EstadoPedidoEnum.DEVUELTO))
                 .setNegativeButton(R.string.action_cancel, null)
                 .show();
     }
@@ -312,7 +421,7 @@ public class PedidoDetailFragment extends Fragment {
             String nombre = d.getNombre() != null ? d.getNombre() : "";
             row.setText(String.format(Locale.getDefault(),
                     "%d × %s  —  $%.0f", d.getCantidad(), nombre, d.getPrecio()));
-            row.setTextColor(Color.parseColor("#D0E4FF"));
+            row.setTextColor(Color.parseColor("#212121"));
             row.setPadding(0, 6, 0, 6);
             binding.itemsContainer.addView(row);
         }
@@ -324,6 +433,59 @@ public class PedidoDetailFragment extends Fragment {
         binding.textError.setVisibility(View.VISIBLE);
         binding.textError.setText(message != null ? message : getString(R.string.error_generic));
         binding.buttonRetry.setVisibility(View.VISIBLE);
+    }
+
+    private void showDemorasLoading() {
+        binding.demorasHistorySection.setVisibility(View.VISIBLE);
+        binding.demorasProgressBar.setVisibility(View.VISIBLE);
+        binding.demorasTextEmpty.setVisibility(View.GONE);
+        binding.demorasTextError.setVisibility(View.GONE);
+        binding.demorasButtonRetry.setVisibility(View.GONE);
+        binding.demorasContainer.setVisibility(View.GONE);
+    }
+
+    private void showDemorasContent(List<DemoraDto> demoras) {
+        binding.demorasHistorySection.setVisibility(View.VISIBLE);
+        binding.demorasProgressBar.setVisibility(View.GONE);
+        binding.demorasTextError.setVisibility(View.GONE);
+        binding.demorasButtonRetry.setVisibility(View.GONE);
+        binding.demorasContainer.removeAllViews();
+
+        if (demoras == null || demoras.isEmpty()) {
+            binding.demorasContainer.setVisibility(View.GONE);
+            binding.demorasTextEmpty.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        binding.demorasTextEmpty.setVisibility(View.GONE);
+        binding.demorasContainer.setVisibility(View.VISIBLE);
+        for (DemoraDto demora : demoras) {
+            TextView row = new TextView(requireContext());
+            StringBuilder text = new StringBuilder()
+                    .append(getString(R.string.delay_minutes, demora.getDemoraMinutos()));
+            if (!TextUtils.isEmpty(demora.getSector())) {
+                text.append("\n")
+                        .append(getString(R.string.delay_sector, demora.getSector()));
+            }
+            if (!TextUtils.isEmpty(demora.getObservaciones())) {
+                text.append("\n")
+                        .append(getString(R.string.delay_observations, demora.getObservaciones()));
+            }
+            row.setText(text);
+            row.setTextColor(Color.parseColor("#212121"));
+            row.setPadding(0, 8, 0, 8);
+            binding.demorasContainer.addView(row);
+        }
+    }
+
+    private void showDemorasError(String message) {
+        binding.demorasHistorySection.setVisibility(View.VISIBLE);
+        binding.demorasProgressBar.setVisibility(View.GONE);
+        binding.demorasContainer.setVisibility(View.GONE);
+        binding.demorasTextEmpty.setVisibility(View.GONE);
+        binding.demorasTextError.setVisibility(View.VISIBLE);
+        binding.demorasTextError.setText(message != null ? message : getString(R.string.error_generic));
+        binding.demorasButtonRetry.setVisibility(View.VISIBLE);
     }
 
     private void showCambiarEstadoDialog() {
@@ -424,6 +586,9 @@ public class PedidoDetailFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (pedidoId > 0 && signalRService != null) {
+            signalRService.salirDePedido(pedidoId);
+        }
         super.onDestroyView();
         binding = null;
     }

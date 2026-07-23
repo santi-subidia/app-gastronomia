@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using ApiGastronomia.Controllers;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Services.Interfaces;
@@ -47,7 +47,7 @@ public class DemorasControllerTests
     }
 
     // ================================================================
-    // GET /api/demoras?pedidoId={id} — List demoras by pedido
+    // GET /api/demoras?pedidoId={id} â€” List demoras by pedido
     // ================================================================
 
     [Fact]
@@ -109,7 +109,7 @@ public class DemorasControllerTests
     }
 
     // ================================================================
-    // POST /api/demoras — Create demora (Cajero only)
+    // POST /api/demoras â€” Create demora (Cajero only)
     // ================================================================
 
     [Fact]
@@ -120,11 +120,11 @@ public class DemorasControllerTests
             Id: 5, PedidoId: 10, UsuarioId: 1, DemoraMinutos: 20, Sector: "cocina", Observaciones: "falta stock");
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.CrearAsync(10, 20, "cocina", "falta stock"))
+            .Setup(s => s.CrearAsync(10, 20, "falta stock"))
             .ReturnsAsync(createdDemora);
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new CrearDemoraRequest(PedidoId: 10, DemoraMinutos: 20, Sector: "cocina", Observaciones: "falta stock");
+        var request = new CrearDemoraRequest(PedidoId: 10, DemoraMinutos: 20, Observaciones: "falta stock");
 
         // Act
         var result = await controller.Create(request);
@@ -144,11 +144,11 @@ public class DemorasControllerTests
         // Arrange: service throws InvalidOperationException for demoraMinutos <= 0
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.CrearAsync(10, 0, null, null))
+            .Setup(s => s.CrearAsync(10, 0, null))
             .ThrowsAsync(new InvalidOperationException("La demora debe ser mayor que cero."));
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new CrearDemoraRequest(PedidoId: 10, DemoraMinutos: 0, Sector: null, Observaciones: null);
+        var request = new CrearDemoraRequest(PedidoId: 10, DemoraMinutos: 0, Observaciones: null);
 
         // Act
         var result = await controller.Create(request);
@@ -163,11 +163,11 @@ public class DemorasControllerTests
         // Arrange
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.CrearAsync(999, 10, null, null))
+            .Setup(s => s.CrearAsync(999, 10, null))
             .ThrowsAsync(new KeyNotFoundException("Pedido #999 no encontrado."));
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new CrearDemoraRequest(PedidoId: 999, DemoraMinutos: 10, Sector: null, Observaciones: null);
+        var request = new CrearDemoraRequest(PedidoId: 999, DemoraMinutos: 10, Observaciones: null);
 
         // Act
         var result = await controller.Create(request);
@@ -177,21 +177,21 @@ public class DemorasControllerTests
     }
 
     // ================================================================
-    // PUT /api/demoras/{id} — Update demora (Cajero only)
+    // PUT /api/demoras/{id} â€” Update demora (Cajero only)
     // ================================================================
 
     [Fact]
     public async Task Update_ValidRequest_ReturnsOk()
     {
         // Arrange
-        var updatedDemora = Demora1Response with { DemoraMinutos = 30, Sector = "reparto" };
+        var updatedDemora = Demora1Response with { DemoraMinutos = 30 };
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.ActualizarAsync(1, 30, "reparto", null))
+            .Setup(s => s.ActualizarAsync(1, 30, null))
             .ReturnsAsync(updatedDemora);
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new ActualizarDemoraRequest(DemoraMinutos: 30, Sector: "reparto", Observaciones: null);
+        var request = new ActualizarDemoraRequest(DemoraMinutos: 30, Observaciones: null);
 
         // Act
         var result = await controller.Update(1, request);
@@ -200,7 +200,7 @@ public class DemorasControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<DemoraResponse>(okResult.Value!);
         Assert.Equal(30, response.DemoraMinutos);
-        Assert.Equal("reparto", response.Sector);
+        Assert.Equal("cocina", response.Sector);
     }
 
     [Fact]
@@ -209,11 +209,11 @@ public class DemorasControllerTests
         // Arrange
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.ActualizarAsync(999, 10, null, null))
+            .Setup(s => s.ActualizarAsync(999, 10, null))
             .ReturnsAsync((DemoraResponse?)null);
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new ActualizarDemoraRequest(DemoraMinutos: 10, Sector: null, Observaciones: null);
+        var request = new ActualizarDemoraRequest(DemoraMinutos: 10, Observaciones: null);
 
         // Act
         var result = await controller.Update(999, request);
@@ -223,7 +223,7 @@ public class DemorasControllerTests
     }
 
     // ================================================================
-    // DELETE /api/demoras/{id} — Hard delete (Cajero only)
+    // DELETE /api/demoras/{id} â€” Hard delete (Cajero only)
     // ================================================================
 
     [Fact]
@@ -269,16 +269,16 @@ public class DemorasControllerTests
     [Fact]
     public async Task Create_WithDifferentData_ReturnsCorrectFields()
     {
-        // Arrange: triangulation — different inputs produce different outputs
+        // Arrange: triangulation â€” different inputs produce different outputs
         var createdDemora = new DemoraResponse(
-            Id: 10, PedidoId: 20, UsuarioId: 3, DemoraMinutos: 45, Sector: "reparto", Observaciones: "tráfico");
+            Id: 10, PedidoId: 20, UsuarioId: 3, DemoraMinutos: 45, Sector: "reparto", Observaciones: "trÃ¡fico");
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.CrearAsync(20, 45, "reparto", "tráfico"))
+            .Setup(s => s.CrearAsync(20, 45, "trÃ¡fico"))
             .ReturnsAsync(createdDemora);
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 3, role: "Cajero");
-        var request = new CrearDemoraRequest(PedidoId: 20, DemoraMinutos: 45, Sector: "reparto", Observaciones: "tráfico");
+        var request = new CrearDemoraRequest(PedidoId: 20, DemoraMinutos: 45, Observaciones: "trÃ¡fico");
 
         // Act
         var result = await controller.Create(request);
@@ -289,7 +289,7 @@ public class DemorasControllerTests
         Assert.Equal(20, response.PedidoId);
         Assert.Equal(45, response.DemoraMinutos);
         Assert.Equal("reparto", response.Sector);
-        Assert.Equal("tráfico", response.Observaciones);
+        Assert.Equal("trÃ¡fico", response.Observaciones);
     }
 
     [Fact]
@@ -299,11 +299,11 @@ public class DemorasControllerTests
         var updatedDemora = Demora1Response with { DemoraMinutos = 60 };
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.ActualizarAsync(1, 60, null, null))
+            .Setup(s => s.ActualizarAsync(1, 60, null))
             .ReturnsAsync(updatedDemora);
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new ActualizarDemoraRequest(DemoraMinutos: 60, Sector: null, Observaciones: null);
+        var request = new ActualizarDemoraRequest(DemoraMinutos: 60, Observaciones: null);
 
         // Act
         var result = await controller.Update(1, request);
@@ -335,14 +335,14 @@ public class DemorasControllerTests
     [Fact]
     public async Task Create_DemoraMinutosNegativo_ReturnsBadRequest()
     {
-        // Arrange: triangulation — negative also triggers 400
+        // Arrange: triangulation â€” negative also triggers 400
         var mockService = new Mock<IDemoraService>();
         mockService
-            .Setup(s => s.CrearAsync(10, -5, null, null))
+            .Setup(s => s.CrearAsync(10, -5, null))
             .ThrowsAsync(new InvalidOperationException("La demora debe ser mayor que cero."));
 
         var controller = CreateControllerWithUser(mockService.Object, userId: 1, role: "Cajero");
-        var request = new CrearDemoraRequest(PedidoId: 10, DemoraMinutos: -5, Sector: null, Observaciones: null);
+        var request = new CrearDemoraRequest(PedidoId: 10, DemoraMinutos: -5, Observaciones: null);
 
         // Act
         var result = await controller.Create(request);
@@ -382,16 +382,17 @@ public class DemorasControllerTests
     }
 
     [Fact]
-    public void Create_HasAuthorizeWithCajeroRole()
+    public void Create_DoesNotHaveCajeroRoleRestriction()
     {
-        // Assert: POST has [Authorize(Roles = "Cajero")]
+        // Assert: POST no longer has [Authorize(Roles = "Cajero")]
         var method = typeof(DemorasController).GetMethod("Create");
         var attr = method?.GetCustomAttributes(true)
             .OfType<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>()
             .FirstOrDefault();
 
-        Assert.NotNull(attr);
-        Assert.Equal("Cajero", attr!.Roles);
+        if (attr != null) {
+            Assert.NotEqual("Cajero", attr.Roles);
+        }
     }
 
     [Fact]

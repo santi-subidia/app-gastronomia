@@ -22,6 +22,7 @@ public class UsuarioPipelineTests
         // Arrange: build the service collection as Program.cs does
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSignalR();
 
         // Register AppDbContext with InMemory
         services.AddDbContext<AppDbContext>(options =>
@@ -51,6 +52,7 @@ public class UsuarioPipelineTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSignalR();
         services.AddDbContext<AppDbContext>(options =>
             options.UseInMemoryDatabase("UsuarioScopedTestDb"));
         services.AddScoped<IUsuarioService, UsuarioService>();

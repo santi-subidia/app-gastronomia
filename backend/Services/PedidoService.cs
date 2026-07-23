@@ -14,13 +14,27 @@ public class PedidoService : IPedidoService
 {
     private readonly AppDbContext _context;
     private readonly IHubContext<LogisticaHub> _hubContext;
+    private readonly IEstimacionPedidoService _estimacionPedidoService;
     private readonly ILogger<PedidoService> _logger;
 
-    public PedidoService(AppDbContext context, IHubContext<LogisticaHub> hubContext, ILogger<PedidoService> logger)
+    public PedidoService(
+        AppDbContext context,
+        IHubContext<LogisticaHub> hubContext,
+        IEstimacionPedidoService estimacionPedidoService,
+        ILogger<PedidoService> logger)
     {
         _context = context;
         _hubContext = hubContext;
+        _estimacionPedidoService = estimacionPedidoService;
         _logger = logger;
+    }
+
+    public PedidoService(
+        AppDbContext context,
+        IHubContext<LogisticaHub> hubContext,
+        ILogger<PedidoService> logger)
+        : this(context, hubContext, null!, logger)
+    {
     }
 
     public async Task<Pedido> CrearPedidoAsync(Pedido pedido)
@@ -57,10 +71,21 @@ public class PedidoService : IPedidoService
         if (missingProductoIds.Count > 0)
             throw new InvalidOperationException($"Producto(s) no encontrado(s): {string.Join(", ", missingProductoIds)}.");
 
+        foreach (var detalle in pedido.DetallePedidos)
+        {
+            var producto = existingProductos.Single(p => p.Id == detalle.ProductoId);
+            detalle.Nombre = producto.Nombre;
+            detalle.Precio = producto.Precio;
+            detalle.Producto = producto;
+        }
+
         // Determinar estado inicial según demora de productos (0 = sin cocina)
         bool requiereCocina = existingProductos.Any(p => p.Demora > 0);
         pedido.EstadoId = requiereCocina ? (int)EstadoPedidoEnum.Pendiente : (int)EstadoPedidoEnum.ListoParaRetirar;
         pedido.FechaIngreso = DateTime.UtcNow;
+
+        if (_estimacionPedidoService is not null)
+            await _estimacionPedidoService.CalcularAsync(pedido);
 
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
@@ -80,7 +105,7 @@ public class PedidoService : IPedidoService
 
     public async Task<Pedido?> ObtenerPedidoPorIdAsync(int id)
     {
-        return await _context.Pedidos
+        var pedido = await _context.Pedidos
             .Include(p => p.Estado)
             .Include(p => p.MetodoPago)
             .Include(p => p.MetodoVenta)
@@ -90,6 +115,14 @@ public class PedidoService : IPedidoService
                 .ThenInclude(d => d.Producto)
             .Include(p => p.Demoras)
             .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (pedido is not null && pedido.DemoraAprox is null && _estimacionPedidoService is not null)
+        {
+            await _estimacionPedidoService.CalcularAsync(pedido);
+            await _context.SaveChangesAsync();
+        }
+
+        return pedido;
     }
 
     public async Task<IEnumerable<Pedido>> ObtenerPedidosAsync()
@@ -156,10 +189,19 @@ public class PedidoService : IPedidoService
 
         var estadoAnterior = (EstadoPedidoEnum)pedido.EstadoId;
 
-        if (estadoAnterior is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado or EstadoPedidoEnum.Cancelado or EstadoPedidoEnum.Devuelto)
+        // Reglas de transición: 
+        // 1. Estados finales absolutos: Cancelado y Devuelto no pueden cambiar a nada más.
+        if (estadoAnterior is EstadoPedidoEnum.Cancelado or EstadoPedidoEnum.Devuelto)
         {
             throw new InvalidOperationException(
-                $"No se puede cambiar el estado de un pedido en estado '{estadoAnterior}'.");
+                $"No se puede cambiar el estado de un pedido que ya está en estado '{estadoAnterior}'.");
+        }
+
+        // 2. Si está Entregado o Retirado, SOLO puede pasar a Devuelto.
+        if ((estadoAnterior is EstadoPedidoEnum.Entregado or EstadoPedidoEnum.Retirado) && nuevoEstado != EstadoPedidoEnum.Devuelto)
+        {
+            throw new InvalidOperationException(
+                $"Un pedido '{estadoAnterior}' solo puede cambiar a estado 'Devuelto'.");
         }
 
         pedido.EstadoId = (int)nuevoEstado;
@@ -259,6 +301,12 @@ public class PedidoService : IPedidoService
 
         pedido.RepartidorId = repartidorId;
         pedido.FechaAsignado = DateTime.UtcNow;
+
+        if (pedido.EstadoId == (int)EstadoPedidoEnum.Contingencia)
+        {
+            pedido.EstadoId = (int)EstadoPedidoEnum.ListoParaRetirar;
+            _logger.LogInformation("Pedido #{PedidoId} movido de Contingencia a ListoParaRetirar al asignar nuevo repartidor", pedidoId);
+        }
 
         await _context.SaveChangesAsync();
 

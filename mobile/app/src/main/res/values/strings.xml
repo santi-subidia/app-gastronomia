@@ -50,6 +50,22 @@
     <string name="order_cancelled">Pedido cancelado</string>
     <string name="assign_driver">Asignar Repartidor</string>
     <string name="register_delay">Registrar Demora</string>
+    <string name="view_delays">Ver demoras</string>
+    <string name="estimated_delay_minutes">Demora estimada: %1$d minutos</string>
+    <string name="estimated_delay_unavailable">Demora estimada no disponible</string>
+    <string name="estimated_completion_time">Finalización estimada: %1$s</string>
+    <string name="delay_history_title">Historial de demoras</string>
+    <string name="delay_history_empty">No hay demoras registradas para este pedido</string>
+    <string name="delay_minutes">%d min</string>
+    <string name="delay_sector">Sector: %s</string>
+    <string name="delay_observations">Observaciones: %s</string>
+    <string name="delay_notification_channel_name">Demoras de pedidos</string>
+    <string name="delay_notification_channel_description">Notificaciones cuando se registra una demora en un pedido</string>
+    <string name="delay_notification_title">Nueva demora registrada</string>
+    <string name="delay_notification_content">Pedido #%3$d: %1$d min en %2$s</string>
+    <string name="delay_notification_observations">Observaciones: %s</string>
+    <string name="delay_notification_permission_granted">Permiso de notificaciones concedido</string>
+    <string name="delay_notification_permission_denied">No se podrán mostrar notificaciones de demoras</string>
     <string name="label_customer">Cliente</string>
     <string name="label_method">M\u00e9todo</string>
     <string name="label_date">Fecha</string>
@@ -131,7 +147,7 @@
     <string name="caja_title">Caja</string>
     <string name="no_open_caja">No hay caja abierta</string>
     <string name="open_amount_hint">Monto de Apertura</string>
-    <string name="close_amount_hint">Monto de Cierre Real</string>
+    <string name="close_amount_hint">Monto de Cierre (Efectivo en Caja)</string>
     <string name="open_caja_button">Abrir Caja</string>
     <string name="close_caja_button">Cerrar Caja</string>
     <string name="caja_opened">Caja abierta exitosamente</string>
@@ -144,7 +160,6 @@
     <!-- Demora form -->
     <string name="demora_title">Registrar Demora</string>
     <string name="demora_minutes_hint">Minutos de demora</string>
-    <string name="demora_sector_hint">Sector</string>
     <string name="demora_observations_hint">Observaciones</string>
     <string name="register_delay_button">Registrar Demora</string>
     <string name="delay_registered">Demora registrada exitosamente</string>
@@ -164,6 +179,7 @@
 
     <!-- Navigation UX: drawer, toolbar overflow, splash, role labels, header fallback -->
     <string name="drawer_config">Configuraci\u00f3n</string>
+    <string name="drawer_report_contingency">Reportar Problema</string>
     <string name="drawer_logout">Cerrar sesi\u00f3n</string>
     <string name="menu_logout">Cerrar sesi\u00f3n</string>
     <string name="splash_title">Gastronom\u00eda</string>

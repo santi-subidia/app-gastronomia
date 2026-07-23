@@ -13,20 +13,18 @@ public record DemoraResponse(
 );
 
 /// <summary>
-/// Request DTO for creating a demora.
+/// Request DTO for creating a demora. Sector is derived from the JWT role server-side.
 /// </summary>
 public record CrearDemoraRequest(
     int PedidoId,
     int DemoraMinutos,
-    string? Sector,
     string? Observaciones
 );
 
 /// <summary>
-/// Request DTO for updating a demora.
+/// Request DTO for updating a demora. Sector is immutable on update.
 /// </summary>
 public record ActualizarDemoraRequest(
     int DemoraMinutos,
-    string? Sector,
     string? Observaciones
 );

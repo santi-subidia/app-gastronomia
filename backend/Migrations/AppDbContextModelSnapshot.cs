@@ -266,6 +266,18 @@ namespace ApiGastronomia.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("demora_aprox");
 
+                    b.Property<int?>("DemoraDeliveryAprox")
+                        .HasColumnType("integer")
+                        .HasColumnName("demora_delivery_aprox");
+
+                    b.Property<int?>("DemoraDemorasAprox")
+                        .HasColumnType("integer")
+                        .HasColumnName("demora_demoras_aprox");
+
+                    b.Property<int?>("DemoraPreparacionAprox")
+                        .HasColumnType("integer")
+                        .HasColumnName("demora_preparacion_aprox");
+
                     b.Property<int>("EstadoId")
                         .HasColumnType("integer")
                         .HasColumnName("estado_id");
@@ -407,6 +419,11 @@ namespace ApiGastronomia.Migrations
                     b.Property<bool>("FueraDeServicio")
                         .HasColumnType("boolean")
                         .HasColumnName("fuera_de_servicio");
+
+                    b.Property<string>("MotivoFueraDeServicio")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("motivo_fuera_servicio");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

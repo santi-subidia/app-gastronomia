@@ -371,7 +371,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     return errorResponse.getMensaje();
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Error parsing error body", e);
         }
         return fallback;
@@ -393,7 +393,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Error parsing create-order error body", e);
         }
         return new ParsedError(null, fallback);

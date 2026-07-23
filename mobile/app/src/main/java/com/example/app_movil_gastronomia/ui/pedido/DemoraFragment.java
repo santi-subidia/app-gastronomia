@@ -27,8 +27,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 /**
  * "Registrar Demora" form. The cajero or cocina staff enters the delay
- * in minutes, the responsible sector (free text, e.g. "Cocina" /
- * "Repartidor") and optional observations, then submits. The form is
+ * in minutes and optional observations, then submits. The server derives
+ * the responsible sector from the authenticated user's role. The form is
  * scoped to a single pedido — its id is read from the {@code pedidoId}
  * navigation argument.
  *
@@ -65,8 +65,6 @@ public class DemoraFragment extends Fragment {
         binding.buttonRegistrar.setOnClickListener(v -> submit());
 
         attachClearErrorOnType(binding.inputMinutos, binding.inputMinutosLayout);
-        attachClearErrorOnType(binding.inputSector, binding.inputSectorLayout);
-
         viewModel.getCrearState().observe(getViewLifecycleOwner(), this::handleCrearResult);
     }
 

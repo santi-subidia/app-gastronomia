@@ -9,5 +9,6 @@ public enum EstadoPedidoEnum
     Entregado = 5,
     Retirado = 6,
     Cancelado = 7,
-    Devuelto = 8
+    Devuelto = 8,
+    Contingencia = 9
 }

@@ -39,4 +39,9 @@ public interface IUsuarioService
     /// Returns true if the user was found and deactivated, false if not found.
     /// </summary>
     Task<bool> EliminarUsuarioAsync(int id);
+
+    /// <summary>
+    /// Marca a un repartidor como fuera de servicio, asigna el motivo y pasa sus pedidos activos a Contingencia.
+    /// </summary>
+    Task ReportarContingenciaAsync(int usuarioId, string motivo);
 }

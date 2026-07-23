@@ -10,6 +10,7 @@ using ApiGastronomia.Models;
 using ApiGastronomia.Services;
 using ApiGastronomia.Services.Hubs;
 using ApiGastronomia.Services.Interfaces;
+using ApiGastronomia.Services.Routing;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
@@ -72,36 +73,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 // =============================================
-// 3. Redis -> Caché de posiciones GPS
+// 3. SignalR (in-memory para el MVP de una sola instancia)
 // =============================================
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "ApiGastronomia_";
-});
-
-// También registramos IConnectionMultiplexer para uso avanzado si se necesita
-builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
-{
-    var config = builder.Configuration.GetConnectionString("Redis")
-        ?? throw new InvalidOperationException("Redis connection string no configurada.");
-    return StackExchange.Redis.ConnectionMultiplexer.Connect(config);
-});
+builder.Services.AddSignalR();
 
 // =============================================
-// 4. SignalR + Redis backplane
-// =============================================
-var redisConnection = builder.Configuration.GetConnectionString("Redis")
-    ?? throw new InvalidOperationException("Redis connection string no configurada.");
-
-builder.Services.AddSignalR()
-    .AddStackExchangeRedis(redisConnection, options =>
-    {
-        options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("SignalR");
-    });
-
-// =============================================
-// 4b. Autenticación JWT
+// 4. Autenticación JWT
 // =============================================
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
@@ -162,7 +139,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 // =============================================
-// 4c. Rate Limiting — protección contra abuso
+// 5. Rate Limiting — protección contra abuso
 // =============================================
 builder.Services.AddRateLimiter(options =>
 {
@@ -229,6 +206,11 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 builder.Services.AddScoped<IDemoraService, DemoraService>();
+builder.Services.AddScoped<IEstimacionPedidoService, EstimacionPedidoService>();
+builder.Services.AddHttpClient<IRoutingService, OsrmRoutingService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 builder.Services.AddScoped<ICajaService, CajaService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<RoleSeedService>();

@@ -15,18 +15,18 @@ public interface IDemoraService
     Task<IEnumerable<DemoraResponse>> ObtenerPorPedidoAsync(int pedidoId);
 
     /// <summary>
-    /// Creates a new demora. userId is extracted from JWT claims internally.
+    /// Creates a new demora. userId and sector are extracted from JWT claims internally.
     /// Throws KeyNotFoundException if the pedido does not exist.
     /// Throws InvalidOperationException if demoraMinutos &lt;= 0.
-    /// Sends SignalR notification to the pedido group on success.
+    /// Sends SignalR notification to the pedido group and to the Cajeros group on success.
     /// </summary>
-    Task<DemoraResponse> CrearAsync(int pedidoId, int demoraMinutos, string? sector, string? observaciones);
+    Task<DemoraResponse> CrearAsync(int pedidoId, int demoraMinutos, string? observaciones);
 
     /// <summary>
-    /// Updates demoraMinutos, sector, and observaciones of an existing demora.
+    /// Updates demoraMinutos and observaciones of an existing demora.
     /// Returns null if the demora does not exist.
     /// </summary>
-    Task<DemoraResponse?> ActualizarAsync(int id, int demoraMinutos, string? sector, string? observaciones);
+    Task<DemoraResponse?> ActualizarAsync(int id, int demoraMinutos, string? observaciones);
 
     /// <summary>
     /// Hard deletes a demora by ID.

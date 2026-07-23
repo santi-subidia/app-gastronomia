@@ -63,7 +63,12 @@ public record PedidoDetalleDTO(
     int? CajaId,
     int EstadoId,
     List<DetallePedidoDTO> DetallePedidos
-);
+)
+{
+    public int? DemoraPreparacionAprox { get; init; }
+    public int? DemoraDemorasAprox { get; init; }
+    public int? DemoraDeliveryAprox { get; init; }
+}
 
 public record CrearDetalleRequest(
     int ProductoId,

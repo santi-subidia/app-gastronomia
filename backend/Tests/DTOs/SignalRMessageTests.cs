@@ -62,11 +62,15 @@ public class SignalRMessageTests
     [Fact]
     public void DemoraRegistradaMessage_ConstructsCorrectly()
     {
-        var msg = new DemoraRegistradaMessage(42, "Cocina", 15, DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+        var msg = new DemoraRegistradaMessage(1, 42, "Cocina", 15, "falta stock", now);
 
+        Assert.Equal(1, msg.DemoraId);
         Assert.Equal(42, msg.PedidoId);
-        Assert.Equal("Cocina", msg.Motivo);
+        Assert.Equal("Cocina", msg.Sector);
         Assert.Equal(15, msg.TiempoEstimadoMinutos);
+        Assert.Equal("falta stock", msg.Observaciones);
+        Assert.Equal(now, msg.Fecha);
     }
 
     [Fact]

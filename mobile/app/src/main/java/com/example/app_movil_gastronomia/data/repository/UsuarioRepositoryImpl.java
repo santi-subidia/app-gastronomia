@@ -26,6 +26,8 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
     
     private final MutableLiveData<UiState<List<UsuarioDto>>> repartidoresState = new MutableLiveData<>();
     private final MutableLiveData<UiState<UsuarioDto>> updateState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<UsuarioDto>> usuarioState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<Void>> contingenciaState = new MutableLiveData<>();
 
     @Inject
     public UsuarioRepositoryImpl(UsuarioApi api, Gson gson) {
@@ -104,6 +106,56 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
             @Override
             public void onFailure(Call<UsuarioDto> call, Throwable t) {
                 updateState.setValue(UiState.error(t.getMessage()));
+            }
+        });
+    }
+
+    @Override
+    public LiveData<UiState<UsuarioDto>> getUsuarioState() {
+        return usuarioState;
+    }
+
+    @Override
+    public void fetchUsuario(int id) {
+        usuarioState.setValue(UiState.loading());
+        api.getUsuario(id).enqueue(new Callback<UsuarioDto>() {
+            @Override
+            public void onResponse(Call<UsuarioDto> call, Response<UsuarioDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    usuarioState.setValue(UiState.success(response.body()));
+                } else {
+                    usuarioState.setValue(UiState.error(parseError(response)));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UsuarioDto> call, Throwable t) {
+                usuarioState.setValue(UiState.error(t.getMessage()));
+            }
+        });
+    }
+
+    @Override
+    public LiveData<UiState<Void>> getContingenciaState() {
+        return contingenciaState;
+    }
+
+    @Override
+    public void reportarContingencia(int id, String motivo) {
+        contingenciaState.setValue(UiState.loading());
+        api.reportarContingencia(id, new com.example.app_movil_gastronomia.data.dto.usuario.ReportarContingenciaRequest(motivo)).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    contingenciaState.setValue(UiState.success(null));
+                } else {
+                    contingenciaState.setValue(UiState.error(parseError(response)));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                contingenciaState.setValue(UiState.error(t.getMessage()));
             }
         });
     }

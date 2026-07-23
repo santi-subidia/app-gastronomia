@@ -159,6 +159,37 @@
                         app:layout_constraintTop_toBottomOf="@id/label_metodo"
                         tools:text="Delivery" />
 
+                    <androidx.constraintlayout.widget.Group
+                        android:id="@+id/group_repartidor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:constraint_referenced_ids="label_repartidor,repartidor_nombre"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/label_repartidor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Repartidor"
+                        android:textAppearance="?attr/textAppearanceCaption"
+                        android:textColor="@color/text_muted"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/metodo_venta" />
+
+                    <TextView
+                        android:id="@+id/repartidor_nombre"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textAppearance="?attr/textAppearanceBody1"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/label_repartidor"
+                        tools:text="Pepe Delivery" />
+
                     <TextView
                         android:id="@+id/label_fecha"
                         android:layout_width="wrap_content"
@@ -168,7 +199,7 @@
                         android:textAppearance="?attr/textAppearanceCaption"
                         android:textColor="@color/text_muted"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/metodo_venta" />
+                        app:layout_constraintTop_toBottomOf="@id/repartidor_nombre" />
 
                     <TextView
                         android:id="@+id/fecha_ingreso"
@@ -205,6 +236,42 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/label_total"
                         tools:text="$1500" />
+
+                    <TextView
+                        android:id="@+id/label_demora_estimada"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Demora estimada"
+                        android:textAppearance="?attr/textAppearanceCaption"
+                        android:textColor="@color/text_muted"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/total" />
+
+                    <TextView
+                        android:id="@+id/demora_estimada"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textAppearance="?attr/textAppearanceBody1"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/label_demora_estimada"
+                        tools:text="42 minutos" />
+
+                    <TextView
+                        android:id="@+id/fecha_estimada"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textAppearance="?attr/textAppearanceBody1"
+                        android:textColor="?attr/colorOnSurface"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/demora_estimada"
+                        tools:text="Llegaría aproximadamente: 20:15" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -286,7 +353,84 @@
                     android:text="@string/register_delay"
                     android:textColor="@color/amber_500" />
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_ver_demoras"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/view_delays"
+                    android:visibility="gone" />
+
             </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/demoras_history_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/delay_history_title"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/demoras_progress_bar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/demoras_text_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/delay_history_empty"
+                        android:textColor="@color/text_muted"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/demoras_text_error"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textColor="?attr/colorError"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/demoras_button_retry"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/retry"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/demoras_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 

@@ -83,7 +83,7 @@ public class AuthRepositoryImpl implements AuthRepository {
                                 }
                             }
                         }
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         Log.e(TAG, "Error parsing error body", e);
                     }
                     _loginState.setValue(UiState.error(errorMsg));

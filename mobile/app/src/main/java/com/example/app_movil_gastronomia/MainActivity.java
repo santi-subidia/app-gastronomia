@@ -1,6 +1,12 @@
 package com.example.app_movil_gastronomia;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -14,6 +20,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.Observer;
@@ -26,14 +36,18 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.app_movil_gastronomia.core.SessionManager;
+import com.example.app_movil_gastronomia.data.dto.signalr.DemoraRegistradaMessage;
 import com.example.app_movil_gastronomia.data.repository.contract.AuthRepository;
 import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -59,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     public AuthRepository authRepository;
 
+    @Inject
+    public com.example.app_movil_gastronomia.data.repository.contract.UsuarioRepository usuarioRepository;
+
     @Nullable
     @Inject
     public SignalRService signalRService;
@@ -69,6 +86,11 @@ public class MainActivity extends AppCompatActivity {
      * instrumentation tests) without re-running the check.
      */
     private boolean isCheckingSession = true;
+
+    private static final String DELAY_NOTIFICATION_CHANNEL_ID = "demoras_channel";
+    private static final int DELAY_NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
+    private final Set<Integer> notifiedDemoraIds = new HashSet<>();
+    private Observer<DemoraRegistradaMessage> demoraRegistradaObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,12 +122,29 @@ public class MainActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_cerrar_sesion) {
                 performLogout();
+            } else if (id == R.id.nav_reportar_contingencia) {
+                showReportarContingenciaDialog();
             } else if (id == R.id.nav_configuracion) {
                 navController.navigate(R.id.nav_configuracion);
             } else if (id == R.id.nav_repartidores_mapa) {
                 navController.navigate(R.id.nav_repartidores_mapa);
+            } else if (id == R.id.nav_switch_disponible) {
+                // If they tap the menu item background instead of the switch directly, toggle the switch
+                if (item.getActionView() != null) {
+                    com.google.android.material.switchmaterial.SwitchMaterial switchView = 
+                            item.getActionView().findViewById(R.id.drawer_switch_disponible);
+                    if (switchView != null && switchView.isEnabled()) {
+                        switchView.setChecked(!switchView.isChecked());
+                        // Fire the manual toggle logic explicitly
+                        int userId = tokenManager.getUserId();
+                        if (userId > 0) {
+                            usuarioRepository.updateDisponibilidad(userId, switchView.isChecked());
+                        }
+                    }
+                }
+                return true; // Don't close the drawer
             }
-            binding.drawerLayout.closeDrawer(GravityCompat.START);
+            binding.drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
             return true;
         });
 
@@ -132,10 +171,31 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        usuarioRepository.getContingenciaState().observe(this, state -> {
+            if (state != null) {
+                switch (state.getStatus()) {
+                    case LOADING:
+                        // Podríamos mostrar un progress dialog
+                        break;
+                    case SUCCESS:
+                        android.widget.Toast.makeText(this, "Contingencia reportada. Estás Fuera de Servicio.", android.widget.Toast.LENGTH_LONG).show();
+                        // Refrescar el estado del switch
+                        int userId = tokenManager.getUserId();
+                        if (userId > 0) {
+                            usuarioRepository.fetchUsuario(userId);
+                        }
+                        break;
+                    case ERROR:
+                        android.widget.Toast.makeText(this, "Error al reportar: " + state.getError(), android.widget.Toast.LENGTH_LONG).show();
+                        break;
+                }
+            }
+        });
+
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             boolean isLogin = destination.getId() == R.id.nav_login;
             boolean isCocina = tokenManager != null && "Cocina".equalsIgnoreCase(tokenManager.getRole());
-            
+
             if (binding.appBarMain.toolbar != null) {
                 binding.appBarMain.toolbar.setVisibility(isLogin ? View.GONE : View.VISIBLE);
             }
@@ -147,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                         isLogin ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED : DrawerLayout.LOCK_MODE_UNLOCKED
                 );
             }
-            
+
             // Hide keyboard when navigating to avoid it sticking around on screens without inputs
             View currentFocus = getCurrentFocus();
             if (currentFocus != null) {
@@ -165,18 +225,134 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_options_menu, menu);
-        return true;
+    protected void onStart() {
+        super.onStart();
+        handleNotificationIntent(getIntent());
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_logout) {
-            performLogout();
-            return true;
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNotificationIntent(intent);
+    }
+
+    /**
+     * Navigates to the pedido detail if the activity was launched from a
+     * delay notification. Safe to call repeatedly; no-op if the intent has no
+     * pedido id.
+     */
+    private void handleNotificationIntent(@Nullable Intent intent) {
+        if (intent == null || navController == null) return;
+        int pedidoId = intent.getIntExtra("pedidoId", -1);
+        if (pedidoId <= 0) return;
+        intent.removeExtra("pedidoId");
+        navigateToPedidoDetail(pedidoId);
+    }
+
+    private void navigateToPedidoDetail(int pedidoId) {
+        NavDestination current = navController.getCurrentDestination();
+        if (current != null && current.getId() == R.id.nav_pedido_detail) {
+            // Already there; nothing to do.
+            return;
         }
-        return super.onOptionsItemSelected(item);
+        NavOptions popUp = new NavOptions.Builder()
+                .setPopUpTo(R.id.nav_pedido_detail, true)
+                .build();
+        Bundle args = new Bundle();
+        args.putInt("pedidoId", pedidoId);
+        navController.navigate(R.id.nav_pedido_detail, args, popUp);
+    }
+
+    /**
+     * Wires the cashier delay notification observer when the role is Cajero.
+     * Called after a successful login or auto-login.
+     */
+    private void bindDelayNotifications() {
+        if (signalRService == null) return;
+        if (demoraRegistradaObserver == null) {
+            demoraRegistradaObserver = msg -> {
+                if (msg == null || !isCajeroRole()) return;
+                if (notifiedDemoraIds.contains(msg.getDemoraId())) return;
+                notifiedDemoraIds.add(msg.getDemoraId());
+                showDelayNotification(msg);
+            };
+        }
+        signalRService.getDemoraRegistrada().observe(this, demoraRegistradaObserver);
+    }
+
+    private boolean isCajeroRole() {
+        String role = tokenManager != null ? tokenManager.getRole() : null;
+        return "Cajero".equalsIgnoreCase(role);
+    }
+
+    private void showDelayNotification(DemoraRegistradaMessage msg) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        DELAY_NOTIFICATION_PERMISSION_REQUEST_CODE);
+                return;
+            }
+        }
+
+        createDelayNotificationChannel();
+
+        String content = getString(R.string.delay_notification_content,
+                msg.getDemoraMinutos(), msg.getSector(), msg.getPedidoId());
+        String bigText = content;
+        if (msg.getObservaciones() != null && !msg.getObservaciones().isEmpty()) {
+            bigText += "\n" + getString(R.string.delay_notification_observations, msg.getObservaciones());
+        }
+
+        Intent launchIntent = new Intent(this, MainActivity.class);
+        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        launchIntent.putExtra("pedidoId", msg.getPedidoId());
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                msg.getDemoraId(),
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, DELAY_NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_warning_24dp)
+                .setContentTitle(getString(R.string.delay_notification_title))
+                .setContentText(content)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(bigText))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
+        NotificationManagerCompat.from(this).notify(msg.getDemoraId(), builder.build());
+    }
+
+    private void createDelayNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        CharSequence name = getString(R.string.delay_notification_channel_name);
+        String description = getString(R.string.delay_notification_channel_description);
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel channel = new NotificationChannel(DELAY_NOTIFICATION_CHANNEL_ID, name, importance);
+        channel.setDescription(description);
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        if (notificationManager != null) {
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == DELAY_NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Snackbar.make(binding.getRoot(), R.string.delay_notification_permission_granted,
+                        Snackbar.LENGTH_SHORT).show();
+            } else {
+                Snackbar.make(binding.getRoot(), R.string.delay_notification_permission_denied,
+                        Snackbar.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override
@@ -241,6 +417,12 @@ public class MainActivity extends AppCompatActivity {
         if (signalRService != null) {
             signalRService.connect(tokenManager.getToken());
         }
+        if ("Repartidor".equalsIgnoreCase(role)) {
+            startLocationService();
+        }
+        if ("Cajero".equalsIgnoreCase(role)) {
+            bindDelayNotifications();
+        }
 
         isCheckingSession = false;
         hideSplash();
@@ -259,7 +441,23 @@ public class MainActivity extends AppCompatActivity {
             if (signalRService != null) {
                 signalRService.connect(tokenManager.getToken());
             }
+            if ("Repartidor".equalsIgnoreCase(role)) {
+                startLocationService();
+            }
+            if ("Cajero".equalsIgnoreCase(role)) {
+                bindDelayNotifications();
+            }
         }
+    }
+
+    private void startLocationService() {
+        android.content.Intent serviceIntent = new android.content.Intent(this, com.example.app_movil_gastronomia.core.LocationForegroundService.class);
+        androidx.core.content.ContextCompat.startForegroundService(this, serviceIntent);
+    }
+
+    private void stopLocationService() {
+        android.content.Intent serviceIntent = new android.content.Intent(this, com.example.app_movil_gastronomia.core.LocationForegroundService.class);
+        stopService(serviceIntent);
     }
 
     /**
@@ -312,6 +510,29 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(bottomNav, navController);
     }
 
+    private void showReportarContingenciaDialog() {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("Ej. Se pinchó la rueda, accidente, etc.");
+        
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Reportar Problema")
+                .setMessage("¿Por qué no podés continuar? Se te marcará como Fuera de Servicio y tus pedidos pasarán a Contingencia.")
+                .setView(input)
+                .setPositiveButton("Reportar", (dialog, which) -> {
+                    String motivo = input.getText().toString().trim();
+                    if (motivo.isEmpty()) {
+                        android.widget.Toast.makeText(this, "Debe ingresar un motivo", android.widget.Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    int userId = tokenManager.getUserId();
+                    if (userId > 0) {
+                        usuarioRepository.reportarContingencia(userId, motivo);
+                    }
+                })
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
     /**
      * Shows or hides items in the side navigation drawer based on the user's role.
      * For example, the 'cocina' role should not see the configuration menu.
@@ -322,18 +543,71 @@ public class MainActivity extends AppCompatActivity {
         Menu drawerMenu = binding.navView.getMenu();
         MenuItem configItem = drawerMenu.findItem(R.id.nav_configuracion);
         MenuItem driversMapItem = drawerMenu.findItem(R.id.nav_repartidores_mapa);
+        MenuItem switchItem = drawerMenu.findItem(R.id.nav_switch_disponible);
+        MenuItem contingenciaItem = drawerMenu.findItem(R.id.nav_reportar_contingencia);
+        
+        String normalized = role.trim().toLowerCase(Locale.ROOT);
         
         if (configItem != null) {
-            String normalized = role.trim().toLowerCase(Locale.ROOT);
-            // Hide configuration for 'cocina', show it for others (like 'cajero')
-            if ("cocina".equals(normalized)) {
-                configItem.setVisible(false);
-            } else {
-                configItem.setVisible(true);
-            }
+            // Only 'cajero' should see the configuration menu
+            configItem.setVisible("cajero".equals(normalized));
         }
         if (driversMapItem != null) {
-            driversMapItem.setVisible("cajero".equals(role.trim().toLowerCase(Locale.ROOT)));
+            driversMapItem.setVisible("cajero".equals(normalized));
+        }
+        if (contingenciaItem != null) {
+            contingenciaItem.setVisible("repartidor".equals(normalized));
+        }
+        if (switchItem != null) {
+            boolean isRepartidor = "repartidor".equals(normalized);
+            switchItem.setVisible(isRepartidor);
+            if (isRepartidor && switchItem.getActionView() != null) {
+                com.google.android.material.switchmaterial.SwitchMaterial switchView = 
+                        switchItem.getActionView().findViewById(R.id.drawer_switch_disponible);
+                if (switchView != null) {
+                    // Temporarily disable while fetching state
+                    switchView.setEnabled(false);
+                    usuarioRepository.getUsuarioState().observe(this, state -> {
+                        if (state != null && state.getStatus() == com.example.app_movil_gastronomia.core.UiState.Status.SUCCESS && state.getData() != null) {
+                            switchView.setChecked(state.getData().isDisponible());
+                            switchView.setEnabled(true);
+                        }
+                    });
+                    usuarioRepository.getUpdateState().observe(this, state -> {
+                        if (state != null) {
+                            switch (state.getStatus()) {
+                                case LOADING:
+                                    switchView.setEnabled(false);
+                                    break;
+                                case SUCCESS:
+                                    switchView.setEnabled(true);
+                                    android.widget.Toast.makeText(this, "Estado actualizado", android.widget.Toast.LENGTH_SHORT).show();
+                                    break;
+                                case ERROR:
+                                    switchView.setEnabled(true);
+                                    switchView.setChecked(!switchView.isChecked());
+                                    android.widget.Toast.makeText(this, "Error al actualizar estado: " + state.getError(), android.widget.Toast.LENGTH_LONG).show();
+                                    break;
+                            }
+                        }
+                    });
+                    
+                    switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                        if (buttonView.isPressed()) {
+                            int userId = tokenManager.getUserId();
+                            if (userId > 0) {
+                                usuarioRepository.updateDisponibilidad(userId, isChecked);
+                            }
+                        }
+                    });
+                    
+                    // Fetch initial state
+                    int userId = tokenManager.getUserId();
+                    if (userId > 0) {
+                        usuarioRepository.fetchUsuario(userId);
+                    }
+                }
+            }
         }
     }
 
@@ -376,6 +650,7 @@ public class MainActivity extends AppCompatActivity {
      * and navigates to {@code nav_login} with the back stack cleared.
      */
     private void performLogout() {
+        stopLocationService();
         if (signalRService != null) {
             signalRService.disconnect();
         }

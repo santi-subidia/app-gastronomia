@@ -205,7 +205,7 @@ public class AuthServiceTests
     // ================================================================
 
     [Fact]
-    public async Task LoginAsync_DisponibleFalse_ReturnsNull()
+    public async Task LoginAsync_DisponibleFalse_ReturnsLoginResponse()
     {
         // Arrange: user exists, Activo=true, but Disponible=false
         var (context, settings) = CreateDbContextAndSettings(
@@ -218,8 +218,9 @@ public class AuthServiceTests
         // Act
         var result = await service.LoginAsync("busy_user", "test123");
 
-        // Assert
-        Assert.Null(result);
+        // Assert: Unavailable users (Disponible=false) should be able to log in to toggle their availability
+        Assert.NotNull(result);
+        Assert.Equal("busy_user", result.UsuarioNombre);
 
         // Cleanup
         await context.Database.EnsureDeletedAsync();

@@ -51,6 +51,7 @@ public class CocinaHomeViewModel extends ViewModel {
 
     private final Observer<UiState<List<PedidoResumenDto>>> repositoryObserver;
     private final Observer<NuevoPedidoMessage> nuevoPedidoObserver;
+    private final Observer<com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage> estadoCambiadoObserver;
     private final Observer<Boolean> connectedObserver;
 
 
@@ -68,6 +69,9 @@ public class CocinaHomeViewModel extends ViewModel {
             this.nuevoPedidoObserver = msg -> pedidoRepository.getPedidos();
             signalRService.getNuevoPedido().observeForever(nuevoPedidoObserver);
 
+            this.estadoCambiadoObserver = msg -> pedidoRepository.getPedidos();
+            signalRService.getEstadoCambiado().observeForever(estadoCambiadoObserver);
+
             this.connectedObserver = isConnected -> {
                 if (isConnected != null && isConnected) {
                     signalRService.unirseACocina();
@@ -76,6 +80,7 @@ public class CocinaHomeViewModel extends ViewModel {
             signalRService.getConnected().observeForever(connectedObserver);
         } else {
             this.nuevoPedidoObserver = null;
+            this.estadoCambiadoObserver = null;
             this.connectedObserver = null;
         }
     }
@@ -96,6 +101,9 @@ public class CocinaHomeViewModel extends ViewModel {
         if (signalRService != null) {
             if (nuevoPedidoObserver != null) {
                 signalRService.getNuevoPedido().removeObserver(nuevoPedidoObserver);
+            }
+            if (estadoCambiadoObserver != null) {
+                signalRService.getEstadoCambiado().removeObserver(estadoCambiadoObserver);
             }
             if (connectedObserver != null) {
                 signalRService.getConnected().removeObserver(connectedObserver);

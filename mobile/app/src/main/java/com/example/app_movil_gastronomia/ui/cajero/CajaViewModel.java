@@ -135,15 +135,12 @@ public class CajaViewModel extends ViewModel {
      * {@link CerrarCajaRequest} DTO (v2) requires two fields:
      * {@code montoCierreTeorico} and {@code montoCierreReal} — the
      * cierre user is derived from the auth token server-side. The
-     * theoretical close is not directly user-entered — for this
-     * slice we pass {@code caja.montoApertura} as a placeholder. A
-     * future sales-aggregated value (apertura + cash sales - refunds)
-     * would replace it.
+     * theoretical close is the base opening amount plus all cash sales.
      */
     public void cerrarCaja(CajaDto caja, double montoCierreReal) {
         if (caja == null) return;
         CerrarCajaRequest request = new CerrarCajaRequest(
-                caja.getMontoApertura(),
+                caja.getMontoApertura() + caja.getIngresosEfectivo(),
                 montoCierreReal
         );
         cajaRepository.cerrarCaja(caja.getId(), request);

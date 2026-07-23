@@ -27,6 +27,9 @@ public class DemoraRegistradaMessage {
     @SerializedName("observaciones")
     private String observaciones;
 
+    @SerializedName("fecha")
+    private String fecha;
+
     public int getDemoraId() {
         return demoraId;
     }
@@ -65,5 +68,13 @@ public class DemoraRegistradaMessage {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public String getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
     }
 }
