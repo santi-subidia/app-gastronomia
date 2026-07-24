@@ -32,24 +32,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Spec coverage for the 4 new repository methods. Mirrors the
- * ProductoRepositoryImplTest pattern: FakeApi + FakeCall + InstantTaskExecutorRule.
- *
- * Spec mapping:
- *  - DEM-LIST-001:      getDemoras emits LOADING -> SUCCESS on 2xx,
- *                       ERROR(parsed mensaje) on 4xx, network error on IOException,
- *                       and captures pedidoId (null + value).
- *  - DEM-CREAR-001:     crearDemora emits LOADING -> SUCCESS on 2xx,
- *                       ERROR(parsed mensaje) on 4xx, network error on IOException.
- *  - DEM-ACTUALIZAR-001: actualizarDemora emits LOADING -> SUCCESS on 2xx,
- *                       ERROR(parsed mensaje) on 4xx, network error on IOException.
- *  - DEM-ELIMINAR-001:  eliminarDemora emits LOADING -> SUCCESS(null) on 2xx,
- *                       ERROR(parsed mensaje) on 4xx, network error on IOException.
- *  - DEM-DI-001:        single-instance state getters; pairwise distinct across
- *                       the 4 states; ViewModel can register once and keep
- *                       receiving emissions.
- */
+/** Verifica las operaciones del repositorio de demoras y sus estados LiveData. */
 public class DemoraRepositoryImplTest {
 
     @Rule
@@ -507,8 +490,7 @@ public class DemoraRepositoryImplTest {
     }
 
     /**
-     * Minimal Call<T> stand-in that synchronously delivers a queued
-     * Response or Throwable to the registered Callback.
+     * Implementación mínima de Call<T> para entregar respuestas de prueba.
      */
     static final class FakeCall<T> implements Call<T> {
         private final Response<T> response;

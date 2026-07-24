@@ -40,23 +40,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Spec coverage for the pedidos repository.
- *
- * Spec mapping:
- *  - PED-CRUD-001: getPedidos / getPedido / getByEstado LOADING -> SUCCESS
- *  - PED-CRUD-002: crearPedido LOADING -> SUCCESS on 201
- *  - PED-CRUD-003: cambiarEstado / asignarRepartidor LOADING -> SUCCESS on 2xx
- *  - PED-CRUD-004: every method emits ERROR(parsed mensaje) on 4xx
- *  - PED-CRUD-005: every method emits ERROR("No hay conexion a internet") on IOException
- *  - PED-CRUD-006: same LiveData instance across calls per method (single-instance pattern)
- *  - PED-VAL-001: crearPedido rejects empty/null detalles BEFORE any API call
- *  - PED-VAL-002: crearPedido rejects metodoVentaId=1 without coords BEFORE any API call
- *  - PED-VAL-003: valid crearPedido still calls the API
- *  - PED-ENUM-001: getByEstado uses EstadoPedidoEnum.getApiValue() in the path
- *  - PED-ENUM-002 (v2): cambiarEstado resolves the enum via CatalogoRepository and
- *                       sends a RAW int body (no CambiarEstadoRequest wrapper)
- */
+/** Verifica las operaciones, validaciones y estados del repositorio de pedidos. */
 public class PedidoRepositoryImplTest {
 
     @Rule
@@ -509,7 +493,7 @@ public class PedidoRepositoryImplTest {
         PedidoRepositoryImpl repo = new PedidoRepositoryImpl(api, readyCatalog());
 
         CrearPedidoRequest req = validDeliveryRequest();
-        req.setMetodoVentaId(2); // take-away / salon — no coords required
+        req.setMetodoVentaId(2);
         req.setLatitudDestino(null);
         req.setLongitudDestino(null);
 
@@ -832,7 +816,7 @@ public class PedidoRepositoryImplTest {
         CrearPedidoRequest req = new CrearPedidoRequest();
         req.setCajaId(1);
         req.setMetodoPagoId(1);
-        req.setMetodoVentaId(1); // Delivery
+        req.setMetodoVentaId(1);
         req.setClienteNombre("Juan");
         req.setClienteDireccion("Av. Siempre Viva 742");
         req.setLatitudDestino(-34.6037);

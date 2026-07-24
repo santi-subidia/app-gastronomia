@@ -86,9 +86,9 @@ public class SessionManagerTest {
     }
 
     /**
-     * Verifies that expireSession() is thread-safe when called from a
+     * Verifica que expireSession() sea seguro al llamarse desde un
      * background thread (simulating OkHttp's interceptor thread on 401).
-     * Uses postValue() internally, so the observer fires on the main thread.
+     * hilo secundario. Usa postValue(), por lo que el observador se ejecuta en el hilo principal.
      */
     @Test
     public void expireSession_fromBackgroundThread_doesNotCrash() throws Exception {

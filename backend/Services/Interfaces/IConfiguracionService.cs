@@ -21,7 +21,7 @@ public interface IConfiguracionService
     Task<ConfiguracionResponse> CrearAsync(int? metodoPagoDefaultId, string? nombreGastronomico, double? latitudPartida, double? longitudPartida);
 
     /// <summary>
-    /// Partially updates the singleton configuration. Only non-null parameters are applied.
+    /// Actualiza parcialmente la configuración singleton. Solo se aplican parámetros no nulos.
     /// Returns null if no configuration exists yet.
     /// </summary>
     Task<ConfiguracionResponse?> ActualizarAsync(int? metodoPagoDefaultId, string? nombreGastronomico, double? latitudPartida, double? longitudPartida, int? maxPedidosPorRepartidor = null);

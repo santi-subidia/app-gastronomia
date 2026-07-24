@@ -22,14 +22,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * ViewModel for the pedido detail screen.
- *
- * <p>Bridges three repository LiveData sources into VM-owned state:
- * the detail itself, the cambiarEstado PATCH result, and the
- * asignarRepartidor PATCH result. Each observer is registered once in the
- * constructor and removed in {@link #onCleared()}.</p>
- */
 @HiltViewModel
 public class PedidoDetailViewModel extends ViewModel {
 
@@ -128,7 +120,6 @@ public class PedidoDetailViewModel extends ViewModel {
         demoraRepository.getDemorasState().removeObserver(demorasObserver);
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
     @VisibleForTesting
     int getObserverRegistrationCount() {
         return observerRegistrationCount.get();

@@ -34,9 +34,9 @@ public class AuthRepositoryImplTest {
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
     /**
-     * Verifies that two back-to-back login() calls expose the SAME
-     * MutableLiveData instance — no per-call allocation. This is the
-     * core contract of FIX-LD-001.
+      * Verifica que dos llamadas consecutivas a login() expongan la MISMA
+     * instancia de MutableLiveData, sin crear una por llamada. Este es el
+     * contrato central de FIX-LD-001.
      */
     @Test
     public void getLoginStateReturnsSameInstanceAcrossCalls() {
@@ -59,9 +59,9 @@ public class AuthRepositoryImplTest {
     }
 
     /**
-     * Verifies that login() loads LOADING first, then SUCCESS, on the single
-     * repository instance — and that an observer registered once sees every
-     * emission.
+      * Verifica que login() publique primero LOADING y luego SUCCESS en la única
+     * instancia del repositorio, y que un observador registrado una sola vez
+     * reciba todas las emisiones.
      */
     @Test
     public void loginEmitsLoadingThenSuccessOnSameInstance() {
@@ -90,8 +90,8 @@ public class AuthRepositoryImplTest {
     }
 
     /**
-     * Verifies the LOADING emission happens BEFORE the terminal state on the
-     * same instance — by registering an observer that counts LOADING/SUCCESS.
+      * Verifica que LOADING se emita ANTES del estado final en la
+      * misma instancia, contando ambas emisiones.
      */
     @Test
     public void loadingIsEmittedBeforeSuccessOnSameInstance() {
@@ -121,8 +121,8 @@ public class AuthRepositoryImplTest {
     }
 
     /**
-     * Verifies that the same _loginState instance posts ERROR on network
-     * failure — no new LiveData is allocated.
+      * Verifica que la misma instancia publique ERROR ante un fallo de red,
+     * sin crear una nueva instancia de LiveData.
      */
     @Test
     public void loginEmitsErrorOnNetworkFailure() {
@@ -148,9 +148,9 @@ public class AuthRepositoryImplTest {
     }
 
     /**
-     * Verifies that two back-to-back login() calls reuse the same field
-     * (reference equality of returned LiveData) — guard against per-call
-     * reallocation.
+      * Verifica que dos llamadas consecutivas reutilicen el mismo campo
+      * (igualdad de referencia del LiveData devuelto), evitando una nueva
+     * asignación por llamada.
      */
     @Test
     public void secondLoginResetsStateToLoadingOnSameInstance() {
@@ -193,8 +193,7 @@ public class AuthRepositoryImplTest {
     }
 
     /**
-     * Minimal Call<T> stand-in that synchronously delivers a queued
-     * Response or Throwable to the registered Callback.
+      * Implementación mínima de Call<T> para entregar respuestas de prueba.
      */
     static final class FakeCall<T> implements Call<T> {
         private final Response<T> response;

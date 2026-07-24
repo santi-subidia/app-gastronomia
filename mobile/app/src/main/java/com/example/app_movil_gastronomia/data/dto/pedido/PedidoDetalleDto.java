@@ -4,18 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-/**
- * Full detail of a pedido returned by {@code GET /api/pedidos/{id}} and
- * accepted as response from {@code POST /api/pedidos},
- * {@code PATCH /api/pedidos/{id}/estado}, and
- * {@code PATCH /api/pedidos/{id}/repartidor}.
- *
- * <p>Spec PED-DTO-001: lifecycle/timing fields are nullable in the wire
- * contract (the pedido has not yet reached those states) and are typed
- * as boxed {@code Integer} / {@code Double} so Gson can omit them when
- * null and deserialize a missing JSON value as {@code null} instead of
- * a primitive default.</p>
- */
 public class PedidoDetalleDto {
 
     @SerializedName("id")

@@ -5,21 +5,18 @@ import androidx.annotation.Nullable;
 import com.example.app_movil_gastronomia.core.TokenManager;
 
 /**
- * Mutable {@link TokenManager} test double for instrumented Hilt tests.
+ * Implementación mutable de {@link TokenManager} para pruebas instrumentadas Hilt.
  *
- * <p>The default state mimics a fresh app install (no token, no role, no
- * user name) so tests that do not configure a role behave the same as a
- * brand-new session. Tests that need a logged-in user call
- * {@link #setRole(String)} before launching the activity.
+ * <p>El estado inicial representa una instalación nueva. Las pruebas que
+ * necesitan una sesión iniciada llaman a
+ * {@link #setRole(String)} antes de iniciar la actividad.
  *
- * <p>Instances are NOT safe to share across tests: every test must call
- * {@code setRole} (or rely on the default "no session" state) to make its
- * intent explicit. Hilt's {@code @BindValue} provides a fresh instance
- * per test method, which is the intended usage.
+ * <p>Las instancias no deben compartirse entre pruebas. Cada prueba configura
+ * explícitamente el rol o utiliza el estado inicial sin sesión.
  */
 public class FakeTokenManager implements TokenManager {
 
-    /** Default JWT expiration offset: one hour in the future. */
+    /** Desplazamiento de expiración JWT por defecto: una hora futura. */
     private static final long DEFAULT_EXP_OFFSET_SECONDS = 3600L;
 
     @Nullable
@@ -35,15 +32,12 @@ public class FakeTokenManager implements TokenManager {
     }
 
     /**
-     * Configures this fake to look like a logged-in user with the given
-     * role. Clears any previous session state, sets a future JWT
-     * expiration, and assigns a synthetic user name.
+     * Configura esta instancia como un usuario autenticado con el rol indicado.
+     * Limpia la sesión anterior, establece una expiración futura y asigna un nombre.
      *
-     * <p>Passing {@code null} resets the fake to the "no session" state,
-     * which is the same as constructing a fresh instance.
+     * <p>Pasar {@code null} restablece el estado sin sesión.
      *
-     * @param role the role name (e.g. "cajero", "cocina", "repartidor")
-     *             or null to reset.
+     * @param role nombre del rol o null para restablecer la sesión
      */
     public void setRole(@Nullable String role) {
         if (role == null) {

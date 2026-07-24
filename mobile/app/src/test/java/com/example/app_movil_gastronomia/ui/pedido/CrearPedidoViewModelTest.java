@@ -16,14 +16,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Unit tests for {@link CrearPedidoViewModel#mapDetalles(List)}.
+ * Pruebas unitarias de {@link CrearPedidoViewModel#mapDetalles(List)}.
  *
- * <p>Spec PED-CRUD-001 / pedido-creacion "DetalleLine maps to
- * CrearDetalleRequest" — each DetalleLine produced by the
- * {@link DetalleAdapter} / {@code CrearPedidoFragment} must be mapped
- * to a {@link CrearDetalleRequest} with identical field values at
- * submit time. The ViewModel owns this mapping so the DTO stays a
- * pure wire contract and the UI layer never imports the DTO.</p>
+ * <p>Especificación PED-CRUD-001: "DetalleLine se convierte en
+ * CrearDetalleRequest". Cada línea producida por la interfaz se convierte
+ * en un {@link CrearDetalleRequest} con los mismos valores. El ViewModel
+ * realiza esta conversión para mantener separado el DTO de red.</p>
  */
 public class CrearPedidoViewModelTest {
 
@@ -39,8 +37,8 @@ public class CrearPedidoViewModelTest {
     }
 
     /**
-     * Single-line happy path: a DetalleLine with non-trivial values
-     * maps to a CrearDetalleRequest with all four fields matching.
+     * Una línea válida se convierte conservando sus cuatro campos.
+     * y se convierte conservando sus cuatro campos.
      */
     @Test
     public void mapDetalles_singleLine_copiesAllFourFields() {
@@ -59,9 +57,8 @@ public class CrearPedidoViewModelTest {
     }
 
     /**
-     * Multi-line list maps 1:1, preserving order. The submit
-     * pipeline uses positional ordering to compute {@code totalEstimado},
-     * so the mapping must NOT shuffle the input.
+     * Una lista de varias líneas conserva la correspondencia y el orden,
+     * necesario para calcular {@code totalEstimado}.
      */
     @Test
     public void mapDetalles_multipleLines_preservesOrderAndValues() {
@@ -94,10 +91,8 @@ public class CrearPedidoViewModelTest {
     }
 
     /**
-     * Empty list maps to empty list (not null). The fragment passes
-     * the result to {@code CrearPedidoRequest.setDetalles}, which
-     * should always receive a list — never null — to keep the JSON
-     * serialization deterministic.
+     * Una lista vacía se convierte en otra lista vacía, nunca en null,
+     * para mantener estable la serialización JSON.
      */
     @Test
     public void mapDetalles_emptyList_returnsEmptyList() {
@@ -108,9 +103,8 @@ public class CrearPedidoViewModelTest {
     }
 
     /**
-     * Null input is treated as empty list. Defensive: the fragment
-     * can be in an early state where {@code detalles} hasn't been
-     * initialised yet.
+     * Una entrada null se trata como una lista vacía para cubrir estados
+     * iniciales donde {@code detalles} todavía no fue inicializado.
      */
     @Test
     public void mapDetalles_nullInput_returnsEmptyList() {
@@ -120,11 +114,8 @@ public class CrearPedidoViewModelTest {
     }
 
     /**
-     * A null {@code nombre} in the UI model is propagated as-is to
-     * the DTO. The DTO field is non-primitive, so a null is a legal
-     * value at the type level; the fragment should never produce
-     * this state (it always picks a product from the picker), but
-     * the mapping must not crash if it does.
+     * Un {@code nombre} null del modelo de UI se conserva en el DTO.
+     * La conversión no debe fallar aunque la interfaz normalmente lo evite.
      */
     @Test
     public void mapDetalles_nullNombre_isPropagatedToDto() {

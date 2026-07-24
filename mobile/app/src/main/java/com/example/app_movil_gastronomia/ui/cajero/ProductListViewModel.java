@@ -17,11 +17,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Bridges the {@link ProductoRepository} single-instance product list state
- * into a VM-owned LiveData. Registers an {@code observeForever} observer
- * exactly once in the constructor and removes it in {@link #onCleared()}.
- */
 @HiltViewModel
 public class ProductListViewModel extends ViewModel {
 

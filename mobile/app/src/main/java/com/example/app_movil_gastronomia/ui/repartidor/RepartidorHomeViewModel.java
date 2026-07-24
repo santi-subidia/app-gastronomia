@@ -25,32 +25,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Backs {@link RepartidorHomeFragment}. Loads the pedido list via
- * {@link PedidoRepository}, exposes a VM-owned {@link LiveData} for the
- * fragment to observe, and wires the {@link SignalRService} so the UI
- * reacts in real time to three things:
- *
- * <ul>
- *   <li>{@code RepartidorAsignadoMessage} â†’ reload the pedido list so
- *       a new assignment shows up immediately.</li>
- *   <li>{@code PedidoFinalizadoMessage} â†’ surface a toast on the
- *       fragment via a separate {@link LiveData} stream, so the
- *       fragment can render transient UI without polluting the list
- *       state.</li>
- *   <li>{@code getConnected()} flips true (reconnect) â†’ re-join the
- *       per-pedido SignalR group for every pedido currently
- *       {@code "En Camino"} in the visible list, so a transient hub
- *       reconnect after a network blip does not silently drop the
- *       rider's subscription to those events.</li>
- * </ul>
- *
- * <p>Observer lifecycle: every {@code observeForever} registration is
- * tracked through {@link #observerRegistrationCount} and torn down in
- * {@link #onCleared()}. The REST observer and SignalR observers are
- * independent and may register zero, one, two, or three of the SignalR
- * ones depending on whether the SignalR service is available.</p>
- */
 @HiltViewModel
 public class RepartidorHomeViewModel extends ViewModel {
 
@@ -58,13 +32,6 @@ public class RepartidorHomeViewModel extends ViewModel {
     private final UsuarioRepository usuarioRepository;
     private final TokenManager tokenManager;
 
-    /**
-     * Optional SignalR transport. Injected when Hilt has wired
-     * {@link SignalRService}; may be {@code null} in defensive
-     * configurations (e.g. tests, or future modularization where the
-     * realtime feature is split out). When null the VM degrades to
-     * pure REST polling.
-     */
     @Nullable
     private final SignalRService signalRService;
 
@@ -120,16 +87,9 @@ public class RepartidorHomeViewModel extends ViewModel {
         return state;
     }
 
-    /**
-     * Stream of {@link PedidoFinalizadoMessage} events pushed by the
-     * hub. The fragment observes this and shows a transient snackbar
-     * per emission. The list state itself is not modified here.
-     */
     public LiveData<PedidoFinalizadoMessage> getPedidoFinalizado() {
         return pedidoFinalizado;
     }
-
-    /** Reloads the pedido list. Wired to the retry button. */
 
     public LiveData<UiState<UsuarioDto>> getUpdateState() {
         return usuarioRepository.getUpdateState();
@@ -155,12 +115,6 @@ public class RepartidorHomeViewModel extends ViewModel {
         fetchPedidos();
     }
 
-    /**
-     * Iterates the currently displayed pedido list and re-joins the
-     * per-pedido SignalR group for every pedido in the
-     * {@code "En Camino"} state. Defensive: if the list has not been
-     * loaded yet (no SUCCESS emitted) this is a no-op.
-     */
     private void rejoinActivePedidoGroups() {
         if (signalRService == null) return;
         UiState<List<PedidoResumenDto>> current = state.getValue();

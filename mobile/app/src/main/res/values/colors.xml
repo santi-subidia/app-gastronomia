@@ -8,7 +8,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Pedido screens palette -->
+    <!-- Paleta de las pantallas de pedidos. -->
     <color name="surface_container">#1E2122</color>
     <color name="text_muted">#9E9E9E</color>
     <color name="chip_unselected_bg">#2A2D2E</color>

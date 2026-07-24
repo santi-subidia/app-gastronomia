@@ -18,37 +18,13 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Backs {@link CocinaHomeFragment}. Loads the full pedido list via
- * {@link PedidoRepository}, exposes a VM-owned {@link LiveData} for the
- * fragment to observe, and wires the {@link SignalRService} so a
- * {@code NuevoPedidoMessage} triggers an automatic refresh of the
- * queue.
- *
- * <p>Observer lifecycle: every {@code observeForever} registration is
- * tracked through {@link #observerRegistrationCount} and torn down in
- * {@link #onCleared()}. The two REST observers (pedido list state) and
- * SignalR observers (nuevo-pedido + connection state) are independent
- * and may register zero, one, or two of each depending on whether the
- * SignalR service is available.</p>
- */
 @HiltViewModel
 public class CocinaHomeViewModel extends ViewModel {
 
     private final PedidoRepository pedidoRepository;
-
-    /**
-     * Optional SignalR transport. Injected when Hilt has wired
-     * {@link SignalRService}; may be {@code null} in defensive
-     * configurations (e.g. tests, or future modularization where the
-     * realtime feature is split out). When null the VM degrades to
-     * pure REST polling.
-     */
     @Nullable
     private final SignalRService signalRService;
-
     private final MutableLiveData<UiState<List<PedidoResumenDto>>> state = new MutableLiveData<>();
-
     private final Observer<UiState<List<PedidoResumenDto>>> repositoryObserver;
     private final Observer<NuevoPedidoMessage> nuevoPedidoObserver;
     private final Observer<com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage> estadoCambiadoObserver;
@@ -89,7 +65,6 @@ public class CocinaHomeViewModel extends ViewModel {
         return state;
     }
 
-    /** Reloads the pedido list. Wired to the retry button. */
     public void retry() {
         pedidoRepository.getPedidos();
     }

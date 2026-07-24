@@ -7,7 +7,7 @@ import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 
 import org.junit.Test;
 
-/** Unit coverage for which active orders may be force-canceled. */
+/** Verifica qué pedidos activos pueden cancelarse de forma forzada. */
 public class PedidoCancellationPolicyTest {
 
     @Test

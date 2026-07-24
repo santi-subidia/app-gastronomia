@@ -25,7 +25,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- MODE 1: no open caja -->
+        <!-- MODO 1: no hay una caja abierta. -->
         <LinearLayout
             android:id="@+id/group_no_caja"
             android:layout_width="0dp"
@@ -70,7 +70,7 @@
                 android:text="@string/open_caja_button" />
         </LinearLayout>
 
-        <!-- MODE 2: caja abierta -->
+        <!-- MODO 2: caja abierta. -->
         <LinearLayout
             android:id="@+id/group_caja_abierta"
             android:layout_width="0dp"

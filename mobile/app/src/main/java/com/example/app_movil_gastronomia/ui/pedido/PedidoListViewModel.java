@@ -22,13 +22,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Bridges the {@link PedidoRepository} list state into a VM-owned LiveData,
- * with support for switching between "all pedidos" and "filtered by estado"
- * sources. The VM keeps exactly one active observer at any time: when the
- * filter changes it tears down the previous observer before subscribing to
- * the new source. All registrations are removed in {@link #onCleared()}.
- */
 @HiltViewModel
 public class PedidoListViewModel extends ViewModel {
 
@@ -52,7 +45,6 @@ public class PedidoListViewModel extends ViewModel {
         this.pedidoRepository = pedidoRepository;
         this.signalRService = signalRService;
         
-        // SignalR Auto-refresh listeners
         if (signalRService != null) {
             this.nuevoPedidoObserver = msg -> retry();
             this.estadoCambiadoObserver = msg -> retry();
@@ -64,7 +56,6 @@ public class PedidoListViewModel extends ViewModel {
             this.estadoCambiadoObserver = null;
         }
 
-        // Default: load all pedidos.
         switchSource(null);
     }
 
@@ -72,11 +63,6 @@ public class PedidoListViewModel extends ViewModel {
         return state;
     }
 
-    /**
-     * Switches the active filter. {@code null} means "all pedidos"; a non-null
-     * value triggers a {@code getByEstado} call. Re-selecting the same filter
-     * is a no-op to avoid redundant network traffic.
-     */
     public void filterByEstado(EstadoPedidoEnum estado) {
         if (estado == currentFilter) {
             return;
@@ -84,22 +70,13 @@ public class PedidoListViewModel extends ViewModel {
         switchSource(estado);
     }
 
-    /** Reloads the currently active filter. */
     public void retry() {
         switchSource(currentFilter);
     }
 
-    /**
-     * Tears down the active observer (if any) and subscribes to the source
-     * matching the given filter, then triggers the corresponding load. The
-     * total number of live registrations is tracked in
-     * {@link #observerRegistrationCount} for tests.
-     */
     private void switchSource(EstadoPedidoEnum filter) {
         currentFilter = filter;
 
-        // Drop the old observer before subscribing to the new source so the VM
-        // never receives stale emissions from the previous filter.
         if (activeSource != null && activeObserver != null) {
             activeSource.removeObserver(activeObserver);
             activeObserver = null;
@@ -136,7 +113,6 @@ public class PedidoListViewModel extends ViewModel {
         }
     }
 
-    /** Test-only diagnostic: how many times the VM registered an observer. */
     @VisibleForTesting
     int getObserverRegistrationCount() {
         return observerRegistrationCount.get();

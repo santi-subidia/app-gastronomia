@@ -2,13 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.signalr;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Server-pushed message for a brand-new pedido. Emitted by the
- * {@code logistica} hub on the {@code NuevoPedido} event so the
- * Cocina UI can refresh the queue without polling.
- *
- * <p>Spec SR-DTO-001: fields match the wire format 1:1.</p>
- */
 public class NuevoPedidoMessage {
 
     @SerializedName("pedidoId")

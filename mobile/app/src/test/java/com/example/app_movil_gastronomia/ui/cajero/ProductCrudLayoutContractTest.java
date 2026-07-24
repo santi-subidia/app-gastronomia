@@ -11,8 +11,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 /**
- * Locks the resource contracts required by the product CRUD screen.
- * These tests intentionally fail until the corresponding layouts are added.
+ * Protege los contratos de recursos requeridos por la pantalla CRUD de productos.
  */
 public class ProductCrudLayoutContractTest {
 

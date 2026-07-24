@@ -10,7 +10,7 @@ namespace ApiGastronomia.Services.Interfaces;
 public interface ICajaService
 {
     /// <summary>
-    /// Opens a new caja. Throws InvalidOperationException if an open caja already exists
+    /// Abre una caja. Lanza InvalidOperationException si ya existe una caja abierta.
     /// or if MontoApertura is negative. Throws KeyNotFoundException if UsuarioAperturaId doesn't exist.
     /// </summary>
     Task<CajaResponse> AperturaAsync(int usuarioAperturaId, decimal montoApertura);

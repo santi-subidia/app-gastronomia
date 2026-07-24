@@ -15,21 +15,6 @@ import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 
-/**
- * Retrofit interface for the pedidos REST endpoints.
- *
- * <p>Spec PED-API-001 (v2): 6 endpoints, all paths relative to the
- * Retrofit {@code baseUrl} (e.g. {@code https://api.example.com/}).
- * Path values match the backend contract 1:1; the {@code estado}
- * path variable is resolved from {@link EstadoPedidoEnum#getApiValue()}
- * at the repository layer so the enum never leaks into Retrofit.</p>
- *
- * <p>Spec PED-API-CHG-001: {@link #cambiarEstado(int, int)} accepts
- * a raw {@code int} body (the catalog-resolved estado ID) instead
- * of a wrapper object. Gson's default serialization of a bare
- * {@code @Body int} produces {@code 3} (a raw number), which is the
- * v2 contract.</p>
- */
 public interface PedidoApi {
 
     @GET("api/pedidos")

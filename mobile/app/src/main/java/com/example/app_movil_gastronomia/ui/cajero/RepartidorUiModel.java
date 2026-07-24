@@ -2,7 +2,6 @@ package com.example.app_movil_gastronomia.ui.cajero;
 
 import androidx.annotation.Nullable;
 
-/** Immutable presentation model for a delivery driver in the cashier map. */
 public final class RepartidorUiModel {
 
     private final int id;

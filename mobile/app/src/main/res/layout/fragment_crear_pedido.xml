@@ -23,7 +23,7 @@
             android:textAppearance="?attr/textAppearanceHeadline4"
             android:textColor="?attr/colorOnSurface" />
 
-        <!-- Customer name -->
+        <!-- Nombre del cliente. -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/input_cliente_nombre_layout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -76,7 +76,7 @@
                 tools:ignore="LabelFor" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Delivery-only group: hidden when metodoVenta != Delivery -->
+        <!-- Grupo exclusivo de Delivery; se oculta para otros métodos de venta. -->
         <LinearLayout
             android:id="@+id/group_delivery"
             android:layout_width="match_parent"
@@ -148,7 +148,7 @@
             android:textColor="?attr/colorOnSurface"
             android:textStyle="bold" />
 
-        <!-- Detalle list (auto-sized; empty state shows inline TextView) -->
+        <!-- Lista de detalles; el estado vacío se muestra dentro de la vista. -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view_detalles"
             android:layout_width="match_parent"
@@ -170,7 +170,7 @@
             android:visibility="visible"
             tools:visibility="visible" />
 
-        <!-- Add product button -->
+        <!-- Botón para agregar producto. -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_add_product"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"

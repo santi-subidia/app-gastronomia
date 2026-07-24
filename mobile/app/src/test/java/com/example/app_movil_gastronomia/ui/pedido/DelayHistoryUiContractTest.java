@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-/** Locks the cashier-only delay history entry point and its UI states. */
+/** Protege el acceso exclusivo de Cajero al historial de demoras y sus estados. */
 public class DelayHistoryUiContractTest {
 
     @Test

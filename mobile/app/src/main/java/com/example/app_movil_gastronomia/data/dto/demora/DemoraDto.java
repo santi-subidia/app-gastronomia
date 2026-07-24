@@ -2,14 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.demora;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Response body for {@code GET/POST/PUT /api/demoras}.
- *
- * <p>The response includes the sector assigned by the server from the
- * authenticated user's role. All fields are primitives
- * or {@code String} (no boxing required because a {@code DemoraDto}
- * is always returned fully populated by the server).</p>
- */
 public class DemoraDto {
 
     @SerializedName("id")

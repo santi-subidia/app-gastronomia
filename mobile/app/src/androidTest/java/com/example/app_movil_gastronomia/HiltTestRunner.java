@@ -7,11 +7,7 @@ import androidx.test.runner.AndroidJUnitRunner;
 
 import dagger.hilt.android.testing.HiltTestApplication;
 
-/**
- * Custom test runner that swaps the production {@link GastronomiaApp} for
- * {@link HiltTestApplication} so Hilt-generated components can be
- * substituted per-test with {@code @BindValue} and {@code @TestInstallIn}.
- */
+/** Runner que reemplaza la aplicación de producción por la aplicación de pruebas Hilt. */
 public class HiltTestRunner extends AndroidJUnitRunner {
 
     @Override

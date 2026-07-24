@@ -3,7 +3,7 @@ using ApiGastronomia.Domain.DTOs;
 namespace ApiGastronomia.Services.Interfaces;
 
 /// <summary>
-/// Authentication service contract. Handles user login and JWT token generation.
+/// Contrato del servicio de autenticación y generación de tokens JWT.
 /// </summary>
 public interface IAuthService
 {

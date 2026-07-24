@@ -22,9 +22,8 @@ import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
- * Verifies that when {@link SessionManager#expireSession()} is fired while
- * {@link MainActivity} is in the foreground, the activity navigates to
- * {@code R.id.nav_login} and consumes the event.
+ * Verifica que la actividad navegue a {@code R.id.nav_login} y consuma el evento
+ * cuando {@link SessionManager#expireSession()} se dispara en primer plano.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)

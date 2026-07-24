@@ -2,12 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.pedido;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Summary projection of a pedido returned by list endpoints
- * ({@code GET /api/pedidos} and {@code GET /api/pedidos/estado/{estado}}).
- *
- * <p>Spec PED-DTO-001: the six fields match the wire format 1:1.</p>
- */
 public class PedidoResumenDto {
 
     @SerializedName("id")

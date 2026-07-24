@@ -1,20 +1,5 @@
 package com.example.app_movil_gastronomia.ui.pedido;
 
-/**
- * UI-layer representation of one detail line in {@code CrearPedidoFragment}.
- *
- * <p>Spec PED-CRUD-001 / pedido-creacion "DetalleLine UI Model": the
- * {@code DetalleAdapter} and {@code CrearPedidoFragment} work with
- * this POJO so the wire DTO {@code CrearDetalleRequest} stays a pure
- * data-transfer object. The mapping to {@code CrearDetalleRequest}
- * happens at submit time inside
- * {@link CrearPedidoViewModel#mapDetalles(java.util.List)}.</p>
- *
- * <p>Same four fields as {@code CrearDetalleRequest}
- * ({@code productoId, nombre, precio, cantidad}) but without
- * {@code @SerializedName} annotations — these objects never reach
- * the network.</p>
- */
 public class DetalleLine {
 
     private int productoId;

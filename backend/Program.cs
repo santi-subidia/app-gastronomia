@@ -18,20 +18,15 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =============================================
-// 1. Controladores + OpenAPI
-// =============================================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Evita ciclos de referencia en la serialización JSON
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
 builder.Services.AddOpenApi(options =>
 {
-    // DocumentTransformer: define el security scheme "Bearer" en components/securitySchemes
     options.AddDocumentTransformer((document, context, ct) =>
     {
         document.Components ??= new OpenApiComponents();
@@ -46,7 +41,6 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 
-    // OperationTransformer: agrega security requirement solo a endpoints con [Authorize]
     options.AddOperationTransformer((operation, context, ct) =>
     {
         var hasAuthorize = context.Description.ActionDescriptor.EndpointMetadata
@@ -65,21 +59,12 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
-// =============================================
-// 2. Entity Framework Core -> PostgreSQL
-// =============================================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
 
-// =============================================
-// 3. SignalR (in-memory para el MVP de una sola instancia)
-// =============================================
 builder.Services.AddSignalR();
 
-// =============================================
-// 4. Autenticación JWT
-// =============================================
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
 builder.Services.AddSingleton(jwtSettings);
@@ -99,8 +84,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
         };
 
-        // SignalR envía el JWT como query string ?access_token= porque
-        // los navegadores no soportan headers personalizados en WebSocket handshake
+            // SignalR recibe el JWT por query string porque WebSocket no admite
+            // encabezados personalizados durante el handshake del navegador.
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -114,8 +99,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return Task.CompletedTask;
             },
 
-            // Evita redirect 302 en rutas SignalR — devuelve 401 directo
-            // sin interferir con el comportamiento de los controllers REST
+            // Devuelve 401 en SignalR sin alterar el comportamiento de los
+            // controladores REST.
             OnChallenge = context =>
             {
                 if (context.Request.Path.StartsWithSegments("/hubs"))
@@ -129,8 +114,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Fallback policy: todas las rutas requieren autenticación por defecto.
-// Solo AuthController.Login se excluye con [AllowAnonymous].
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -138,9 +121,6 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-// =============================================
-// 5. Rate Limiting — protección contra abuso
-// =============================================
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
@@ -197,9 +177,6 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-// =============================================
-// 5. Inyección de Dependencias - Servicios
-// =============================================
 builder.Services.AddScoped<IPedidoService, PedidoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
@@ -220,9 +197,6 @@ builder.Services.AddScoped<MetodoPagoSeedService>();
 builder.Services.AddScoped<EstadoPedidoSeedService>();
 builder.Services.AddScoped<ProductoSeedService>();
 
-// =============================================
-// 6. CORS (abierto para desarrollo; restringir en producción)
-// =============================================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -243,9 +217,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// =============================================
-// Seed de datos (solo cuando Database:RunSeeds = true)
-// =============================================
 if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
 {
     using var scope = app.Services.CreateScope();
@@ -273,16 +244,9 @@ if (app.Configuration.GetValue<bool>("Database:RunSeeds"))
     logger.LogInformation("Seeds completados");
 }
 
-// =============================================
-// Pipeline HTTP
-// =============================================
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    // Scalar: API fluida con persistencia del token JWT
-    //   - AddPreferredSecuritySchemes: preselecciona "Bearer" en la UI
-    //   - EnablePersistentAuthentication: guarda el token en localStorage
-    //     Lo pegás UNA VEZ y se reusa en todos los endpoints y sesiones
     app.MapScalarApiReference(options => options
         .AddPreferredSecuritySchemes("Bearer")
         .EnablePersistentAuthentication()
@@ -292,16 +256,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
-app.UseRateLimiter();     // AFTER auth (needs sub claim), BEFORE authz (all requests must be rate-limited)
+app.UseRateLimiter();
 app.UseAuthorization();
 
-// Mapeo de controladores REST
 app.MapControllers().RequireAuthorization();
 
-// Mapeo del Hub de SignalR
 app.MapHub<LogisticaHub>("/hubs/logistica");
 
 app.Run();
 
-// Expone Program para WebApplicationFactory en tests de integración
 public partial class Program { }

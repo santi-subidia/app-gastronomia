@@ -27,35 +27,12 @@ import java.util.TimeZone;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Open/close caja screen for the cajero. Two modes are toggled by
- * the value of {@link CajaViewModel#getCajaState()}:
- *
- * <ul>
- *   <li><b>No open caja</b> ({@code SUCCESS} with data == null) — shows
- *       the "Abrir Caja" form: a monto de apertura field plus a
- *       primary action button.</li>
- *   <li><b>Open caja</b> ({@code SUCCESS} with data != null) — shows
- *       a details card (fecha, monto, usuario) plus the "Cerrar Caja"
- *       form: a monto de cierre real field plus an error-tinted
- *       action button.</li>
- * </ul>
- *
- * <p>Open and close results surface on separate VM streams: a
- * transient toast on success (the VM auto-reloads the status so the
- * fragment flips modes), and a Snackbar on error. A LOADING state on
- * either stream disables the matching submit button.</p>
- */
 @AndroidEntryPoint
 public class CajaFragment extends Fragment {
 
     private FragmentCajaBinding binding;
     private CajaViewModel viewModel;
 
-    /**
-     * Last caja DTO from {@code cajaState}, kept so the close button
-     * can hand it to the VM along with the user-entered close amount.
-     */
     @Nullable
     private CajaDto lastCaja;
 
@@ -207,9 +184,7 @@ public class CajaFragment extends Fragment {
     }
 
     /**
-     * Parses the user-entered monto from a {@link TextInputEditText}.
-     * Returns {@code null} for empty / non-numeric input so the caller
-     * can show a validation Snackbar without a separate flag.
+     * Convierte el monto ingresado y devuelve null si está vacío o no es numérico.
      */
     private static @Nullable Double parseMonto(TextInputEditText edit) {
         if (edit.getText() == null) return null;

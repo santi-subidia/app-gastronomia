@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Renders all delivery drivers, including those without a live location. */
 public class RepartidoresMapaAdapter
         extends RecyclerView.Adapter<RepartidoresMapaAdapter.RepartidorViewHolder> {
 

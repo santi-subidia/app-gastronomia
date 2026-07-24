@@ -23,9 +23,8 @@ public class LoginViewModelTest {
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
     /**
-     * Verifies FIX-LD-004: the ViewModel registers an observer exactly once
-     * during construction — NOT per call to login(). The observer forwards
-     * every emission to the VM's own state.
+     * Verifica FIX-LD-004: el ViewModel registra un observador una sola vez
+     * durante la construcción y reenvía cada emisión a su propio estado.
      */
     @Test
     public void registersObserverOnceInConstructorAndForwardsValues() {
@@ -40,8 +39,7 @@ public class LoginViewModelTest {
     }
 
     /**
-     * Verifies that calling login() multiple times does NOT register new
-     * observers — the count stays at 1.
+     * Verifica que varias llamadas a login() no registren observadores nuevos.
      */
     @Test
     public void loginDoesNotRegisterAdditionalObservers() {
@@ -55,14 +53,13 @@ public class LoginViewModelTest {
         vm.login("user", "password");
 
         assertEquals(
-                "login() must not call observeForever on the repository",
+                 "login() no debe llamar observeForever en el repositorio",
                 before, vm.getObserverRegistrationCount()
         );
     }
 
     /**
-     * Verifies the VM observer forwards every repository state transition
-     * to the VM-owned LiveData.
+     * Verifica que el observador reenvíe cada estado del repositorio al LiveData del ViewModel.
      */
     @Test
     public void loginForwardsRepositoryEmissionsToVmState() {
@@ -78,9 +75,8 @@ public class LoginViewModelTest {
     }
 
     /**
-     * Verifies FIX-LD-004 cleanup: onCleared() must removeObserver on the
-     * repository's LiveData. The recording repo's MutableLiveData subclass
-     * counts removeObserver calls so we can assert it was called exactly once.
+     * Verifica la limpieza FIX-LD-004: onCleared() debe quitar el observador
+     * del LiveData del repositorio exactamente una vez.
      */
     @Test
     public void onClearedRemovesObserver() {
@@ -98,14 +94,14 @@ public class LoginViewModelTest {
         }
 
         assertEquals(
-                "onCleared must call removeObserver on the repository's LiveData",
+                 "onCleared debe quitar el observador del LiveData del repositorio",
                 1, repo.getLoginStateInternal().removeObserverCount
         );
     }
 
     /**
-     * Verifies local validation catches empty username / short password
-     * without calling the repository.
+     * Verifica que la validación local detecte usuario vacío o contraseña corta
+     * sin llamar al repositorio.
      */
     @Test
     public void localValidationBypassesRepository() {
@@ -117,7 +113,7 @@ public class LoginViewModelTest {
         vm.login("", "password");
         vm.login("user", "123");
 
-        assertEquals("invalid input must not call the repository", callsBefore, repo.loginCallCount);
+         assertEquals("la entrada inválida no debe llamar al repositorio", callsBefore, repo.loginCallCount);
         assertEquals(UiState.Status.ERROR, vm.getLoginState().getValue().getStatus());
     }
 
@@ -131,8 +127,8 @@ public class LoginViewModelTest {
     }
 
     /**
-     * Fake repository backed by a {@link CountingMutableLiveData} that
-     * records how many times removeObserver was invoked.
+     * Repositorio falso respaldado por un {@link CountingMutableLiveData} que
+     * registra cuántas veces se quitó el observador.
      */
     static final class RecordingAuthRepository implements AuthRepository {
         final CountingMutableLiveData<UiState<LoginResponse>> state = new CountingMutableLiveData<>();
@@ -154,7 +150,7 @@ public class LoginViewModelTest {
         }
     }
 
-    /** MutableLiveData that counts removeObserver calls. */
+    /** MutableLiveData que cuenta las llamadas a removeObserver. */
     static final class CountingMutableLiveData<T> extends MutableLiveData<T> {
         int removeObserverCount = 0;
 

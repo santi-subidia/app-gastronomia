@@ -17,19 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * RecyclerView adapter for {@link PedidoResumenDto} cards.
- *
- * <p>Each card shows the pedido id, status chip, customer name, sales method,
- * total estimate, and the timestamp of when the pedido entered the system.
- * The status chip background and left accent border are colored by estado.</p>
- */
 public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoViewHolder> {
 
     private final List<PedidoResumenDto> items = new ArrayList<>();
     private OnItemClickListener listener;
 
-    /** Click callback for navigating to the pedido detail. */
     public interface OnItemClickListener {
         void onItemClick(PedidoResumenDto pedido);
     }
@@ -93,7 +85,6 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
         return items.size();
     }
 
-    /** Maps the API enum to the user-facing chip background color. */
     static int colorForEstado(EstadoPedidoEnum estado) {
         if (estado == null) return Color.parseColor("#9E9E9E");
         switch (estado) {
@@ -118,7 +109,6 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
         }
     }
 
-    /** Maps the API enum to a readable text color (dark text on light bg, white on dark bg). */
     static int textColorForEstado(EstadoPedidoEnum estado) {
         if (estado == null) return Color.WHITE;
         switch (estado) {
@@ -129,7 +119,6 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
         }
     }
 
-    /** Maps the API enum to the user-facing label shown in the status chip. */
     static String labelForEstado(EstadoPedidoEnum estado) {
         if (estado == null) return "—";
         switch (estado) {

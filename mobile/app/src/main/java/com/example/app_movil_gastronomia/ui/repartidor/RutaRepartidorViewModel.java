@@ -21,7 +21,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/** Coordinates order destination state and OSRM route requests for the map screen. */
 @HiltViewModel
 public class RutaRepartidorViewModel extends ViewModel {
 
@@ -80,7 +79,6 @@ public class RutaRepartidorViewModel extends ViewModel {
         }
     }
 
-    /** Package-private for deterministic unit tests and repository callbacks. */
     void applyDestination(PedidoDetalleDto pedido) {
         routeRequested = false;
         if (pedido == null || pedido.getLatitudDestino() == null || pedido.getLongitudDestino() == null) {
@@ -133,7 +131,6 @@ public class RutaRepartidorViewModel extends ViewModel {
                 originLongitude, originLatitude, destinationLongitude, destinationLatitude);
     }
 
-    /** Package-private for unit tests that validate response-to-state transitions. */
     void applyRouteResponse(Response<OsrmRouteResponse> response) {
         if (response.isSuccessful() && response.body() != null
                 && "Ok".equalsIgnoreCase(response.body().getCode())

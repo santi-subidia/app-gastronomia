@@ -17,8 +17,8 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Verifies the wire-level contract of the three catalog API interfaces
- * declared for backend v2:
+ * Verifica el contrato de red de las tres interfaces de API de catálogos
+ * declaradas para el backend v2:
  *
  * <ul>
  *   <li>{@link EstadosPedidoApi} → {@code GET api/catalogo/estados-pedido}</li>
@@ -26,15 +26,15 @@ import retrofit2.converter.gson.GsonConverterFactory;
  *   <li>{@link MetodoVentaApi}   → {@code GET api/catalogo/metodos-venta}</li>
  * </ul>
  *
- * <p>Spec CAT-API-001: each interface must compile to a Retrofit proxy
- * that sends a GET request to the exact relative path documented in
- * {@code openspec/.../specs/catalogo-endpoints/spec.md} and returns
+ * <p>Especificación CAT-API-001: cada interfaz debe compilar como un proxy
+ * Retrofit que envía una solicitud GET a la ruta relativa exacta documentada en
+ * {@code openspec/.../specs/catalogo-endpoints/spec.md} y devuelve
  * {@code Call<List<CatalogoItemDto>>}.</p>
  *
- * <p>The test builds a real Retrofit proxy against a dummy base URL
- * and inspects the {@link Request} that the call would execute. The
- * call is never enqueued — we only need the URL composition that
- * Retrofit computes from the {@code @GET} annotation.</p>
+ * <p>La prueba construye un proxy Retrofit real contra una URL base ficticia
+ * e inspecciona el {@link Request} que ejecutaría la llamada. La llamada nunca
+ * se encola; solo necesitamos la composición de URL que Retrofit calcula a
+ * partir de la anotación {@code @GET}.</p>
  */
 public class CatalogApisTest {
 

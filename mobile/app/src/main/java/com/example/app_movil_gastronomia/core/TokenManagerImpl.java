@@ -11,11 +11,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.json.JSONObject;
 
-/**
- * EncryptedSharedPreferences-backed implementation of {@link TokenManager}.
- * Stores JWT token, role name, user ID, and display name with E2E encryption
- * at rest. Falls back gracefully if MasterKey initialization fails.
- */
 public class TokenManagerImpl implements TokenManager {
 
     private static final String TAG = "TokenManagerImpl";
@@ -31,11 +26,6 @@ public class TokenManagerImpl implements TokenManager {
         this(createEncryptedPrefs(context));
     }
 
-    /**
-     * Test-friendly constructor that accepts a pre-built {@link SharedPreferences}.
-     * Package-private to keep production wiring on the {@link Context}-based
-     * constructor while letting unit tests inject a fake prefs.
-     */
     TokenManagerImpl(SharedPreferences prefs) {
         this.encryptedPrefs = prefs;
     }
@@ -54,7 +44,7 @@ public class TokenManagerImpl implements TokenManager {
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             );
         } catch (Exception e) {
-            Log.e(TAG, "Failed to initialize EncryptedSharedPreferences, falling back to clear prefs", e);
+            Log.e(TAG, "No se pudieron inicializar las preferencias cifradas; se usará el respaldo", e);
             return context.getSharedPreferences(PREFS_FILE_NAME + "_fallback", Context.MODE_PRIVATE);
         }
     }
@@ -89,13 +79,6 @@ public class TokenManagerImpl implements TokenManager {
         return encryptedPrefs.getString(KEY_USER_NAME, null);
     }
 
-    /**
-     * Decodes the {@code exp} claim from the stored JWT.
-     *
-     * <p>Splits on {@code "."}, Base64URL-decodes the payload, parses it as
-     * JSON, and returns {@code exp} as epoch seconds. Returns {@code -1L}
-     * on any failure (no token, malformed JWT, missing/invalid {@code exp}).
-     */
     @Override
     public long decodeTokenExp() {
         String token = getToken();
@@ -112,12 +95,6 @@ public class TokenManagerImpl implements TokenManager {
         }
     }
 
-    /**
-     * Decodes a Base64URL-encoded string. Protected so unit tests can
-     * override it with a JVM-compatible decoder; production uses
-     * {@code android.util.Base64} to avoid pulling in core-library
-     * desugaring or an external library on minSdk 24.
-     */
     protected byte[] decodeBase64Url(String s) {
         return android.util.Base64.decode(s, android.util.Base64.URL_SAFE | android.util.Base64.NO_PADDING);
     }

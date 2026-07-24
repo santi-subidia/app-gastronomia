@@ -6,18 +6,18 @@ import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link MainActivity#resolveHomeDestination(String)}.
+ * Pruebas unitarias de {@link MainActivity#resolveHomeDestination(String)}.
  *
- * <p>The mapping is extracted to a package-private static method so the
- * role-to-destination logic can be verified in plain JUnit — no
- * Robolectric, no Activity instantiation, no Hilt test runner required.
+ * <p>La resolución está aislada en un método estático para probarla sin
+ * la lógica rol-destino se puede verificar con JUnit sin
+ * Robolectric, instanciar la actividad ni usar el runner Hilt.
  *
- * <p>Mapping contract (see spec/auto-login):
+ * <p>Contrato de resolución usado por el auto-login:
  * <ul>
- *   <li>"cajero" (case-insensitive, whitespace-trimmed) -> R.id.nav_cajero_home</li>
- *   <li>"cocina" (case-insensitive) -> R.id.nav_cocina_home</li>
- *   <li>"repartidor" (case-insensitive) -> R.id.nav_repartidor_home</li>
- *   <li>anything else (null, empty, blank, unknown) -> null (caller falls back to login)</li>
+ *   <li>"cajero" -> R.id.nav_cajero_home</li>
+ *   <li>"cocina" -> R.id.nav_cocina_home</li>
+ *   <li>"repartidor" -> R.id.nav_repartidor_home</li>
+ *   <li>cualquier otro valor devuelve null y permite volver al login</li>
  * </ul>
  */
 public class MainActivityNavResolverTest {

@@ -24,7 +24,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/** Coordinates the cashier's initial driver list and live GPS updates. */
 @HiltViewModel
 public class RepartidoresMapaViewModel extends ViewModel {
 

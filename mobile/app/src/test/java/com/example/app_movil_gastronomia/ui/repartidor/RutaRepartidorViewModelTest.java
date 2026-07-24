@@ -17,7 +17,7 @@ import org.junit.Test;
 
 import retrofit2.Response;
 
-/** Covers destination validation and route state transitions without Android UI. */
+/** Verifica la validación del destino y los cambios de estado de la ruta. */
 public class RutaRepartidorViewModelTest {
 
     @Rule

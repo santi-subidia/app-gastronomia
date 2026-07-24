@@ -29,21 +29,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Spec coverage for the 3 new repository methods. Mirrors the
- * DemoraRepositoryImplTest pattern: FakeApi + FakeCall + InstantTaskExecutorRule.
- *
- * Spec mapping:
- *  - CONF-GET-001:       getConfiguracion emits LOADING -> SUCCESS on 2xx,
- *                        ERROR(parsed mensaje) on 4xx, network error on IOException.
- *  - CONF-CREAR-001:     crearConfiguracion emits LOADING -> SUCCESS on 2xx,
- *                        ERROR(parsed mensaje) on 4xx, network error on IOException.
- *  - CONF-ACTUALIZAR-001: actualizarConfiguracion emits LOADING -> SUCCESS on 2xx,
- *                        ERROR(parsed mensaje) on 4xx, network error on IOException.
- *  - CONF-DI-001:        single-instance state getters; pairwise distinct across
- *                        the 3 states; ViewModel can register once and keep
- *                        receiving emissions.
- */
+/** Verifica las operaciones del repositorio de configuración y sus estados. */
 public class ConfiguracionRepositoryImplTest {
 
     @Rule
@@ -399,8 +385,8 @@ public class ConfiguracionRepositoryImplTest {
     }
 
     /**
-     * Minimal Call<T> stand-in that synchronously delivers a queued
-     * Response or Throwable to the registered Callback.
+     * Implementación mínima de Call<T> para entregar respuestas de prueba.
+      * respuesta o excepción al callback registrado.
      */
     static final class FakeCall<T> implements Call<T> {
         private final Response<T> response;

@@ -43,11 +43,6 @@ import java.text.SimpleDateFormat;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Detail screen for a single pedido. Shows status banner, customer / method
- * / date / total info, items list, and three action buttons for the three
- * P0 actions: change estado, assign repartidor, register demora.
- */
 @AndroidEntryPoint
 public class PedidoDetailFragment extends Fragment {
 
@@ -100,9 +95,7 @@ public class PedidoDetailFragment extends Fragment {
         binding.buttonVerDemoras.setOnClickListener(v -> viewModel.loadDemoras(pedidoId));
         binding.demorasButtonRetry.setOnClickListener(v -> viewModel.loadDemoras(pedidoId));
         binding.buttonRegistrarDemora.setOnClickListener(v -> {
-            // Navigate to the Demora form, passing the current pedidoId
-            // as a SafeArgs-equivalent Bundle argument. The Demora
-            // fragment is responsible for the actual POST.
+
             Bundle args = new Bundle();
             args.putInt("pedidoId", pedidoId);
             NavController controller = Navigation.findNavController(v);
@@ -134,11 +127,8 @@ public class PedidoDetailFragment extends Fragment {
         if (state == null) return;
         switch (state.getStatus()) {
             case LOADING:
-                // The detail screen already shows its own loader; suppress a second one.
                 break;
             case SUCCESS:
-                // Refresh the detail from the server so the banner / fields reflect
-                // the new estado.
                 EstadoPedidoEnum nuevoEstado = EstadoPedidoEnum.fromApiValue(state.getData().getEstado());
                 String estadoStr = nuevoEstado != null ? PedidoAdapter.labelForEstado(nuevoEstado) : "";
                 
@@ -210,7 +200,6 @@ public class PedidoDetailFragment extends Fragment {
         binding.buttonRetry.setVisibility(View.GONE);
         binding.contentScroll.setVisibility(View.VISIBLE);
 
-        // Update the action bar title with the pedido id.
         if (getActivity() instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
             if (activity.getSupportActionBar() != null) {
@@ -219,17 +208,14 @@ public class PedidoDetailFragment extends Fragment {
             }
         }
 
-        // Status banner
         EstadoPedidoEnum estado = EstadoPedidoEnum.fromApiValue(pedido.getEstado());
         int statusColor = PedidoAdapter.colorForEstado(estado);
         binding.statusBanner.setBackgroundColor(statusColor);
         binding.statusBanner.setText(PedidoAdapter.labelForEstado(estado));
-        // Always pick a readable foreground: white on dark backgrounds,
-        // black on the amber Pendiente chip.
+
         int fg = (estado == EstadoPedidoEnum.PENDIENTE) ? Color.BLACK : Color.WHITE;
         binding.statusBanner.setTextColor(fg);
 
-        // Info card
         binding.clienteNombre.setText(pedido.getClienteNombre());
         binding.clienteDireccion.setText(pedido.getClienteDireccion() != null ? pedido.getClienteDireccion() : "No especificada");
         String metodoVenta = pedido.getMetodoVenta() != null ? pedido.getMetodoVenta() : "";
@@ -253,13 +239,11 @@ public class PedidoDetailFragment extends Fragment {
                 ? getString(R.string.estimated_completion_time, formatApiDate(pedido.getFechaEstimadoFin()))
                 : "");
 
-        // Configuración de botones de acción
         String role = tokenManager.getRole() != null ? tokenManager.getRole().toLowerCase(Locale.ROOT) : "";
         boolean isCajero = "cajero".equals(role);
         boolean isCocina = "cocina".equals(role);
         
         if (isCajero) {
-            // Lógica específica para el Cajero
             binding.buttonRegistrarDemora.setVisibility(View.GONE);
             binding.buttonVerDemoras.setVisibility(View.VISIBLE);
             
@@ -271,8 +255,7 @@ public class PedidoDetailFragment extends Fragment {
                     binding.buttonAsignarRepartidor.setVisibility(View.GONE);
                     binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
                     binding.buttonCambiarEstado.setText("Entregar");
-                    // Eliminamos el listener por defecto que abre el modal de todos los estados
-                    // y hacemos que asigne ENTREGADO directamente.
+
                     binding.buttonCambiarEstado.setOnClickListener(v -> {
                         viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.ENTREGADO);
                     });
@@ -288,12 +271,10 @@ public class PedidoDetailFragment extends Fragment {
                 binding.buttonCambiarEstado.setText("Mandar a rehacer (Cocina)");
                 binding.buttonCambiarEstado.setOnClickListener(v -> viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.PENDIENTE));
             } else {
-                // Si no está listo ni entregado/retirado, el cajero no puede hacer ninguna acción terminal en esta vista
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
                 binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             }
         } else if (isCocina) {
-            // Lógica específica para Cocina
             binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             binding.buttonVerDemoras.setVisibility(View.GONE);
             binding.demorasHistorySection.setVisibility(View.GONE);
@@ -315,7 +296,6 @@ public class PedidoDetailFragment extends Fragment {
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
             }
         } else {
-            // Lógica para Repartidor
             binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             binding.buttonVerDemoras.setVisibility(View.GONE);
             binding.demorasHistorySection.setVisibility(View.GONE);
@@ -348,7 +328,6 @@ public class PedidoDetailFragment extends Fragment {
         boolean canCancel = isCajero && PedidoCancellationPolicy.isCancelable(estado);
         binding.buttonCancelarPedido.setVisibility(canCancel ? View.VISIBLE : View.GONE);
 
-        // Items list
         renderItems(pedido.getDetallePedidos());
     }
 

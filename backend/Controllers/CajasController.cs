@@ -22,7 +22,7 @@ public class CajasController : ControllerBase
     }
 
     /// <summary>
-    /// Opens a new caja (apertura). Only one open caja can exist at a time.
+    /// Abre una nueva caja. Solo puede existir una caja abierta a la vez.
     /// </summary>
     [HttpPost("apertura")]
     public async Task<ActionResult<CajaResponse>> Apertura([FromBody] AperturaRequest request)
@@ -51,7 +51,7 @@ public class CajasController : ControllerBase
     }
 
     /// <summary>
-    /// Closes an existing open caja by ID (cierre).
+    /// Cierra una caja abierta por su ID.
     /// </summary>
     [HttpPost("{id:int}/cierre")]
     public async Task<ActionResult<CajaResponse>> Cerrar(int id, [FromBody] CierreRequest request)
@@ -81,7 +81,7 @@ public class CajasController : ControllerBase
     }
 
     /// <summary>
-    /// Returns all cajas, optionally filtered by estado (abiertas/cerradas).
+    /// Devuelve todas las cajas, opcionalmente filtradas por estado.
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CajaResponse>>> GetAll([FromQuery] string? estado = null)
@@ -91,7 +91,7 @@ public class CajasController : ControllerBase
     }
 
     /// <summary>
-    /// Returns a single caja by ID.
+    /// Devuelve una caja por su ID.
     /// </summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<CajaResponse>> GetById(int id)

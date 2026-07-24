@@ -22,19 +22,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Owns a single {@link MutableLiveData} instance per method — one for
- * the singleton config and one for each CRUD verb. Every instance is
- * reset to LOADING on its method call and then posted SUCCESS or ERROR.
- * Instances are never reallocated, so observers registered in the
- * ViewModel constructor (via {@code observeForever}) keep receiving
- * emissions across retries without leaking.
- *
- * <p>Mirrors the {@link DemoraRepositoryImpl} pattern: no client-side
- * validation guards, a single {@link #parseMensaje(Response, String)}
- * helper, and {@code setValue} in Retrofit callbacks (verified convention
- * from {@code fix-livedata-pattern}).
- */
 @Singleton
 public class ConfiguracionRepositoryImpl implements ConfiguracionRepository {
 
@@ -140,11 +127,6 @@ public class ConfiguracionRepositoryImpl implements ConfiguracionRepository {
         return _actualizarState;
     }
 
-    /**
-     * Parses the server's {@code {"mensaje":"..."}} envelope from a Retrofit
-     * error body, falling back to {@code fallback} when the body is missing
-     * or unparseable. Mirrors {@link DemoraRepositoryImpl#parseMensaje}.
-     */
     private static String parseMensaje(Response<?> response, String fallback) {
         try {
             if (response.errorBody() != null) {

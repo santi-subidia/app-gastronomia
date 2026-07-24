@@ -22,18 +22,13 @@ import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
- * Instrumented test for the role-conditional bottom-nav menu configured
- * by {@code MainActivity.configureBottomNav(String)} on cold start.
+ * Prueba instrumentada del menú inferior configurado según el rol al iniciar.
  *
- * <p>For each role the test pre-configures a {@link FakeTokenManager} with
- * a non-expired session and a known role, launches
- * {@link MainActivity}, and asserts both the menu item count and the
- * specific destination IDs that {@code configureBottomNav} added.
+ * <p>Para cada rol se configura una sesión válida, se inicia
+ * {@link MainActivity} y se verifican la cantidad de opciones y sus destinos.
  *
- * <p>The {@link TestStorageModule} (installed via
- * {@code @TestInstallIn}) replaces the production
- * {@code StorageModule.provideTokenManager} binding with the fake for the
- * duration of each test.
+ * <p>{@link TestStorageModule} reemplaza el proveedor de tokens de producción
+ * durante cada prueba.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)

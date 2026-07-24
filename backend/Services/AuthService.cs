@@ -11,7 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace ApiGastronomia.Services;
 
 /// <summary>
-/// Authentication service that validates credentials against the database
+/// Servicio de autenticación que valida las credenciales contra la base de datos.
 /// and generates JWT tokens for valid users.
 /// </summary>
 public class AuthService : IAuthService

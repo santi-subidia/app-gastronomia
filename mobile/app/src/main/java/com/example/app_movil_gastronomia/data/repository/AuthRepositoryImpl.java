@@ -24,13 +24,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Owns a single {@link MutableLiveData} instance ({@code _loginState}) that
- * is reset to LOADING on every {@link #login(LoginRequest)} call and then
- * posted SUCCESS or ERROR. The instance is never reallocated, so observers
- * registered in the ViewModel constructor (via {@code observeForever}) keep
- * receiving emissions across retries without leaking.
- */
+/** Repositorio de autenticación con un estado LiveData reutilizable. */
 @Singleton
 public class AuthRepositoryImpl implements AuthRepository {
 

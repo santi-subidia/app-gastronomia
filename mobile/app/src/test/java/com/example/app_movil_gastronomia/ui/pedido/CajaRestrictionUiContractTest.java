@@ -11,9 +11,8 @@ import java.nio.file.Paths;
 import org.junit.Test;
 
 /**
- * Locks the Android resource and source contracts for caja restriction UX.
- * The tests keep the user-visible cancel action and register shortcut from
- * being removed while the surrounding screens are refactored.
+ * Protege los contratos de recursos y código de la restricción de caja.
+ * Evita eliminar la acción visible de cancelar y el acceso de registro.
  */
 public class CajaRestrictionUiContractTest {
 

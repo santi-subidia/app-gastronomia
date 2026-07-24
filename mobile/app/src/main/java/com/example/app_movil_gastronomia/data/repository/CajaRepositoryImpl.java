@@ -25,20 +25,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Owns a single {@link MutableLiveData} instance per method — one for
- * each of the 5 repository methods. Every instance is reset to LOADING
- * on its method call and then posted SUCCESS or ERROR. Instances are
- * never reallocated, so observers registered in the ViewModel
- * constructor (via {@code observeForever}) keep receiving emissions
- * across retries without leaking.
- *
- * <p>Spec CAJ-VAL-001: cajas has no client-side validation guards —
- * open/closed transitions are enforced by the server. Every method
- * goes straight to LOADING then the network call. Server-side 4xx
- * errors (e.g. 409 "ya existe una caja abierta") are surfaced through
- * {@link #parseMensaje} on the ERROR branch.</p>
- */
+/** Repositorio REST de cajas con estados LiveData reutilizables por operación. */
 @Singleton
 public class CajaRepositoryImpl implements CajaRepository {
 
@@ -218,11 +205,6 @@ public class CajaRepositoryImpl implements CajaRepository {
     }
 
 
-    /**
-     * Parses the server's {@code {"mensaje":"..."}} envelope from a Retrofit
-     * error body, falling back to {@code fallback} when the body is missing
-     * or unparseable. Mirrors the PedidoRepositoryImpl pattern.
-     */
     private static String parseMensaje(Response<?> response, String fallback) {
         try {
             if (response.errorBody() != null) {

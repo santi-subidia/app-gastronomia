@@ -15,12 +15,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Bridges the {@link AuthRepository} single-instance login state into a
- * VM-owned LiveData. Registers an {@code observeForever} observer exactly
- * once in the constructor and removes it in {@link #onCleared()} to avoid
- * the per-call observer leak that the previous implementation suffered from.
- */
 @HiltViewModel
 public class LoginViewModel extends ViewModel {
 
@@ -39,13 +33,6 @@ public class LoginViewModel extends ViewModel {
         return loginState;
     }
 
-    /**
-     * Attempts login with the provided credentials.
-     * Validates fields locally before making the network call.
-     * The repository's shared LiveData is observed by the bridge registered
-     * in the constructor — calling {@code login()} does NOT register a new
-     * observer.
-     */
     public void login(String username, String password) {
         if (username == null || username.trim().isEmpty()) {
             loginState.setValue(UiState.error("El usuario es obligatorio"));

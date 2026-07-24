@@ -58,7 +58,6 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/** MapLibre route screen for one delivery destination. */
 @AndroidEntryPoint
 public class RutaRepartidorFragment extends Fragment {
 

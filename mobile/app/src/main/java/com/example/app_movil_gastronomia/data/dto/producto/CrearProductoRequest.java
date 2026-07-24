@@ -2,13 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.producto;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Request body for {@code POST /api/productos}.
- *
- * <p>Spec PROD-CRUD-005: serialized JSON must contain exactly the keys
- * {@code nombre}, {@code precio}, {@code demora}. All three fields are
- * required by the server, so they are kept as primitives.
- */
 public class CrearProductoRequest {
 
     @SerializedName("nombre")

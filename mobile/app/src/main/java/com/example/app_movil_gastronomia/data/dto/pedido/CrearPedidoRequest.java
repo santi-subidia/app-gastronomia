@@ -4,15 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-/**
- * Request body for {@code POST /api/pedidos}.
- *
- * <p>Spec PED-DTO-001 / PED-CRUD-001: nullable fields (cajaId,
- * latitudDestino, longitudDestino, demoraAprox) are typed as boxed
- * wrappers so Gson omits them from the JSON when null and accepts
- * null on deserialization. Non-nullable fields use primitives per
- * the same null-omit convention used by {@code ActualizarProductoRequest}.</p>
- */
 public class CrearPedidoRequest {
 
     @SerializedName("cajaId")

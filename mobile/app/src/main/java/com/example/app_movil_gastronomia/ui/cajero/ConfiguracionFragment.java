@@ -50,27 +50,6 @@ import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Singleton business-configuration form. Loads the current
- * configuration on creation and either:
- *
- * <ul>
- *   <li>prefills the fields and shows "Actualizar Configuración"
- *       (update mode) when the server already has a record, or</li>
- *   <li>shows "Guardar Configuración" (create mode) when the server
- *       has none yet — the repository's 404 is normalized to
- *       {@code success(null)} by {@link ConfiguracionViewModel}, so
- *       this fragment never has to handle a "not found" error
- *       itself.</li>
- * </ul>
- *
- * <p>The fragment is intentionally thin: all CRUD dispatch lives in
- * the VM. The fragment's job is to (1) render the form, (2) react to
- * the two VM state streams, and (3) collect the form back into a
- * {@link ConfiguracionDto} on submit. The {@code id} field is never
- * exposed to the user — the VM copies it from the cached config when
- * the request is an update.</p>
- */
 @AndroidEntryPoint
 public class ConfiguracionFragment extends Fragment {
 
@@ -78,10 +57,7 @@ public class ConfiguracionFragment extends Fragment {
     private ConfiguracionViewModel viewModel;
 
     /**
-     * Cached so the submit handler can decide whether the next save
-     * is a create (no data) or an update. Mirrors the VM's internal
-     * configState — kept here to avoid a second observer hop in the
-     * click handler.
+     * Configuración cacheada para decidir si el próximo guardado crea o actualiza.
      */
     @Nullable
     private ConfiguracionDto lastConfig;
@@ -114,7 +90,7 @@ public class ConfiguracionFragment extends Fragment {
 
         binding.mapView.onCreate(savedInstanceState);
         
-        // Prevent ScrollView from interfering with map panning
+        // Evita que ScrollView interfiera con el desplazamiento del mapa.
         binding.mapView.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -182,14 +158,13 @@ public class ConfiguracionFragment extends Fragment {
     }
 
     // ------------------------------------------------------------------
-    // State observers
+    // Observadores de estado.
     // ------------------------------------------------------------------
 
     /**
-     * Renders the current configuration state. LOADING hides the form
-     * and shows the spinner. ERROR hides the form and shows the error
-     * text + retry button. SUCCESS shows the form; a null payload
-     * means "create mode" (empty fields + "Guardar" button) and a
+     * Renderiza el estado actual. LOADING muestra el indicador, ERROR
+     * muestra el mensaje y reintento, y SUCCESS muestra el formulario.
+     * Un payload null activa el modo creación.
      * non-null payload means "update mode" (prefilled + "Actualizar").
      */
     private void renderConfigState(UiState<ConfiguracionDto> state) {
@@ -229,10 +204,8 @@ public class ConfiguracionFragment extends Fragment {
     }
 
     /**
-     * Renders the result of the latest create/update call. LOADING
-     * disables the submit button. SUCCESS toasts and pops the back
-     * stack so the user lands back on the dashboard. ERROR enables
-     * the button again and shows a Snackbar with the parsed server
+     * Renderiza el resultado del último guardado. LOADING desactiva el botón,
+     * SUCCESS muestra un aviso y vuelve al panel, y ERROR permite reintentar.
      * message.
      */
     private void renderSaveState(UiState<ConfiguracionDto> state) {
@@ -308,7 +281,7 @@ public class ConfiguracionFragment extends Fragment {
                 dto.setMetodoPagoDefaultId(metodoId);
                 dto.setMetodoPagoDefaultNombre(metodoNombre);
             } else {
-                // If it can't be resolved, we can just send the string or clear it
+                // Si no se puede resolver, se conserva el texto o se limpia.
                 dto.setMetodoPagoDefaultNombre(metodoNombre);
             }
         }
@@ -319,9 +292,8 @@ public class ConfiguracionFragment extends Fragment {
         String maxPedidosStr = textOf(binding.inputMaxPedidos);
         dto.setMaxPedidosPorRepartidor(parseInteger(maxPedidosStr));
         
-        // id is intentionally not read from the form ?" the VM copies it
-        // from the cached config when this is an update, so the server
-        // receives a body that matches the previously saved row.
+        // El ID no se lee del formulario: el ViewModel lo copia de la configuración
+        // cacheada cuando se trata de una actualización.
         viewModel.saveConfiguracion(dto);
     }
 

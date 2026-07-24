@@ -27,19 +27,6 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Cocina dashboard: a live queue of pedidos that still require kitchen
- * action. The full list is fetched via {@link com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository}
- * and then filtered client-side to only the estados the kitchen
- * cares about ({@code Pendiente} and {@code EnPreparacion}, matched
- * case-insensitively). The view is also refreshed automatically when
- * the SignalR hub pushes a {@code NuevoPedidoMessage}.
- *
- * <p>UI states mirror {@link com.example.app_movil_gastronomia.ui.cajero.ProductListFragment}:
- * LOADING shows a centered spinner, ERROR shows the message and a
- * retry button, SUCCESS shows the filtered list (or the empty
- * sub-state when the kitchen queue is fully drained).</p>
- */
 @AndroidEntryPoint
 public class CocinaHomeFragment extends Fragment {
 
@@ -167,12 +154,8 @@ public class CocinaHomeFragment extends Fragment {
     }
 
     /**
-     * Keeps only pedidos the kitchen is responsible for. Matches the
-     * API value of {@code Pendiente} and {@code EnPreparacion}
-     * case-insensitively, and also tolerates the human-friendly
-     * "En Preparación" form (with the accent and a space) so a server
-     * that ever sends the display label instead of the canonical
-     * wire value still works.
+     * Conserva los pedidos de Cocina y acepta tanto los valores de API como
+     * la etiqueta visible "En Preparación".
      */
     static List<PedidoResumenDto> filterForCocina(List<PedidoResumenDto> pedidos, @Nullable EstadoPedidoEnum explicitFilter) {
         List<PedidoResumenDto> result = new ArrayList<>();

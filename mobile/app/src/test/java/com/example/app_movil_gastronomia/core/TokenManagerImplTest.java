@@ -15,21 +15,17 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Unit tests for {@link TokenManagerImpl#decodeTokenExp()} and related
- * session storage behavior.
+ * Pruebas unitarias de {@link TokenManagerImpl#decodeTokenExp()} y del
+ * almacenamiento de la sesión.
  *
- * <p>The decode logic is structured so production uses
- * {@code android.util.Base64} (no new runtime dependencies on minSdk 24)
- * while tests override the protected {@code decodeBase64Url} hook to use
- * {@link java.util.Base64} — which is a real implementation on the host
- * JVM, unlike the android stub (which returns null under
- * {@code isReturnDefaultValues = true}).
+ * <p>Producción usa {@code android.util.Base64}, mientras que las pruebas
+ * reemplazan el decodificador por {@link java.util.Base64}, disponible en la JVM.
  */
 public class TokenManagerImplTest {
 
     @Test
     public void decodeTokenExp_validToken_returnsExpTimestamp() {
-        long expectedExp = 1_700_000_000L; // some future timestamp
+        long expectedExp = 1_700_000_000L;
         String jwt = buildJwt(expectedExp);
         TokenManagerImpl tm = newTokenManagerWithJwt(jwt);
 
@@ -40,7 +36,7 @@ public class TokenManagerImplTest {
 
     @Test
     public void decodeTokenExp_expiredToken_returnsExpTimestampInPast() {
-        long pastExp = 1_000_000_000L; // year 2001
+        long pastExp = 1_000_000_000L;
         String jwt = buildJwt(pastExp);
         TokenManagerImpl tm = newTokenManagerWithJwt(jwt);
 
@@ -110,10 +106,7 @@ public class TokenManagerImplTest {
 
 
     /**
-     * Builds a TokenManagerImpl wired to a fake prefs pre-populated with the
-     * given JWT, and overrides the Base64URL decoder to use the JVM's
-     * {@link java.util.Base64} (production uses {@code android.util.Base64}
-     * which is a stub on the host JVM).
+     * Crea un TokenManagerImpl con preferencias falsas y un JWT precargado.
      */
     private static TokenManagerImpl newTokenManagerWithJwt(String jwt) {
         FakeSharedPreferences prefs = new FakeSharedPreferences();
@@ -140,8 +133,8 @@ public class TokenManagerImplTest {
     }
 
     /**
-     * Minimal in-memory SharedPreferences for unit testing. Only the methods
-     * used by {@link TokenManagerImpl} are meaningful; others return defaults.
+     * SharedPreferences en memoria para pruebas. Solo son relevantes los métodos
+     * utilizados por {@link TokenManagerImpl}; el resto devuelve valores por defecto.
      */
     static final class FakeSharedPreferences implements SharedPreferences {
         private final Map<String, Object> data = new HashMap<>();

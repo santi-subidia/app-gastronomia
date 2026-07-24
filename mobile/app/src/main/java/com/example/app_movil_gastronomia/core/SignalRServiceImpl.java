@@ -29,26 +29,11 @@ import javax.inject.Singleton;
 
 import io.reactivex.rxjava3.core.Single;
 
-/**
- * Singleton implementation of {@link SignalRService} backed by the
- * Microsoft SignalR Java client 8.x. Owns a single {@link HubConnection}
- * for the lifetime of the process and reuses it across the
- * connect/disconnect cycles of a logged-in session.
- *
- * <p>Threading: all {@link MutableLiveData} updates go through
- * {@code postValue}, so hub callbacks running on SignalR's internal
- * thread pool are safe. Reconnect attempts are scheduled on a
- * single-threaded executor and can be cancelled by
- * {@link #disconnect()}.</p>
- *
- * <p>Spec SR-SVC-001.</p>
- */
 @Singleton
 public class SignalRServiceImpl implements SignalRService {
 
     private static final String TAG = "SignalRServiceImpl";
 
-    /** Seconds to wait before attempting a reconnection after an unexpected close. */
     private static final long RECONNECT_DELAY_SECONDS = 5L;
 
     private final String hubUrl;
@@ -69,11 +54,6 @@ public class SignalRServiceImpl implements SignalRService {
     private final MutableLiveData<Boolean> _connected = new MutableLiveData<>(false);
     private final MutableLiveData<String> _error = new MutableLiveData<>();
 
-    /**
-     * Set to {@code true} by {@link #disconnect()} so the
-     * {@code onClosed} callback knows the close was intentional and
-     * must NOT schedule a reconnect.
-     */
     private final AtomicBoolean disconnectedByUser = new AtomicBoolean(false);
 
     @Nullable
@@ -87,15 +67,8 @@ public class SignalRServiceImpl implements SignalRService {
 
     @Inject
     public SignalRServiceImpl() {
-        // BuildConfig.API_BASE_URL is the Retrofit base URL (e.g.
-        // "https://tu-api-url/"). The SignalR hub lives under
-        // hubs/logistica on the same origin.
         this.hubUrl = BuildConfig.API_BASE_URL + "hubs/logistica";
     }
-
-    // ------------------------------------------------------------------
-    // Connection lifecycle
-    // ------------------------------------------------------------------
 
     @Override
     public void connect(String token) {
@@ -129,8 +102,6 @@ public class SignalRServiceImpl implements SignalRService {
         } catch (Exception e) {
             Log.e(TAG, "Failed to connect to hub at " + hubUrl, e);
             _error.postValue("No se pudo conectar al hub: " + e.getMessage());
-            // null out the half-built connection so the next
-            // connect() call can try again from scratch.
             hubConnection = null;
             scheduleReconnect();
         }
@@ -155,10 +126,6 @@ public class SignalRServiceImpl implements SignalRService {
         _connected.postValue(false);
     }
 
-    // ------------------------------------------------------------------
-    // Hub method invocations
-    // ------------------------------------------------------------------
-
     @Override
     public void unirseACocina() {
         invokeOnConnection("UnirseAGrupo", "cocina");
@@ -182,17 +149,11 @@ public class SignalRServiceImpl implements SignalRService {
             return;
         }
         try {
-            // send() is fire-and-forget: no return value needed for
-            // a high-frequency GPS broadcast.
             conn.send("EnviarPosicionGPS", repartidorId, lat, lng);
         } catch (Exception e) {
             Log.e(TAG, "Error sending GPS position", e);
         }
     }
-
-    // ------------------------------------------------------------------
-    // LiveData getters
-    // ------------------------------------------------------------------
 
     @Override
     public LiveData<NuevoPedidoMessage> getNuevoPedido() {
@@ -239,16 +200,6 @@ public class SignalRServiceImpl implements SignalRService {
         return _error;
     }
 
-    // ------------------------------------------------------------------
-    // Internals
-    // ------------------------------------------------------------------
-
-    /**
-     * Wires the six server-pushed events we listen for. Each
-     * handler is a single-line post into its own
-     * {@link MutableLiveData}; observers registered at app
-     * startup will see every emission.
-     */
     private void registerHandlers(HubConnection conn) {
         conn.on("NuevoPedido",
                 (NuevoPedidoMessage msg) -> _nuevoPedido.postValue(msg),
@@ -279,12 +230,6 @@ public class SignalRServiceImpl implements SignalRService {
                 PedidoFinalizadoMessage.class);
     }
 
-    /**
-     * Reacts to connection state changes. {@code onClosed} fires on
-     * any drop (network loss, server restart, explicit stop). If
-     * the drop was NOT initiated by {@link #disconnect()}, schedule
-     * a reconnect so the user does not have to re-login.
-     */
     private void registerLifecycleCallbacks(HubConnection conn) {
         conn.onClosed(error -> {
             _connected.postValue(false);

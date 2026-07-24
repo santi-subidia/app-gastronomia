@@ -7,7 +7,6 @@ import retrofit2.http.GET;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
-/** Retrofit contract for the OSRM route service. */
 public interface OsrmApi {
 
     @GET("route/v1/driving/{coordinates}")

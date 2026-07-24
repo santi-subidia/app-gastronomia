@@ -25,14 +25,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Owns a single {@link MutableLiveData} instance per method — one for the
- * product list and one for each CRUD verb. Every instance is reset to
- * LOADING on its method call and then posted SUCCESS or ERROR. Instances
- * are never reallocated, so observers registered in the ViewModel
- * constructor (via {@code observeForever}) keep receiving emissions across
- * retries without leaking.
- */
 @Singleton
 public class ProductoRepositoryImpl implements ProductoRepository {
 
@@ -200,11 +192,6 @@ public class ProductoRepositoryImpl implements ProductoRepository {
         return _eliminarState;
     }
 
-    /**
-     * Parses the server's {@code {"mensaje":"..."}} envelope from a Retrofit
-     * error body, falling back to {@code fallback} when the body is missing
-     * or unparseable. Mirrors the AuthRepositoryImpl.login() pattern.
-     */
     private static String parseMensaje(Response<?> response, String fallback) {
         try {
             if (response.errorBody() != null) {

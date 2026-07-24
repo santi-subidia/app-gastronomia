@@ -60,7 +60,7 @@
             android:orientation="vertical"
             android:paddingBottom="24dp">
 
-            <!-- Status banner -->
+            <!-- Indicador de estado. -->
             <TextView
                 android:id="@+id/status_banner"
                 android:layout_width="match_parent"

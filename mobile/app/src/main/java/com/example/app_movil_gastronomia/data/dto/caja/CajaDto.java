@@ -2,22 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.caja;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Wire-format representation of a caja returned by the
- * {@code /api/cajas} endpoints (list, get-by-id, apertura and
- * cierre responses).
- *
- * <p>Spec CAJ-DTO-001 (v2): the 9 remaining fields map 1:1 to
- * the v2 JSON contract in {@code doc/API_REFERENCIA.md} §3.4.
- * The v2 server no longer includes {@code usuarioAperturaId} or
- * {@code usuarioCierreId} — the caller derives them from the auth
- * token. The display-only name fields ({@code usuarioAperturaNombre},
- * {@code usuarioCierreNombre}) are kept. Cierre-related fields
- * ({@code fechaCierre}, {@code montoCierreTeorico},
- * {@code montoCierreReal}) are typed as boxed wrappers so Gson
- * keeps them {@code null} for an open caja that has no cierre
- * data yet.</p>
- */
 public class CajaDto {
 
     @SerializedName("id")

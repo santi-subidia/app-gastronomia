@@ -2,18 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.configuracion;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Response/request body for {@code GET/POST/PUT /api/configuracion}.
- *
- * <p>Spec CONF-DTO-001: serialized JSON must contain exactly the keys
- * {@code id}, {@code metodoPagoDefaultId}, {@code metodoPagoDefaultNombre},
- * {@code nombreGastronomico}, {@code latitudPartida}, {@code longitudPartida}
- * — matching the server's contract. The optional fields
- * {@code metodoPagoDefaultId}, {@code latitudPartida} and
- * {@code longitudPartida} are boxed (nullable) because a fresh business
- * may not yet have a default payment method or GPS coordinates; primitives
- * would silently coerce missing JSON keys to 0 and corrupt state.
- */
 public class ConfiguracionDto {
 
     @SerializedName("id")

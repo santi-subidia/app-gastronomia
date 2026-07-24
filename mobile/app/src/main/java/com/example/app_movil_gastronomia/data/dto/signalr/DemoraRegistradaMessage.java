@@ -2,14 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.signalr;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Server-pushed message for a demora registered against a pedido.
- * Emitted by the {@code logistica} hub on the {@code DemoraRegistrada}
- * event so the Cocina UI can show a countdown/notice and the
- * Repartidor can see expected pick-up delays.
- *
- * <p>Spec SR-DTO-004.</p>
- */
 public class DemoraRegistradaMessage {
 
     @SerializedName("demoraId")

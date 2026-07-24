@@ -48,36 +48,16 @@ import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * New-pedido form. The cajero enters the customer name, picks a
- * sales method and a payment method, optionally fills the delivery
- * address + lat/lng when the method is Delivery, adds one or more
- * product lines through a picker dialog, and submits the result as
- * a POST /api/pedidos.
- *
- * <p>The fragment is intentionally thin: all validation, total
- * recomputation, and network plumbing live in
- * {@link CrearPedidoViewModel}. The fragment's job is to (1) read
- * the form into a {@link CrearPedidoRequest}, (2) react to the VM's
- * state streams, and (3) drive the two dialogs (product picker +
- * quantity input).</p>
- */
+
 @AndroidEntryPoint
 public class CrearPedidoFragment extends Fragment {
 
-    /** Server identifier for the Delivery sales method. */
     private static final int METODO_VENTA_DELIVERY = 1;
 
-    /**
-     * Local dropdown labels in display order, paired 1:1 with their
-     * server id below. Kept as parallel arrays to avoid building a
-     * small DTO just for this.
-     */
     private static final String[] METODO_VENTA_LABELS = {
             "Retiro en local", // id 2
             "Delivery"         // id 1
     };
-    /** Server metodoVentaId values, in display order. */
     private static final int[] METODO_VENTA_IDS = {2, 1};
 
     private static final String[] METODO_PAGO_LABELS = {
@@ -87,25 +67,14 @@ public class CrearPedidoFragment extends Fragment {
     };
     private static final int[] METODO_PAGO_IDS = {1, 2, 3};
 
-    /** Default selected sales method (Para llevar). */
     private static final int DEFAULT_METODO_VENTA_INDEX = 0;
-    /** Default selected payment method (Efectivo). */
     private static final int DEFAULT_METODO_PAGO_INDEX = 0;
 
     private FragmentCrearPedidoBinding binding;
     private CrearPedidoViewModel viewModel;
     private DetalleAdapter detalleAdapter;
 
-    /**
-     * Detalle lines currently in the form. Edited in-place as the user
-     * adds / removes rows. The list holds UI-layer
-     * {@link DetalleLine} objects; the conversion to the wire
-     * {@code CrearDetalleRequest} happens in
-     * {@link CrearPedidoViewModel#mapDetalles(List)} at submit time.
-     */
     private final List<DetalleLine> detalles = new ArrayList<>();
-
-    /** Last product list received from the VM, used to populate the picker. */
 
     private Double selectedLat = null;
     private Double selectedLng = null;
@@ -139,7 +108,6 @@ public class CrearPedidoFragment extends Fragment {
 
         binding.mapView.onCreate(savedInstanceState);
         
-        // Prevent ScrollView from interfering with map panning
         binding.mapView.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case android.view.MotionEvent.ACTION_DOWN:
@@ -147,6 +115,9 @@ public class CrearPedidoFragment extends Fragment {
                     v.getParent().requestDisallowInterceptTouchEvent(true);
                     break;
                 case android.view.MotionEvent.ACTION_UP:
+                    v.performClick();
+                    v.getParent().requestDisallowInterceptTouchEvent(false);
+                    break;
                 case android.view.MotionEvent.ACTION_CANCEL:
                     v.getParent().requestDisallowInterceptTouchEvent(false);
                     break;
@@ -168,8 +139,10 @@ public class CrearPedidoFragment extends Fragment {
             map.addOnCameraIdleListener(() -> {
                 if (mapLibreMap != null) {
                     LatLng target = mapLibreMap.getCameraPosition().target;
-                    selectedLat = target.getLatitude();
-                    selectedLng = target.getLongitude();
+                    if (target != null) {
+                        selectedLat = target.getLatitude();
+                        selectedLng = target.getLongitude();
+                    }
                 }
             });
         });
@@ -469,15 +442,6 @@ public class CrearPedidoFragment extends Fragment {
         return edit.getText() != null ? edit.getText().toString().trim() : "";
     }
 
-    private static Double parseDouble(String text) {
-        if (TextUtils.isEmpty(text)) return null;
-        try {
-            return Double.parseDouble(text.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
     private void navigateBack() {
         NavController controller = Navigation.findNavController(requireView());
         controller.popBackStack();
@@ -505,7 +469,7 @@ public class CrearPedidoFragment extends Fragment {
                         .build());
                 return;
             } else {
-                // Fetch fresh location if cached is null
+                // Obtiene una ubicación nueva si no hay una cacheada.
                 android.location.LocationListener listener = new android.location.LocationListener() {
                     @Override
                     public void onLocationChanged(@NonNull Location location) {

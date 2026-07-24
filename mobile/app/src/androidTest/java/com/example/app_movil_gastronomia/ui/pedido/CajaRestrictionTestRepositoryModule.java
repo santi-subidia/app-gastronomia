@@ -25,7 +25,7 @@ import dagger.Provides;
 import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.testing.TestInstallIn;
 
-/** Hilt bindings for deterministic caja restriction UI instrumentation tests. */
+/** Enlaces Hilt para pruebas deterministas de restricción de caja. */
 @Module
 @TestInstallIn(
         components = SingletonComponent.class,

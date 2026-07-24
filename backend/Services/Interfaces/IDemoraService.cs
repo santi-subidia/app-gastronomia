@@ -18,7 +18,7 @@ public interface IDemoraService
     /// Creates a new demora. userId and sector are extracted from JWT claims internally.
     /// Throws KeyNotFoundException if the pedido does not exist.
     /// Throws InvalidOperationException if demoraMinutos &lt;= 0.
-    /// Sends SignalR notification to the pedido group and to the Cajeros group on success.
+    /// Envía una notificación SignalR al grupo del pedido y al grupo de Cajeros si tiene éxito.
     /// </summary>
     Task<DemoraResponse> CrearAsync(int pedidoId, int demoraMinutos, string? observaciones);
 

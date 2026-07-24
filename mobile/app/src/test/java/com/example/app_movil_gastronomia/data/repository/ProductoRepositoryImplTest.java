@@ -33,19 +33,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Spec coverage for the 4 new repository methods. Mirrors the
- * AuthRepositoryImplTest pattern: FakeApi + FakeCall + InstantTaskExecutorRule.
- *
- * Spec mapping:
- *  - PROD-CRUD-001: getProducto emits LOADING -> SUCCESS on 2xx
- *  - PROD-CRUD-002: crearProducto emits LOADING -> SUCCESS on 201
- *  - PROD-CRUD-003: actualizarProducto emits LOADING -> SUCCESS on 2xx
- *  - PROD-CRUD-004: eliminarProducto emits LOADING -> SUCCESS on 2xx
- *  - PROD-CRUD-005: actualizarProducto partial-update — verified at DTO level
- *  - PROD-CRUD-006: every method emits ERROR on 4xx/IOException
- *  - PROD-CRUD-007: same LiveData instance across calls per method
- */
+/** Verifica las operaciones del repositorio de productos y sus estados LiveData. */
 public class ProductoRepositoryImplTest {
 
     @Rule
@@ -503,8 +491,7 @@ public class ProductoRepositoryImplTest {
     }
 
     /**
-     * Minimal Call<T> stand-in that synchronously delivers a queued
-     * Response or Throwable to the registered Callback.
+     * Implementación mínima de Call<T> para entregar respuestas de prueba.
      */
     static final class FakeCall<T> implements Call<T> {
         private final Response<T> response;

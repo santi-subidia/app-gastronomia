@@ -17,25 +17,6 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Backs {@link CajaFragment}. Powers three VM-owned LiveData streams:
- *
- * <ul>
- *   <li>{@link #getCajaState()} — the current open caja, or {@code null}
- *       on SUCCESS when no caja is currently open. Sourced from
- *       {@link CajaRepository#getCajas(String)} filtered by
- *       {@code "abiertas"}; the first list element is taken as the open
- *       caja (the server returns at most one).</li>
- *   <li>{@link #getAbrirState()} — last result of an open call.</li>
- *   <li>{@link #getCerrarState()} — last result of a close call.</li>
- * </ul>
- *
- * <p>After a successful open or close, the VM reloads the caja status
- * so the fragment can flip between the two modes without an explicit
- * call. The pattern mirrors {@link CocinaHomeViewModel}: every
- * {@code observeForever} registration is tracked and torn down in
- * {@link #onCleared()}.</p>
- */
 @HiltViewModel
 public class CajaViewModel extends ViewModel {
 
@@ -93,50 +74,31 @@ public class CajaViewModel extends ViewModel {
         loadCajaStatus();
     }
 
-    /** Current open caja, or {@code null} on SUCCESS when no caja is open. */
     public LiveData<UiState<CajaDto>> getCajaState() {
         return cajaState;
     }
 
-    /** Last result of an open call. */
     public LiveData<UiState<CajaDto>> getAbrirState() {
         return abrirState;
     }
 
-    /** Last result of a close call. */
     public LiveData<UiState<CajaDto>> getCerrarState() {
         return cerrarState;
     }
 
-    /** Reloads the open-caja status. */
     public void loadCajaStatus() {
         cajaRepository.getCajas("abiertas");
     }
 
-    /** Reload entry point wired to the retry button. */
     public void retry() {
         loadCajaStatus();
     }
 
-    /**
-     * Opens a caja with the given apertura amount. The server
-     * derives the apertura user from the auth token (v2 contract);
-     * the server also enforces that at most one caja is open at a
-     * time (409 if violated) — that error is surfaced through the
-     * repository's standard error envelope.
-     */
     public void abrirCaja(double montoApertura) {
         AbrirCajaRequest request = new AbrirCajaRequest(montoApertura);
         cajaRepository.abrirCaja(request);
     }
 
-    /**
-     * Closes the given caja with the supplied cierre real. The
-     * {@link CerrarCajaRequest} DTO (v2) requires two fields:
-     * {@code montoCierreTeorico} and {@code montoCierreReal} — the
-     * cierre user is derived from the auth token server-side. The
-     * theoretical close is the base opening amount plus all cash sales.
-     */
     public void cerrarCaja(CajaDto caja, double montoCierreReal) {
         if (caja == null) return;
         CerrarCajaRequest request = new CerrarCajaRequest(
@@ -153,5 +115,4 @@ public class CajaViewModel extends ViewModel {
         cajaRepository.getAbrirState().removeObserver(abrirRepositoryObserver);
         cajaRepository.getCerrarState().removeObserver(cerrarRepositoryObserver);
     }
-
 }

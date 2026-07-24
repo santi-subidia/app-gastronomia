@@ -18,9 +18,9 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Authenticates a user and returns a JWT token.
-    /// Returns 401 if credentials are invalid or user is inactive.
-    /// Rate-limited to 10 requests per minute per IP.
+    /// Autentica un usuario y devuelve un token JWT.
+    /// Devuelve 401 si las credenciales son inválidas o el usuario está inactivo.
+    /// Limitado a 10 solicitudes por minuto y por IP.
     /// </summary>
     [EnableRateLimiting("LoginPolicy")]
     [AllowAnonymous]

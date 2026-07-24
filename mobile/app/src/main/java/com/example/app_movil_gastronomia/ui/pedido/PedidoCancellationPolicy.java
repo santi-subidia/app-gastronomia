@@ -4,7 +4,6 @@ import androidx.annotation.Nullable;
 
 import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 
-/** Defines the active order states that can be force-canceled by the UI. */
 final class PedidoCancellationPolicy {
 
     private PedidoCancellationPolicy() {

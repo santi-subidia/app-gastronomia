@@ -30,40 +30,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Spec coverage for the cajas repository.
- *
- * Spec mapping:
- *  - CAJ-LIST-001:  getCajas LOADING -> SUCCESS on 2xx
- *  - CAJ-LIST-002:  getCajas ERROR(parsed mensaje) on 4xx
- *  - CAJ-LIST-003:  getCajas ERROR("No hay conexion a internet") on IOException
- *  - CAJ-LIST-004:  getCajasState returns the same instance across calls
- *  - CAJ-LIST-005:  getCajas passes estado=null through to the API call
- *  - CAJ-LIST-006:  getCajas passes estado="Abierta" through to the API call
- *  - CAJ-ABIERTAS-001: getCajasAbiertas LOADING -> SUCCESS on 2xx (non-empty)
- *  - CAJ-ABIERTAS-002: getCajasAbiertas SUCCESS with empty list (no open cajas)
- *  - CAJ-ABIERTAS-003: getCajasAbiertas ERROR(parsed mensaje) on 5xx
- *  - CAJ-ABIERTAS-004: getCajasAbiertas ERROR("No hay conexion a internet") on IOException
- *  - CAJ-ABIERTAS-005: getCajasAbiertasState returns the same instance across calls
- *  - CAJ-GET-001:   getCaja(id) LOADING -> SUCCESS on 2xx
- *  - CAJ-GET-002:   getCaja(id) ERROR(parsed mensaje) on 4xx
- *  - CAJ-GET-003:   getCaja(id) ERROR("No hay conexion a internet") on IOException
- *  - CAJ-GET-004:   getCajaState returns the same instance across calls
- *  - CAJ-ABRIR-001: abrirCaja(request) LOADING -> SUCCESS on 2xx
- *  - CAJ-ABRIR-002: abrirCaja(request) ERROR(parsed mensaje) on 4xx
- *  - CAJ-ABRIR-003: abrirCaja(request) ERROR("No hay conexion a internet") on IOException
- *  - CAJ-ABRIR-004: abrirState returns the same instance across calls
- *  - CAJ-CERRAR-001: cerrarCaja(id, request) LOADING -> SUCCESS on 2xx
- *  - CAJ-CERRAR-002: cerrarCaja(id, request) ERROR(parsed mensaje) on 4xx
- *  - CAJ-CERRAR-003: cerrarCaja(id, request) ERROR("No hay conexion a internet") on IOException
- *  - CAJ-CERRAR-004: cerrarState returns the same instance across calls
- *  - CAJ-DI-001:    all 5 state instances must be pairwise distinct
- *
- * <p>The cajas entity has no client-side validation guards: open/closed
- * transitions are enforced by the server and surfaced through
- * {@code parseMensaje}. Spec CAJ-VAL-001: this test does not assert
- * any pre-flight validation on the repo.</p>
- */
+/** Verifica las operaciones del repositorio de cajas y sus estados LiveData. */
 public class CajaRepositoryImplTest {
 
     @Rule

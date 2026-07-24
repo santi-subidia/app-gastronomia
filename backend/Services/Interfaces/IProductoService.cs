@@ -27,7 +27,7 @@ public interface IProductoService
     Task<ProductoResponse> CrearProductoAsync(string nombre, double precio, int demora);
 
     /// <summary>
-    /// Updates specific product fields. Only non-null parameters are updated.
+    /// Actualiza campos específicos del producto. Solo se aplican parámetros no nulos.
     /// Returns null if product not found. Throws InvalidOperationException on duplicate Nombre.
     /// </summary>
     Task<ProductoResponse?> ActualizarProductoAsync(int id, string? nombre, double? precio, int? demora);

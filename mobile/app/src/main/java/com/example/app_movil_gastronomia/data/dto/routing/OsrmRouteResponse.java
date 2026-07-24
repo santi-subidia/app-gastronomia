@@ -5,7 +5,6 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Collections;
 import java.util.List;
 
-/** Minimal OSRM response model for a GeoJSON route. */
 public class OsrmRouteResponse {
 
     @SerializedName("code")

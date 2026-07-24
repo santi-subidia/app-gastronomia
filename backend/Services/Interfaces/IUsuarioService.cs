@@ -27,7 +27,7 @@ public interface IUsuarioService
     Task<UsuarioResponse> CrearUsuarioAsync(string usuarioNombre, string password, int rolId);
 
     /// <summary>
-    /// Updates specific user fields. Only non-null parameters are updated.
+    /// Actualiza campos específicos del usuario. Solo se aplican parámetros no nulos.
     /// If password is provided, it is re-hashed with BCrypt.
     /// Activo cannot be changed via this method (use EliminarUsuarioAsync for soft delete).
     /// Returns null if user not found.

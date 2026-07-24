@@ -15,17 +15,6 @@ import retrofit2.http.PUT;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
-/**
- * Retrofit contract for the demoras REST endpoints.
- *
- * <p>Spec DEM-API-001: every method must match the server routes exactly
- * (paths, query keys, path keys, HTTP verbs). {@code pedidoId} on
- * {@link #getDemoras(Integer)} is nullable so the same endpoint can list
- * either the full set of demoras ({@code pedidoId == null}, query
- * parameter omitted by Retrofit) or the demoras filtered to a single
- * pedido. The design decision and the boxes-vs-primitives rationale live
- * in {@code sdd/entidad-demoras/design}.
- */
 public interface DemoraApi {
 
     @GET("api/demoras")

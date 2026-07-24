@@ -2,15 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.producto;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Request body for {@code PUT /api/productos/{id}} (partial update).
- *
- * <p>Spec PROD-CRUD-005: a field that the caller does <b>not</b> set must
- * be omitted from the JSON body — the server treats the request as a
- * partial update. Gson's default behavior is to skip {@code null} boxed
- * fields during serialization, so {@code Double} and {@code Integer} are
- * used instead of primitives.
- */
 public class ActualizarProductoRequest {
 
     @SerializedName("nombre")

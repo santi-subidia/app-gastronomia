@@ -80,13 +80,6 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     public SignalRService signalRService;
 
-    /**
-     * True while {@link #onCreate(Bundle)} is performing the splash-gated
-     * auto-login. Held as a field so a future phase can probe it (e.g.
-     * instrumentation tests) without re-running the check.
-     */
-    private boolean isCheckingSession = true;
-
     private static final String DELAY_NOTIFICATION_CHANNEL_ID = "demoras_channel";
     private static final int DELAY_NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
     private final Set<Integer> notifiedDemoraIds = new HashSet<>();
@@ -106,18 +99,12 @@ public class MainActivity extends AppCompatActivity {
         assert navHostFragment != null;
         navController = navHostFragment.getNavController();
 
-        // Top-level destinations are the three role-home screens; the
-        // drawerLayout is wired as the openable container so the
-        // hamburger/up-arrow switch works correctly.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_cajero_home, R.id.nav_cocina_home, R.id.nav_repartidor_home)
                 .setOpenableLayout(binding.drawerLayout)
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
 
-        // Drawer item selection: handle logout + configuracion, then close
-        // the drawer. We keep the listener attached for the whole activity
-        // lifetime because the drawer's contents do not change at runtime.
         binding.navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_cerrar_sesion) {
@@ -129,41 +116,34 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.nav_repartidores_mapa) {
                 navController.navigate(R.id.nav_repartidores_mapa);
             } else if (id == R.id.nav_switch_disponible) {
-                // If they tap the menu item background instead of the switch directly, toggle the switch
                 if (item.getActionView() != null) {
                     com.google.android.material.switchmaterial.SwitchMaterial switchView = 
                             item.getActionView().findViewById(R.id.drawer_switch_disponible);
                     if (switchView != null && switchView.isEnabled()) {
                         switchView.setChecked(!switchView.isChecked());
-                        // Fire the manual toggle logic explicitly
                         int userId = tokenManager.getUserId();
                         if (userId > 0) {
                             usuarioRepository.updateDisponibilidad(userId, switchView.isChecked());
                         }
                     }
                 }
-                return true; // Don't close the drawer
+                return true;
             }
             binding.drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
             return true;
         });
 
-        // Observe session-expiration: when fired, navigate to the login screen
-        // and re-arm the flag. Preserved from the previous implementation —
-        // OkHttp's AuthInterceptor posts here on 401, and the host Activity
-        // is the only place that can safely navigate.
         sessionManager.getSessionExpired().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(@Nullable Boolean expired) {
                 if (Boolean.TRUE.equals(expired) && navController != null) {
                     NavDestination current = navController.getCurrentDestination();
-                    // Guard: don't re-navigate if we are already on login.
                     if (current != null && current.getId() == R.id.nav_login) {
                         sessionManager.consume();
                         return;
                     }
                     NavOptions popUpToGraph = new NavOptions.Builder()
-                            .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
+                            .setPopUpTo(R.id.nav_login, true)
                             .build();
                     navController.navigate(R.id.nav_login, null, popUpToGraph);
                     sessionManager.consume();
@@ -175,11 +155,9 @@ public class MainActivity extends AppCompatActivity {
             if (state != null) {
                 switch (state.getStatus()) {
                     case LOADING:
-                        // Podríamos mostrar un progress dialog
                         break;
                     case SUCCESS:
                         android.widget.Toast.makeText(this, "Contingencia reportada. Estás Fuera de Servicio.", android.widget.Toast.LENGTH_LONG).show();
-                        // Refrescar el estado del switch
                         int userId = tokenManager.getUserId();
                         if (userId > 0) {
                             usuarioRepository.fetchUsuario(userId);
@@ -208,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
                 );
             }
 
-            // Hide keyboard when navigating to avoid it sticking around on screens without inputs
             View currentFocus = getCurrentFocus();
             if (currentFocus != null) {
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -218,9 +195,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Splash-gated auto-login. The splash stays on top of every other
-        // view while we validate the stored session so the login form
-        // never flickers on cold start.
         runAutoLogin();
     }
 
@@ -238,9 +212,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Navigates to the pedido detail if the activity was launched from a
-     * delay notification. Safe to call repeatedly; no-op if the intent has no
-     * pedido id.
+     * Abre el detalle del pedido cuando la actividad se inició desde una
+     * notificación de demora. Ignora intents sin identificador de pedido.
      */
     private void handleNotificationIntent(@Nullable Intent intent) {
         if (intent == null || navController == null) return;
@@ -253,7 +226,6 @@ public class MainActivity extends AppCompatActivity {
     private void navigateToPedidoDetail(int pedidoId) {
         NavDestination current = navController.getCurrentDestination();
         if (current != null && current.getId() == R.id.nav_pedido_detail) {
-            // Already there; nothing to do.
             return;
         }
         NavOptions popUp = new NavOptions.Builder()
@@ -264,10 +236,7 @@ public class MainActivity extends AppCompatActivity {
         navController.navigate(R.id.nav_pedido_detail, args, popUp);
     }
 
-    /**
-     * Wires the cashier delay notification observer when the role is Cajero.
-     * Called after a successful login or auto-login.
-     */
+    /** Registra el observador de demoras para el rol Cajero. */
     private void bindDelayNotifications() {
         if (signalRService == null) return;
         if (demoraRegistradaObserver == null) {
@@ -362,18 +331,11 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-    /**
-     * Splash-gated session validation executed on cold start. Decides whether
-     * to keep the user in their role-home screen or hand them off to the
-     * login destination, then dismisses the splash overlay.
-     */
+    /** Valida la sesión al iniciar y muestra la pantalla correspondiente al rol. */
     private void runAutoLogin() {
         showSplash();
 
         if (!tokenManager.hasToken()) {
-            // No token: login is the nav graph's startDestination, so we
-            // just need to make sure the splash is dismissed and bail.
-            isCheckingSession = false;
             hideSplash();
             return;
         }
@@ -381,13 +343,10 @@ public class MainActivity extends AppCompatActivity {
         long expSeconds = tokenManager.decodeTokenExp();
         long nowSeconds = System.currentTimeMillis() / 1000L;
         if (expSeconds < 0 || expSeconds <= nowSeconds) {
-            // Malformed (-1) or expired. Treat as invalid: clear and let
-            // the startDestination (login) handle the rest.
             tokenManager.clearToken();
-        if (authRepository != null) {
-            authRepository.resetLoginState();
-        }
-            isCheckingSession = false;
+            if (authRepository != null) {
+                authRepository.resetLoginState();
+            }
             hideSplash();
             return;
         }
@@ -395,21 +354,28 @@ public class MainActivity extends AppCompatActivity {
         String role = tokenManager.getRole();
         Integer homeDestination = resolveHomeDestination(role);
         if (homeDestination == null) {
-            // Unknown role: log a warning and bail to the start destination
-            // (login) so the user can re-authenticate.
             Log.w(TAG, "Unknown role '" + role + "' — falling back to login");
-            isCheckingSession = false;
             hideSplash();
             return;
         }
 
-        // Valid session: jump to the role-home, then wire the role-specific
-        // bottom-nav tabs and the drawer header. popUpTo(nav_login, inclusive=true) clears the back stack so back-from-home exits the
-        // app instead of re-entering login.
         NavOptions popUpToGraph = new NavOptions.Builder()
-                .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
+                .setPopUpTo(R.id.nav_login, true)
                 .build();
         navController.navigate(homeDestination, null, popUpToGraph);
+        configureAuthenticatedSession(role);
+        hideSplash();
+    }
+
+    /** Actualiza la interfaz después de un login exitoso. */
+    public void onLoginSuccess() {
+        if (tokenManager.hasToken()) {
+            String role = tokenManager.getRole();
+            configureAuthenticatedSession(role);
+        }
+    }
+
+    private void configureAuthenticatedSession(@Nullable String role) {
         configureBottomNav(role);
         configureDrawerMenu(role);
         bindDrawerHeader();
@@ -423,31 +389,6 @@ public class MainActivity extends AppCompatActivity {
         if ("Cajero".equalsIgnoreCase(role)) {
             bindDelayNotifications();
         }
-
-        isCheckingSession = false;
-        hideSplash();
-    }
-
-    /**
-     * Called by LoginFragment after a successful login to update the UI
-     * elements that depend on the authenticated user's role.
-     */
-    public void onLoginSuccess() {
-        if (tokenManager.hasToken()) {
-            String role = tokenManager.getRole();
-            configureBottomNav(role);
-            configureDrawerMenu(role);
-            bindDrawerHeader();
-            if (signalRService != null) {
-                signalRService.connect(tokenManager.getToken());
-            }
-            if ("Repartidor".equalsIgnoreCase(role)) {
-                startLocationService();
-            }
-            if ("Cajero".equalsIgnoreCase(role)) {
-                bindDelayNotifications();
-            }
-        }
     }
 
     private void startLocationService() {
@@ -460,17 +401,10 @@ public class MainActivity extends AppCompatActivity {
         stopService(serviceIntent);
     }
 
-    /**
-     * Replaces the bottom navigation menu with the items appropriate for the
-     * given role. Items are added programmatically so the IDs always match
-     * the nav-graph destinations and {@link NavigationUI} can wire the
-     * tab-selection -> navigate behavior without an extra XML file per role.
-     */
+    /** Configura la navegación inferior según el rol autenticado. */
     private void configureBottomNav(@Nullable String role) {
         BottomNavigationView bottomNav = binding.appBarMain.contentMain.bottomNavView;
         if (bottomNav == null) {
-            // The view is only present in the default layout (not w600dp /
-            // w1240dp). Tablets skip the bottom-nav entirely.
             return;
         }
         bottomNav.getMenu().clear();
@@ -494,7 +428,6 @@ public class MainActivity extends AppCompatActivity {
                         .setIcon(R.drawable.ic_caja_24dp);
                 break;
             case "cocina":
-                // Cocina solo necesita una pantalla, la BottomNav se oculta entera
                 break;
             case "repartidor":
                 bottomNav.getMenu()
@@ -533,10 +466,7 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Shows or hides items in the side navigation drawer based on the user's role.
-     * For example, the 'cocina' role should not see the configuration menu.
-     */
+    /** Muestra en el menú lateral únicamente las opciones permitidas por el rol. */
     private void configureDrawerMenu(@Nullable String role) {
         if (binding.navView == null || role == null) return;
         
@@ -549,7 +479,6 @@ public class MainActivity extends AppCompatActivity {
         String normalized = role.trim().toLowerCase(Locale.ROOT);
         
         if (configItem != null) {
-            // Only 'cajero' should see the configuration menu
             configItem.setVisible("cajero".equals(normalized));
         }
         if (driversMapItem != null) {
@@ -565,7 +494,6 @@ public class MainActivity extends AppCompatActivity {
                 com.google.android.material.switchmaterial.SwitchMaterial switchView = 
                         switchItem.getActionView().findViewById(R.id.drawer_switch_disponible);
                 if (switchView != null) {
-                    // Temporarily disable while fetching state
                     switchView.setEnabled(false);
                     usuarioRepository.getUsuarioState().observe(this, state -> {
                         if (state != null && state.getStatus() == com.example.app_movil_gastronomia.core.UiState.Status.SUCCESS && state.getData() != null) {
@@ -601,7 +529,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                     
-                    // Fetch initial state
                     int userId = tokenManager.getUserId();
                     if (userId > 0) {
                         usuarioRepository.fetchUsuario(userId);
@@ -611,12 +538,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Binds the drawer's header {@code header_name} and {@code header_role}
-     * text views from the persisted session. If the session has no name or
-     * role, the localized fallback string is shown so the header is never
-     * blank.
-     */
+    /** Completa el encabezado del menú lateral con los datos de la sesión. */
     private void bindDrawerHeader() {
         NavigationView navView = binding.navView;
         if (navView.getHeaderCount() == 0) {
@@ -643,12 +565,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Single logout entry point used by both the toolbar overflow and the
-     * drawer. Clears the persisted session, resets the SessionManager flag
-     * (so a stale {@code expireSession()} doesn't immediately re-trigger),
-     * and navigates to {@code nav_login} with the back stack cleared.
-     */
+    /** Cierra la sesión, limpia la navegación y vuelve al login. */
     private void performLogout() {
         stopLocationService();
         if (signalRService != null) {
@@ -661,7 +578,7 @@ public class MainActivity extends AppCompatActivity {
         sessionManager.consume();
         if (navController != null) {
             NavOptions popUpToGraph = new NavOptions.Builder()
-                    .setPopUpTo(R.id.nav_login, /* inclusive= */ true)
+                    .setPopUpTo(R.id.nav_login, true)
                     .build();
             navController.navigate(R.id.nav_login, null, popUpToGraph);
         }
@@ -670,37 +587,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Makes the splash overlay visible. The view is config-dependent
-     * ({@code layout-w600dp} does not include it), so we tolerate null.
-     */
+    /** Muestra la capa de carga cuando está disponible en el layout. */
     private void showSplash() {
         if (binding.splashLayout != null) {
             binding.splashLayout.setVisibility(View.VISIBLE);
         }
     }
 
-    /**
-     * Hides the splash overlay. Safe to call when the view is absent.
-     */
+    /** Oculta la capa de carga cuando está disponible en el layout. */
     private void hideSplash() {
         if (binding.splashLayout != null) {
             binding.splashLayout.setVisibility(View.GONE);
         }
     }
 
-    /**
-     * Maps a persisted role name to its home destination ID, or {@code null}
-     * when the role is unrecognized so the caller can fall back to login.
-     *
-     * <p>Comparison is case-insensitive and trim-tolerant so the app keeps
-     * working when the backend returns a different casing ("cajero" vs
-     * "Cajero") or a value padded with whitespace.
-     *
-     * <p>Extracted from {@link #onCreate(Bundle)} as a package-private
-     * static method so it can be unit-tested without instantiating the
-     * Activity or running Robolectric.
-     */
+    /** Resuelve el destino inicial a partir del rol persistido. */
     @Nullable
     @VisibleForTesting
     static Integer resolveHomeDestination(@Nullable String role) {
@@ -720,10 +621,3 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
-
-
-
-
-
-

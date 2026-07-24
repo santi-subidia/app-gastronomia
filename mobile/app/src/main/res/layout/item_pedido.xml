@@ -17,7 +17,7 @@
         android:paddingEnd="16dp"
         android:paddingVertical="12dp">
 
-        <!-- Left accent border colored by status, 4dp wide. -->
+        <!-- Borde izquierdo de 4dp, coloreado según el estado. -->
         <View
             android:id="@+id/pedido_accent_border"
             android:layout_width="6dp"
@@ -27,7 +27,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Row 1: pedido id + status chip -->
+        <!-- Fila 1: ID del pedido y estado. -->
         <TextView
             android:id="@+id/pedido_id"
             android:layout_width="0dp"
@@ -55,7 +55,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="En Preparación" />
 
-        <!-- Row 2: customer name -->
+        <!-- Fila 2: nombre del cliente. -->
         <TextView
             android:id="@+id/pedido_cliente_nombre"
             android:layout_width="0dp"
@@ -69,7 +69,7 @@
             app:layout_constraintTop_toBottomOf="@id/pedido_id"
             tools:text="Juan Pérez" />
 
-        <!-- Row 3: method + total -->
+        <!-- Fila 3: método y total. -->
         <TextView
             android:id="@+id/pedido_metodo_venta"
             android:layout_width="wrap_content"

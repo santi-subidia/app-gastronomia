@@ -16,23 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * RecyclerView adapter for the in-progress pedido's detalle lines.
- *
- * <p>Each row is a {@link DetalleLine} snapshot: producto name,
- * quantity, line subtotal, and a delete button. The host
- * ({@link CrearPedidoFragment}) rebuilds the list on every add /
- * remove so this adapter is intentionally a "dumb" rendering
- * surface — no diffing, no animations.</p>
- *
- * <p>Spec PED-CRUD-001 / pedido-creacion "DetalleAdapter renders
- * DetalleLine": the adapter does not know about the wire DTO
- * {@code CrearDetalleRequest} — that mapping happens in
- * {@link CrearPedidoViewModel#mapDetalles(List)} at submit time.</p>
- */
 public class DetalleAdapter extends RecyclerView.Adapter<DetalleAdapter.DetalleViewHolder> {
 
-    /** Click callback for the trailing delete button on each row. */
     public interface OnDeleteClickListener {
         void onDelete(int position);
     }

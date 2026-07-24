@@ -17,7 +17,7 @@ public interface UsuarioApi {
     @GET("api/Usuarios/repartidores/disponibles")
     Call<List<UsuarioDto>> getRepartidoresDisponibles();
 
-    /** Returns all active delivery drivers, including unavailable drivers. */
+    /** Devuelve todos los repartidores activos, incluidos los no disponibles. */
     @GET("api/Usuarios")
     Call<List<UsuarioDto>> getRepartidores(@Query("role") String role);
 

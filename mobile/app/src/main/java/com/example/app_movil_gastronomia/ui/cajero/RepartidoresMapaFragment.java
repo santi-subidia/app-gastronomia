@@ -37,7 +37,6 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/** MapLibre screen that lets the cashier monitor every delivery driver. */
 @AndroidEntryPoint
 public class RepartidoresMapaFragment extends Fragment {
 
@@ -86,7 +85,7 @@ public class RepartidoresMapaFragment extends Fragment {
                 addDriverIcon();
                 redrawMap(currentDrivers());
                 
-                // Observe default location once map is ready
+                // Observa la ubicación predeterminada cuando el mapa está listo.
                 viewModel.getDefaultLocation().observe(getViewLifecycleOwner(), coords -> {
                     if (!cameraPositioned && coords != null && map != null) {
                         cameraPositioned = true;

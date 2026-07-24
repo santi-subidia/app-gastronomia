@@ -26,23 +26,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * {@link CatalogoRepository} implementation that eagerly loads all
- * three v2 catalogs the moment Hilt instantiates it (Spec CAT-REP-001).
- *
- * <p>Each catalog lives in three pieces:</p>
- * <ul>
- *   <li>A single {@link MutableLiveData} (the public read model)</li>
- *   <li>A {@code Map<String,Integer>} for O(1) name resolution</li>
- *   <li>A boolean flag tracking whether THAT catalog finished loading</li>
- * </ul>
- *
- * <p>{@link #isReady()} is the AND of the three per-catalog flags —
- * the cache is "ready" only when every catalog came back
- * successfully. Each load is independent: a failure on one catalog
- * posts an empty list on its LiveData and leaves the other two
- * alone, so partial outages don't poison the whole cache.</p>
- */
+/** Carga y mantiene en memoria los catálogos necesarios para resolver IDs. */
 @Singleton
 public class CatalogoRepositoryImpl implements CatalogoRepository {
 
@@ -177,18 +161,7 @@ public class CatalogoRepositoryImpl implements CatalogoRepository {
         return map;
     }
 
-    /**
-     * Single Retrofit callback that owns the per-catalog success /
-     * failure logic. On success it commits the in-memory cache and
-     * flips the per-catalog ready flag. On failure it posts an empty
-     * list (so observers can react instead of staring at null) and
-     * leaves the ready flag false.
-     *
-     * <p>The {@code pendingLoads} counter is decremented on every
-     * terminal state so a future test can assert "all three callbacks
-     * have fired" — but {@code isReady()} alone already conveys that
-     * since it's the AND of the per-catalog flags.</p>
-     */
+    /** Callback común para actualizar caché, estado de carga y errores. */
     private static final class CatalogCallback implements Callback<List<CatalogoItemDto>> {
 
         private final String logTag;

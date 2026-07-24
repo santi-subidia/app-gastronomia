@@ -1,11 +1,5 @@
 package com.example.app_movil_gastronomia.core;
 
-/**
- * Generic UI state wrapper for LiveData-driven screens.
- * Encapsulates loading, success, and error states with typed data.
- *
- * @param <T> the type of data held on success
- */
 public class UiState<T> {
 
     public enum Status { LOADING, SUCCESS, ERROR }

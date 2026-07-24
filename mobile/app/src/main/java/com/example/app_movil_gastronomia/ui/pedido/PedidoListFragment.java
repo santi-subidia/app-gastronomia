@@ -25,21 +25,12 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Scrollable list of pedidos, filterable by estado. Renders a
- * LOADING / SUCCESS / ERROR / empty trio exactly like
- * {@link com.example.app_movil_gastronomia.ui.cajero.ProductListFragment}.
- * Tapping a card navigates to {@link PedidoDetailFragment} with the pedido id
- * passed as a SafeArgs integer.
- */
 @AndroidEntryPoint
 public class PedidoListFragment extends Fragment {
 
     private FragmentPedidoListBinding binding;
     private PedidoListViewModel viewModel;
     private PedidoAdapter adapter;
-
-    /** Active filter chip — tracked so we can re-apply its selected style. */
     private TextView activeChip;
 
     @Nullable

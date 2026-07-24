@@ -11,21 +11,14 @@ import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.testing.TestInstallIn;
 
 /**
- * Hilt test module that replaces the production
+ * Módulo de pruebas Hilt que reemplaza el enlace de producción de
  * {@link StorageModule#provideTokenManager(android.content.Context)}
- * binding with a shared {@link FakeTokenManager} for all
- * {@code @HiltAndroidTest} classes in the {@code nav} package (and any
- * other test class that installs it).
+ * por un {@link FakeTokenManager} compartido para las pruebas Hilt.
  *
- * <p>The provider IS {@code @Singleton}-scoped (matching the production
- * scope) so the test class and the injected {@code MainActivity.tokenManager}
- * receive the SAME {@code FakeTokenManager} instance. Without this, each
- * {@code @Inject} point would get a fresh fake and the test's
- * {@code setRole(...)} call would never reach the activity — the activity
- * would see the default "no session" state and route to the login screen.
+ * <p>El proveedor usa el mismo alcance {@code @Singleton} que producción para
+ * que la prueba y {@code MainActivity.tokenManager} reciban la misma instancia.
  *
- * <p>Default state is "no session" so tests that do not configure a role
- * behave the same as a fresh app install.
+ * <p>El estado inicial es "sin sesión" para representar una instalación nueva.
  */
 @Module
 @TestInstallIn(

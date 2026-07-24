@@ -25,19 +25,6 @@ import com.google.android.material.snackbar.Snackbar;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * "Registrar Demora" form. The cajero or cocina staff enters the delay
- * in minutes and optional observations, then submits. The server derives
- * the responsible sector from the authenticated user's role. The form is
- * scoped to a single pedido — its id is read from the {@code pedidoId}
- * navigation argument.
- *
- * <p>The fragment is intentionally thin: it reads the form, runs a
- * tiny client-side validation, and forwards the values to
- * {@link DemoraViewModel}. All network plumbing lives in the VM. On
- * SUCCESS the fragment toasts the user and pops the back stack so
- * the caller (PedidoDetail) refreshes naturally.</p>
- */
 @AndroidEntryPoint
 public class DemoraFragment extends Fragment {
 
@@ -130,13 +117,6 @@ public class DemoraFragment extends Fragment {
         return edit.getText() != null ? edit.getText().toString().trim() : "";
     }
 
-    /**
-     * Wires a one-shot error clearer: the moment the user types into
-     * {@code field} we drop the {@code setError(...)} red helper text
-     * on its parent {@code TextInputLayout}. Keeps the inline
-     * validation feel consistent with Material guidelines without
-     * pulling in a full form-attached approach.
-     */
     private void attachClearErrorOnType(EditText field,
                                         com.google.android.material.textfield.TextInputLayout parent) {
         field.addTextChangedListener(new TextWatcher() {

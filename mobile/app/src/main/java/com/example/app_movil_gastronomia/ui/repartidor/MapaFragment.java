@@ -29,22 +29,6 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Repartidor map screen. Shows the pedidos the rider is on the road
- * for and lets them broadcast their current GPS position to the hub
- * either manually (button) or automatically (switch + 8s Handler in
- * the ViewModel).
- *
- * <p>The actual map rendering is intentionally left for a future
- * Google Maps integration. Today this fragment only displays the
- * coordinates as text plus the active deliveries list.</p>
- *
- * <p>Runtime permission for {@code ACCESS_FINE_LOCATION} is requested
- * on first use via the
- * {@link ActivityResultContracts.RequestPermission} contract. If the
- * user denies it, the GPS section shows the "no disponible" label and
- * the "Enviar Posición Ahora" button is disabled.</p>
- */
 @AndroidEntryPoint
 public class MapaFragment extends Fragment {
 

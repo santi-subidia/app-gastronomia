@@ -4,15 +4,13 @@
     tools:showIn="navigation_view">
 
     <!--
-        Placeholder pool of all possible bottom-nav destinations. MainActivity calls
-        configureBottomNav(role) which does menu.clear() then menu.add(id, title).setIcon()
-        for the role's allowed destinations, so only the relevant items end up visible
-        at runtime. IDs here MUST match the nav graph destination IDs.
+        Conjunto de destinos posibles de la navegación inferior. MainActivity limpia
+        el menú y agrega solo las opciones permitidas para cada rol. Los IDs deben
+        coincidir con los destinos del grafo de navegación.
 
-        IMPORTANT: BottomNavigationView enforces a hard max of 6 items at construction
-        time (before menu.clear() runs), so this pool is capped at 6. The Repartidor-only
-        nav_mapa item is added programmatically by configureBottomNav("repartidor")
-        and therefore does not need to live in the placeholder pool.
+        IMPORTANTE: BottomNavigationView admite como máximo 6 elementos al crearse,
+        por eso este conjunto está limitado a 6. nav_mapa se agrega programáticamente
+        para Repartidor y no necesita estar en este conjunto.
     -->
     <group android:checkableBehavior="single">
         <item

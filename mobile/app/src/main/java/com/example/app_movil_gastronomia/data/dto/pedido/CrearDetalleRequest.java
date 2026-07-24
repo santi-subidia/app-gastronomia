@@ -2,12 +2,6 @@ package com.example.app_movil_gastronomia.data.dto.pedido;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * One line of a pedido as part of a {@link CrearPedidoRequest}.
- *
- * <p>Spec PED-DTO-001: four fields, all required by the server, so
- * primitives are used.</p>
- */
 public class CrearDetalleRequest {
 
     @SerializedName("productoId")

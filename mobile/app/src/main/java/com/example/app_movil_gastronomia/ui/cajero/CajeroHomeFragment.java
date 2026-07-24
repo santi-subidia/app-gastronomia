@@ -18,39 +18,12 @@ import com.example.app_movil_gastronomia.databinding.FragmentCajeroHomeBinding;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Cajero dashboard. Two pieces of information up top (active pedidos
- * count and caja open/closed status) plus a 2x2 grid of quick links
- * into the most common cajero flows:
- *
- * <ul>
- *   <li><b>Pedidos</b> → navigates to {@code nav_pedido_list}.</li>
- *   <li><b>Productos</b> → navigates to {@code nav_cajero_productos}
- *       (the new destination that wraps the existing
- *       {@link ProductListFragment}).</li>
- *   <li><b>Caja</b> → navigates to {@code nav_caja}.</li>
- *   <li><b>Configuración</b> → navigates to {@code nav_configuracion}
- *       (the singleton business-configuration form backed by
- *       {@code ConfiguracionFragment} / {@code ConfiguracionViewModel}).</li>
- * </ul>
- *
- * <p>The two stat streams from {@link CajeroHomeViewModel} are
- * independent: the spinner is shown while <em>either</em> is loading
- * and an error message + retry button is shown if <em>either</em>
- * errors. Once both are in SUCCESS, the stats card is rendered with
- * the latest count and open/closed flag.</p>
- */
 @AndroidEntryPoint
 public class CajeroHomeFragment extends Fragment {
 
     private FragmentCajeroHomeBinding binding;
     private CajeroHomeViewModel viewModel;
 
-    /**
-     * Cached state of the two VM streams so {@link #renderDashboard()}
-     * can fold them into a single render. {@code null} means "not
-     * emitted yet" (still in LOADING).
-     */
     @Nullable
     private UiState<Integer> lastPedidosState;
     @Nullable
@@ -88,12 +61,6 @@ public class CajeroHomeFragment extends Fragment {
         binding.buttonConfig.setOnClickListener(v -> navigateToConfiguracion());
     }
 
-    /**
-     * Folds the two independent state streams into a single render.
-     * LOADING on either side hides the stats card and shows the
-     * spinner. ERROR on either side shows the error message and the
-     * retry button. SUCCESS on both renders the stats card.
-     */
     private void renderDashboard() {
         if (binding == null) return;
 

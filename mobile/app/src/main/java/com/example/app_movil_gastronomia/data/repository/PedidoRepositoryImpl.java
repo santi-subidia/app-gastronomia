@@ -28,37 +28,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Owns a single {@link MutableLiveData} instance per method â€” one for
- * each of the 6 repository methods. Every instance is reset to LOADING
- * on its method call and then posted SUCCESS or ERROR. Instances are
- * never reallocated, so observers registered in the ViewModel
- * constructor (via {@code observeForever}) keep receiving emissions
- * across retries without leaking.
- *
- * <p>Spec PED-VAL-001 / PED-VAL-002: {@link #crearPedido(CrearPedidoRequest)}
- * performs client-side validation (non-empty detalles, delivery coords
- * when {@code metodoVentaId == 1}) BEFORE any network call and emits
- * ERROR directly without going through Retrofit.</p>
- *
- * <p>Spec PED-ENUM-002 (v2): {@link #cambiarEstado(int, EstadoPedidoEnum)}
- * resolves the enum to a catalog ID via {@link CatalogoRepository}
- * <b>before</b> hitting the API. The v2 backend expects a raw int
- * body, so the resolution has to happen on the client side. The
- * {@link CatalogoRepository} is injected so the dependency is
- * explicit and the repo can fail fast (clear error, no API call)
- * if the catalog is not yet loaded.</p>
- */
 @Singleton
 public class PedidoRepositoryImpl implements PedidoRepository {
 
     private static final String TAG = "PedidoRepositoryImpl";
 
-    /**
-     * Server identifier for the Delivery sales method. Spec PED-VAL-002:
-     * when {@code metodoVentaId == DELIVERY_ID} the request MUST carry
-     * both {@code latitudDestino} and {@code longitudDestino}.
-     */
     private static final int DELIVERY_ID = 1;
 
     private final PedidoApi pedidoApi;
@@ -77,13 +51,9 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         this.catalogoRepository = catalogoRepository;
     }
 
-    // ------------------------------------------------------------------
-    // getPedidos
-    // ------------------------------------------------------------------
-
     @Override
     public LiveData<UiState<List<PedidoResumenDto>>> getPedidos() {
-        // Reset the single shared instance to LOADING before the network call.
+        // Reinicia el estado compartido en LOADING antes de llamar a la red.
         _pedidosState.setValue(UiState.loading());
 
         pedidoApi.getPedidos().enqueue(new Callback<List<PedidoResumenDto>>() {
@@ -134,10 +104,6 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _pedidosState;
     }
 
-    // ------------------------------------------------------------------
-    // getPedido
-    // ------------------------------------------------------------------
-
     @Override
     public LiveData<UiState<PedidoDetalleDto>> getPedido(int id) {
         _pedidoState.setValue(UiState.loading());
@@ -169,16 +135,10 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _pedidoState;
     }
 
-    // ------------------------------------------------------------------
-    // getByEstado
-    // ------------------------------------------------------------------
-
     @Override
     public LiveData<UiState<List<PedidoResumenDto>>> getByEstado(EstadoPedidoEnum estado) {
         _byEstadoState.setValue(UiState.loading());
 
-        // Resolve the enum to its API string at the repo boundary so the
-        // PedidoApi interface stays free of generic converters.
         final String estadoPath = estado.getApiValue();
 
         pedidoApi.getByEstado(estadoPath).enqueue(new Callback<List<PedidoResumenDto>>() {
@@ -208,15 +168,8 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _byEstadoState;
     }
 
-    // ------------------------------------------------------------------
-    // crearPedido
-    // ------------------------------------------------------------------
-
     @Override
     public LiveData<UiState<PedidoDetalleDto>> crearPedido(CrearPedidoRequest request) {
-        // Spec PED-VAL-001 / PED-VAL-002: validate BEFORE any API call.
-        // When validation fails the API is never called and the state
-        // is set to ERROR directly (skipping LOADING).
         if (request.getDetalles() == null || request.getDetalles().isEmpty()) {
             _crearState.setValue(UiState.error("El pedido debe tener al menos un producto"));
             return getCrearState();
@@ -261,15 +214,8 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         _crearState.setValue(null);
     }
 
-    // ------------------------------------------------------------------
-    // cambiarEstado
-    // ------------------------------------------------------------------
-
     @Override
     public LiveData<UiState<PedidoDetalleDto>> cambiarEstado(int id, EstadoPedidoEnum estado) {
-        // Spec PED-ENUM-002 (v2): the backend wants a raw int body.
-        // Resolve the enum via the catalog BEFORE any network call so
-        // a missing / unloaded cache fails fast with a clear error.
         if (!catalogoRepository.isReady()) {
             _cambiarEstadoState.setValue(UiState.error(
                     "El catÃ¡logo de estados aÃºn no estÃ¡ disponible, intente nuevamente"));
@@ -316,10 +262,6 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         _cambiarEstadoState.setValue(null);
     }
 
-    // ------------------------------------------------------------------
-    // asignarRepartidor
-    // ------------------------------------------------------------------
-
     @Override
     public LiveData<UiState<PedidoDetalleDto>> asignarRepartidor(int id, int repartidorId) {
         _asignarRepartidorState.setValue(UiState.loading());
@@ -353,15 +295,6 @@ public class PedidoRepositoryImpl implements PedidoRepository {
         return _asignarRepartidorState;
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
-
-    /**
-     * Parses the server's {@code {"mensaje":"..."}} envelope from a Retrofit
-     * error body, falling back to {@code fallback} when the body is missing
-     * or unparseable. Mirrors the ProductoRepositoryImpl pattern.
-     */
     private static String parseMensaje(Response<?> response, String fallback) {
         try {
             if (response.errorBody() != null) {

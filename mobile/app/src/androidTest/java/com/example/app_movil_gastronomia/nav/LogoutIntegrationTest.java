@@ -28,34 +28,21 @@ import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 
 /**
- * Instrumented test for the full logout flow.
+ * Prueba instrumentada del flujo completo de cierre de sesión.
  *
- * <p>Scenarios verified:
+ * <p>Escenarios verificados:
  * <ol>
- *   <li>The user starts on the role-home destination (sanity check).</li>
- *   <li>{@code MainActivity.performLogout()} is invoked.</li>
- *   <li>{@code TokenManager.getToken()} returns null after the call
- *       (proves {@code clearToken} was called).</li>
- *   <li>The current {@code NavController} destination is
- *       {@code R.id.nav_login}.</li>
- *   <li>The back stack contains no previous entry — pressing back from
- *       {@code nav_login} exits the app instead of returning to a home
- *       screen.</li>
+ *   <li>El usuario comienza en el inicio de su rol.</li>
+ *   <li>Se invoca {@code MainActivity.performLogout()}.</li>
+ *   <li>El token queda en null y el destino actual es {@code R.id.nav_login}.</li>
+ *   <li>La pila queda vacía y volver desde login cierra la aplicación.</li>
  * </ol>
  *
- * <p>The {@link TestStorageModule} (installed via
- * {@code @TestInstallIn}) replaces the production
- * {@code StorageModule.provideTokenManager} binding with the fake for the
- * duration of each test.
+ * <p>{@link TestStorageModule} reemplaza el proveedor de tokens de producción
+ * durante cada prueba.
  *
- * <p><b>Note on triggering logout:</b> {@code Espresso.openActionBarOverflowMenu()}
- * was removed in Espresso 3.6.0 and {@code espresso-contrib} (which provides
- * {@code ToolbarActions}) is not on the classpath. Rather than add a
- * dependency just to drive a menu, the test invokes the same single
- * entry point used by both the toolbar overflow and the drawer —
- * {@code MainActivity.performLogout()} — via reflection. This still
- * exercises the production logout code path (the same method the menu
- * item and the drawer item both delegate to).
+ * <p><b>Nota:</b> se invoca el mismo punto de entrada mediante reflexión para
+ * evitar agregar una dependencia solo para interactuar con el menú.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
@@ -116,9 +103,7 @@ public class LogoutIntegrationTest {
     }
 
     /**
-     * Resolves the {@link NavController} hosted by the activity's
-     * nav-host fragment. Pulled out so each assertion site stays focused
-     * on the intent (read the controller) rather than the lookup boilerplate.
+     * Obtiene el {@link NavController} alojado por el fragmento de navegación.
      */
     private static NavController currentNavController(MainActivity activity) {
         NavHostFragment navHost = (NavHostFragment) activity

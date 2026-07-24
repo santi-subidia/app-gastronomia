@@ -107,7 +107,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- Last sent timestamp                                          -->
+        <!-- Hora del último envío.                                      -->
         <!-- ============================================================ -->
         <TextView
             android:id="@+id/text_last_sent"
@@ -123,7 +123,7 @@
             tools:text="Último envío: 13:42:10" />
 
         <!-- ============================================================ -->
-        <!-- Loading / error / retry                                      -->
+        <!-- Carga, error y reintento.                                  -->
         <!-- ============================================================ -->
         <ProgressBar
             android:id="@+id/progress_bar"

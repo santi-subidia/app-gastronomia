@@ -33,24 +33,24 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Verifies the eager-loaded, in-memory cache behavior of
- * {@link CatalogoRepositoryImpl} (Spec CAT-REP-001).
+ * Verifica el comportamiento de caché en memoria con carga anticipada de
+ * {@link CatalogoRepositoryImpl} (especificación CAT-REP-001).
  *
- * <p>Three catalogs (estados, pagos, ventas) are loaded from the API
- * the moment the repository is constructed. While the loads are in
- * flight {@code isReady()} returns false and the resolve methods
- * throw {@link IllegalStateException}. Once all three loads resolve
- * the resolve methods look up names in the in-memory
- * {@code Map<String, Integer>} cache.</p>
+ * <p>Los tres catálogos (estados, pagos, ventas) se cargan desde la API
+ * al construir el repositorio. Mientras las cargas están en curso,
+ * {@code isReady()} devuelve false y los métodos de resolución lanzan
+ * {@link IllegalStateException}. Cuando se completan las tres cargas, los
+ * métodos de resolución buscan nombres en la caché en memoria
+ * {@code Map<String, Integer>}.</p>
  *
- * <p>Failure modes:</p>
+ * <p>Modos de fallo:</p>
  * <ul>
- *   <li>Per-catalog failure: that catalog's LiveData is posted as
- *       empty, other catalogs can still succeed. {@code isReady()}
- *       only flips to true when ALL three succeed.</li>
- *   <li>Unknown name on a fully loaded catalog: resolves to -1
- *       (caller treats that as a misconfiguration, never throws on
- *       a loaded cache).</li>
+ *   <li>Fallo de un catálogo: el LiveData de ese catálogo se publica vacío,
+ *       mientras los demás pueden completarse correctamente. {@code isReady()}
+ *       solo cambia a true cuando los tres tienen éxito.</li>
+ *   <li>Nombre desconocido en un catálogo completamente cargado: se resuelve
+ *       como -1 (el llamador lo trata como una configuración incorrecta y la
+ *       caché cargada nunca lanza una excepción).</li>
  * </ul>
  */
 public class CatalogoRepositoryImplTest {
@@ -238,7 +238,7 @@ public class CatalogoRepositoryImplTest {
     @Test
     public void resolveEstadoIdThrowsWhileCatalogIsStillLoading() {
         FakeEstadosPedidoApi estados = new FakeEstadosPedidoApi();
-        estados.nextResponse = null; // callback never fires
+        estados.nextResponse = null;
         CatalogoRepositoryImpl repo = new CatalogoRepositoryImpl(
                 estados, successPagos(), successVentas());
 

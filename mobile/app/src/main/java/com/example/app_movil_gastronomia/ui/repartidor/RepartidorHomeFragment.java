@@ -29,21 +29,6 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Repartidor dashboard: the live list of deliveries the rider is
- * currently responsible for. The full pedido list is fetched via
- * {@link com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository}
- * and then filtered client-side to only the {@code "En Camino"}
- * estado (case-insensitive). The view is also refreshed automatically
- * when the SignalR hub pushes a {@code RepartidorAsignadoMessage}
- * (new assignment) and shows a transient snackbar when a
- * {@code PedidoFinalizadoMessage} arrives.
- *
- * <p>UI states mirror {@link com.example.app_movil_gastronomia.ui.cocina.CocinaHomeFragment}:
- * LOADING shows a centered spinner, ERROR shows the message and a
- * retry button, SUCCESS shows the filtered list (or the empty
- * sub-state when no deliveries are assigned).</p>
- */
 @AndroidEntryPoint
 public class RepartidorHomeFragment extends Fragment {
 
@@ -147,10 +132,6 @@ public class RepartidorHomeFragment extends Fragment {
         binding.buttonRetry.setVisibility(View.VISIBLE);
     }
 
-    /**
-     * Keeps only pedidos the repartidor should see right now:
-     * those in the "En Camino", "Listo para retirar" or "Entregado" state.
-     */
     static List<PedidoResumenDto> filterActivos(List<PedidoResumenDto> pedidos) {
         List<PedidoResumenDto> result = new ArrayList<>();
         if (pedidos == null) {
@@ -164,10 +145,6 @@ public class RepartidorHomeFragment extends Fragment {
         return result;
     }
 
-    /**
-     * Renders a transient "Entrega completada" snackbar and refreshes the
-     * dashboard so the finalizado row is removed immediately.
-     */
     private void handlePedidoFinalizado(PedidoFinalizadoMessage message) {
         if (message == null || binding == null) return;
         Snackbar.make(binding.getRoot(),
@@ -183,10 +160,6 @@ public class RepartidorHomeFragment extends Fragment {
         controller.navigate(R.id.nav_pedido_detail, args);
     }
 
-    /**
-     * Navigates to the repartidor map screen. Wired to the
-     * "Ver Mapa" extended FAB.
-     */
     private void navigateToMapa() {
         NavController controller = Navigation.findNavController(requireView());
         controller.navigate(R.id.action_nav_repartidor_home_to_nav_mapa);

@@ -37,57 +37,21 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
-/**
- * Backs {@link MapaFragment}. Provides three concerns:
- *
- * <ol>
- *   <li><b>Active deliveries list</b>: bridges the
- *       {@link PedidoRepository} state and filters to the
- *       {@code "En Camino"} subset so the rider only sees the pedidos
- *       they are actually on the road for.</li>
- *   <li><b>Current GPS position</b>: subscribes to
- *       {@link LocationManager#GPS_PROVIDER} updates and caches the
- *       latest fix so it can be broadcast on demand and at the
- *       configured auto-send cadence.</li>
- *   <li><b>Periodic position broadcasting</b>: when auto-send is
- *       enabled, every {@link #AUTO_SEND_INTERVAL_MS} the cached GPS
- *       position is pushed to the hub via
- *       {@link SignalRService#enviarPosicion(int, double, double)}.
- *       The Handler runs on the main looper; the hub call itself is
- *       fire-and-forget, so blocking the main thread for the duration
- *       of a {@code conn.send()} is acceptable.</li>
- * </ol>
- *
- * <p>Observer lifecycle: every {@code observeForever} registration is
- * tracked through {@link #observerRegistrationCount} and torn down in
- * {@link #onCleared()}. The auto-send Handler and the
- * {@link LocationListener} are also detached there so a configuration
- * change (e.g. rotation) does not leak callbacks.</p>
- */
 @HiltViewModel
 public class MapaViewModel extends ViewModel {
 
     private static final String TAG = "MapaViewModel";
 
-    /** Auto-send cadence. 8 seconds, per the spec. */
     public static final long AUTO_SEND_INTERVAL_MS = 8_000L;
 
-    /** Minimum interval between GPS fixes from the provider. */
     private static final long GPS_MIN_TIME_MS = 2_000L;
 
-    /** Minimum distance between GPS fixes, in meters. */
     private static final float GPS_MIN_DISTANCE_M = 0f;
 
     private final Context appContext;
     private final PedidoRepository pedidoRepository;
     private final TokenManager tokenManager;
 
-    /**
-     * Optional SignalR transport. Injected when Hilt has wired
-     * {@link SignalRService}; may be {@code null} in defensive
-     * configurations. When null the VM still drives the UI and the
-     * auto-send Handler, but {@code sendPosition()} short-circuits.
-     */
     @Nullable
     private final SignalRService signalRService;
 
@@ -97,14 +61,11 @@ public class MapaViewModel extends ViewModel {
     private final MutableLiveData<String> gpsState = new MutableLiveData<>();
     private final MutableLiveData<String> lastSentState = new MutableLiveData<>();
 
-    /** True while the periodic Handler is queued. */
     private final MutableLiveData<Boolean> autoSendEnabled = new MutableLiveData<>(false);
 
-    /** Snapshot of the most recent GPS fix. Null until the first fix arrives. */
     @Nullable
     private volatile Location lastKnownLocation;
 
-    /** Pre-formatted time of the last successful hub send, or null. */
     @Nullable
     private volatile String lastSentAt;
 
@@ -116,8 +77,6 @@ public class MapaViewModel extends ViewModel {
 
     private final Observer<UiState<List<PedidoResumenDto>>> repositoryObserver;
     private final Observer<PosicionGPSActualizadaMessage> posicionGpsObserver;
-    private final Observer<Boolean> connectedObserver;
-
 
     @Inject
     public MapaViewModel(@NonNull @dagger.hilt.android.qualifiers.ApplicationContext Context appContext,
@@ -160,12 +119,8 @@ public class MapaViewModel extends ViewModel {
             };
             signalRService.getPosicionGPSActualizada().observeForever(posicionGpsObserver);
 
-            this.connectedObserver = isConnected -> {
-            };
-            signalRService.getConnected().observeForever(connectedObserver);
         } else {
             this.posicionGpsObserver = null;
-            this.connectedObserver = null;
         }
     }
 
@@ -186,17 +141,10 @@ public class MapaViewModel extends ViewModel {
         return autoSendEnabled;
     }
 
-    /** Reloads the pedido list. Wired to the retry button. */
     public void retry() {
         pedidoRepository.getPedidos();
     }
 
-
-    /**
-     * Starts listening to GPS updates. Idempotent. Should be called
-     * from the fragment after the user has granted
-     * {@link android.Manifest.permission#ACCESS_FINE_LOCATION}.
-     */
     @SuppressLint("MissingPermission")
     public void startGpsUpdates() {
         if (!hasLocationPermission()) {
@@ -259,10 +207,6 @@ public class MapaViewModel extends ViewModel {
         }
     }
 
-    /**
-     * Stops listening to GPS updates. Idempotent. Called when the
-     * user revokes permission or the fragment goes away.
-     */
     public void stopGpsUpdates() {
         LocationManager lm = locationManager;
         LocationListener listener = locationListener;
@@ -276,13 +220,6 @@ public class MapaViewModel extends ViewModel {
         locationListener = null;
     }
 
-
-    /**
-     * Enables or disables the periodic position broadcast. When
-     * enabled, the first {@link #sendPositionNow()} is fired
-     * immediately and the Handler re-arms itself every
-     * {@link #AUTO_SEND_INTERVAL_MS} ms.
-     */
     public void setAutoSendEnabled(boolean enabled) {
         Boolean previous = autoSendEnabled.getValue();
         if (previous != null && previous == enabled) {
@@ -297,10 +234,6 @@ public class MapaViewModel extends ViewModel {
         }
     }
 
-    /**
-     * Manually triggers a single position broadcast. Wires to the
-     * "Enviar Posición Ahora" button.
-     */
     public void sendPositionNow() {
         if (signalRService == null) {
             lastSentState.setValue(formatLastSentError());
@@ -362,12 +295,6 @@ public class MapaViewModel extends ViewModel {
         }
     };
 
-
-    /**
-     * Keeps only pedidos in the {@code "En Camino"} estado. Mirrors
-     * {@code RepartidorHomeFragment.filterEnCamino} so both screens
-     * show the same subset.
-     */
     static List<PedidoResumenDto> filterEnCamino(List<PedidoResumenDto> pedidos) {
         List<PedidoResumenDto> result = new ArrayList<>();
         if (pedidos == null) {
@@ -408,10 +335,8 @@ public class MapaViewModel extends ViewModel {
         return GPS_STATE_UNAVAILABLE;
     }
 
-    /** Marker for "no fix yet". The Fragment converts this to the localized "Esperando GPS..." string. */
     static final String GPS_STATE_WAITING = "—";
 
-    /** Marker for "provider disabled / hardware missing". The Fragment converts this to the localized "GPS no disponible" string. */
     static final String GPS_STATE_UNAVAILABLE = "OFF";
 
     private static String nowFormatted() {
@@ -450,9 +375,6 @@ public class MapaViewModel extends ViewModel {
         if (signalRService != null) {
             if (posicionGpsObserver != null) {
                 signalRService.getPosicionGPSActualizada().removeObserver(posicionGpsObserver);
-            }
-            if (connectedObserver != null) {
-                signalRService.getConnected().removeObserver(connectedObserver);
             }
         }
     }
