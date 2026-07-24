@@ -242,9 +242,17 @@ public class PedidoDetailFragment extends Fragment {
         String role = tokenManager.getRole() != null ? tokenManager.getRole().toLowerCase(Locale.ROOT) : "";
         boolean isCajero = "cajero".equals(role);
         boolean isCocina = "cocina".equals(role);
+        boolean isRepartidor = "repartidor".equals(role);
+        boolean isTerminal = estado == EstadoPedidoEnum.ENTREGADO
+                || estado == EstadoPedidoEnum.RETIRADO
+                || estado == EstadoPedidoEnum.CANCELADO
+                || estado == EstadoPedidoEnum.DEVUELTO;
+        boolean canRegisterDemora = !isTerminal && (isCocina || isRepartidor);
+
+        binding.buttonRegistrarDemora.setVisibility(
+                canRegisterDemora ? View.VISIBLE : View.GONE);
         
         if (isCajero) {
-            binding.buttonRegistrarDemora.setVisibility(View.GONE);
             binding.buttonVerDemoras.setVisibility(View.VISIBLE);
             
             if (estado == EstadoPedidoEnum.LISTO_PARA_RETIRAR) {
@@ -278,7 +286,6 @@ public class PedidoDetailFragment extends Fragment {
             binding.buttonAsignarRepartidor.setVisibility(View.GONE);
             binding.buttonVerDemoras.setVisibility(View.GONE);
             binding.demorasHistorySection.setVisibility(View.GONE);
-            binding.buttonRegistrarDemora.setVisibility(View.VISIBLE);
 
             if (estado == EstadoPedidoEnum.PENDIENTE) {
                 binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
@@ -322,7 +329,6 @@ public class PedidoDetailFragment extends Fragment {
             } else {
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
             }
-            binding.buttonRegistrarDemora.setVisibility(View.VISIBLE);
         }
 
         boolean canCancel = isCajero && PedidoCancellationPolicy.isCancelable(estado);

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
+using ApiGastronomia.Domain.Enums;
 using ApiGastronomia.Infrastructure.Data;
 using ApiGastronomia.Services.Hubs;
 using ApiGastronomia.Services.Interfaces;
@@ -69,8 +70,17 @@ public class DemoraService : IDemoraService
         if (demoraMinutos <= 0)
             throw new InvalidOperationException("La demora debe ser mayor que cero.");
 
-        _ = await _context.Pedidos.FindAsync(pedidoId)
+        var pedido = await _context.Pedidos.FindAsync(pedidoId)
             ?? throw new KeyNotFoundException($"Pedido #{pedidoId} no encontrado.");
+
+        if (pedido.EstadoEnum is EstadoPedidoEnum.Entregado
+            or EstadoPedidoEnum.Retirado
+            or EstadoPedidoEnum.Cancelado
+            or EstadoPedidoEnum.Devuelto)
+        {
+            throw new InvalidOperationException(
+                $"No se puede registrar una demora en un pedido en estado terminal '{pedido.EstadoEnum}'.");
+        }
 
         var userId = ExtractUserIdFromClaims();
         var userRole = ExtractRoleFromClaims();
