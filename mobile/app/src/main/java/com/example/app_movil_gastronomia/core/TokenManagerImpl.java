@@ -109,4 +109,3 @@ public class TokenManagerImpl implements TokenManager {
         encryptedPrefs.edit().clear().apply();
     }
 }
-
