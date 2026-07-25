@@ -145,6 +145,10 @@
 
     <!-- Pantalla de apertura y cierre de caja. -->
     <string name="caja_title">Caja</string>
+    <string name="caja_historial_button">Historial de cajas</string>
+    <string name="caja_historial_title">Historial de cajas cerradas</string>
+    <string name="caja_historial_empty">No hay cajas cerradas</string>
+    <string name="caja_historial_detail_title">Detalle de caja #%d</string>
     <string name="no_open_caja">No hay caja abierta</string>
     <string name="open_amount_hint">Monto de Apertura</string>
     <string name="close_amount_hint">Monto de Cierre (Efectivo en Caja)</string>

@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.app_movil_gastronomia.R;
 import com.example.app_movil_gastronomia.core.UiState;
@@ -53,6 +54,8 @@ public class CajaFragment extends Fragment {
         binding.buttonAbrir.setOnClickListener(v -> submitAbrir());
         binding.buttonCerrar.setOnClickListener(v -> submitCerrar());
         binding.buttonRetry.setOnClickListener(v -> viewModel.retry());
+        binding.buttonHistorial.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_nav_caja_to_nav_caja_historial));
 
         viewModel.getCajaState().observe(getViewLifecycleOwner(), this::renderCaja);
         viewModel.getAbrirState().observe(getViewLifecycleOwner(), this::handleAbrir);

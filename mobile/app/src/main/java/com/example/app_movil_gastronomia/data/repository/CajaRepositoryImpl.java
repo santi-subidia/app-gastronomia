@@ -10,6 +10,8 @@ import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.api.CajaApi;
 import com.example.app_movil_gastronomia.data.dto.caja.AbrirCajaRequest;
 import com.example.app_movil_gastronomia.data.dto.caja.CajaDto;
+import com.example.app_movil_gastronomia.data.dto.caja.CajaHistorialDetalleDto;
+import com.example.app_movil_gastronomia.data.dto.caja.CajaHistorialResumenDto;
 import com.example.app_movil_gastronomia.data.dto.caja.CerrarCajaRequest;
 import com.example.app_movil_gastronomia.data.dto.ErrorResponse;
 import com.example.app_movil_gastronomia.data.repository.contract.CajaRepository;
@@ -38,6 +40,8 @@ public class CajaRepositoryImpl implements CajaRepository {
     private final MutableLiveData<UiState<CajaDto>> _cajaState = new MutableLiveData<>();
     private final MutableLiveData<UiState<CajaDto>> _abrirState = new MutableLiveData<>();
     private final MutableLiveData<UiState<CajaDto>> _cerrarState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<List<CajaHistorialResumenDto>>> _historialState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<CajaHistorialDetalleDto>> _historialDetalleState = new MutableLiveData<>();
 
     @Inject
     public CajaRepositoryImpl(CajaApi cajaApi) {
@@ -202,6 +206,62 @@ public class CajaRepositoryImpl implements CajaRepository {
     @Override
     public LiveData<UiState<CajaDto>> getCerrarState() {
         return _cerrarState;
+    }
+
+    @Override
+    public LiveData<UiState<List<CajaHistorialResumenDto>>> getHistorial() {
+        _historialState.setValue(UiState.loading());
+        cajaApi.getHistorial().enqueue(new Callback<List<CajaHistorialResumenDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<CajaHistorialResumenDto>> call,
+                                   @NonNull Response<List<CajaHistorialResumenDto>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    _historialState.setValue(UiState.success(response.body()));
+                } else {
+                    _historialState.setValue(UiState.error(parseMensaje(response, "Error del servidor, intente más tarde")));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<CajaHistorialResumenDto>> call, @NonNull Throwable t) {
+                Log.e(TAG, "GetHistorial network failure", t);
+                _historialState.setValue(UiState.error("No hay conexión a internet"));
+            }
+        });
+        return getHistorialState();
+    }
+
+    @Override
+    public LiveData<UiState<List<CajaHistorialResumenDto>>> getHistorialState() {
+        return _historialState;
+    }
+
+    @Override
+    public LiveData<UiState<CajaHistorialDetalleDto>> getHistorialDetalle(int id) {
+        _historialDetalleState.setValue(UiState.loading());
+        cajaApi.getHistorialDetalle(id).enqueue(new Callback<CajaHistorialDetalleDto>() {
+            @Override
+            public void onResponse(@NonNull Call<CajaHistorialDetalleDto> call,
+                                   @NonNull Response<CajaHistorialDetalleDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    _historialDetalleState.setValue(UiState.success(response.body()));
+                } else {
+                    _historialDetalleState.setValue(UiState.error(parseMensaje(response, "Error del servidor, intente más tarde")));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CajaHistorialDetalleDto> call, @NonNull Throwable t) {
+                Log.e(TAG, "GetHistorialDetalle network failure", t);
+                _historialDetalleState.setValue(UiState.error("No hay conexión a internet"));
+            }
+        });
+        return getHistorialDetalleState();
+    }
+
+    @Override
+    public LiveData<UiState<CajaHistorialDetalleDto>> getHistorialDetalleState() {
+        return _historialDetalleState;
     }
 
 

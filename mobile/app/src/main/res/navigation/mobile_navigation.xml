@@ -57,7 +57,16 @@
     <fragment
         android:id="@+id/nav_caja"
         android:name="com.example.app_movil_gastronomia.ui.cajero.CajaFragment"
-        android:label="Caja" />
+        android:label="Caja">
+        <action
+            android:id="@+id/action_nav_caja_to_nav_caja_historial"
+            app:destination="@id/nav_caja_historial" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_caja_historial"
+        android:name="com.example.app_movil_gastronomia.ui.cajero.CajaHistorialFragment"
+        android:label="@string/caja_historial_title" />
 
     <fragment
         android:id="@+id/nav_configuracion"

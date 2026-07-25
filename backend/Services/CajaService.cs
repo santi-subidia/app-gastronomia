@@ -131,6 +131,36 @@ public class CajaService : ICajaService
         return MapToResponse(caja, caja.UsuarioApertura.UsuarioNombre, caja.UsuarioCierre?.UsuarioNombre, efectivo, trans, tarjeta);
     }
 
+    public async Task<IEnumerable<CajaHistorialResumenDTO>> ObtenerHistorialAsync()
+    {
+        var cajas = await _context.Cajas
+            .AsNoTracking()
+            .Where(c => c.FechaCierre != null)
+            .Include(c => c.UsuarioApertura)
+            .Include(c => c.UsuarioCierre)
+            .Include(c => c.Pedidos).ThenInclude(p => p.MetodoPago)
+            .OrderByDescending(c => c.FechaCierre)
+            .ToListAsync();
+
+        return cajas.Select(MapToHistorialResumen);
+    }
+
+    public async Task<CajaHistorialDetalleDTO?> ObtenerHistorialDetalleAsync(int id)
+    {
+        var caja = await _context.Cajas
+            .AsNoTracking()
+            .Where(c => c.Id == id && c.FechaCierre != null)
+            .Include(c => c.UsuarioApertura)
+            .Include(c => c.UsuarioCierre)
+            .Include(c => c.Pedidos).ThenInclude(p => p.Estado)
+            .Include(c => c.Pedidos).ThenInclude(p => p.MetodoPago)
+            .Include(c => c.Pedidos).ThenInclude(p => p.MetodoVenta)
+            .Include(c => c.Pedidos).ThenInclude(p => p.DetallePedidos)
+            .FirstOrDefaultAsync();
+
+        return caja is null ? null : MapToHistorialDetalle(caja);
+    }
+
     private static (decimal Efectivo, decimal Transferencia, decimal Tarjeta) CalcularIngresos(IEnumerable<Pedido> pedidos)
     {
         decimal efectivo = 0, transferencia = 0, tarjeta = 0;
@@ -178,4 +208,67 @@ public class CajaService : ICajaService
         ingresosTransferencia,
         ingresosTarjeta
     );
+
+    private static CajaHistorialResumenDTO MapToHistorialResumen(Caja caja)
+    {
+        var (efectivo, transferencia, tarjeta) = CalcularIngresos(caja.Pedidos);
+        var teorico = caja.MontoCierreTeorico ?? 0;
+        var real = caja.MontoCierreReal ?? 0;
+
+        return new CajaHistorialResumenDTO(
+            caja.Id,
+            caja.UsuarioApertura.UsuarioNombre,
+            caja.UsuarioCierre?.UsuarioNombre,
+            caja.FechaApertura,
+            caja.FechaCierre!.Value,
+            caja.MontoApertura,
+            teorico,
+            real,
+            real - teorico,
+            efectivo,
+            transferencia,
+            tarjeta,
+            caja.Pedidos.Count);
+    }
+
+    private static CajaHistorialDetalleDTO MapToHistorialDetalle(Caja caja)
+    {
+        var (efectivo, transferencia, tarjeta) = CalcularIngresos(caja.Pedidos);
+        var teorico = caja.MontoCierreTeorico ?? 0;
+        var real = caja.MontoCierreReal ?? 0;
+
+        var pedidos = caja.Pedidos
+            .OrderByDescending(p => p.FechaIngreso)
+            .Select(p => new PedidoCajaDetalleDTO(
+                p.Id,
+                p.EstadoEnum.ToString(),
+                p.ClienteNombre,
+                p.MetodoVenta?.Nombre,
+                p.MetodoPago?.Nombre,
+                p.TotalEstimado,
+                p.FechaIngreso,
+                p.DetallePedidos.Select(d => new DetallePedidoCajaDTO(
+                    d.ProductoId,
+                    d.Nombre,
+                    d.Cantidad,
+                    d.Precio)).ToList()))
+            .ToList();
+
+        return new CajaHistorialDetalleDTO(
+            caja.Id,
+            caja.UsuarioAperturaId,
+            caja.UsuarioApertura.UsuarioNombre,
+            caja.UsuarioCierreId,
+            caja.UsuarioCierre?.UsuarioNombre,
+            caja.FechaApertura,
+            caja.FechaCierre!.Value,
+            caja.MontoApertura,
+            teorico,
+            real,
+            real - teorico,
+            efectivo,
+            transferencia,
+            tarjeta,
+            pedidos);
+    }
 }

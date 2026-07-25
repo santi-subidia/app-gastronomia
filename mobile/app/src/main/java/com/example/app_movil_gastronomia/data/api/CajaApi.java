@@ -2,6 +2,8 @@ package com.example.app_movil_gastronomia.data.api;
 
 import com.example.app_movil_gastronomia.data.dto.caja.AbrirCajaRequest;
 import com.example.app_movil_gastronomia.data.dto.caja.CajaDto;
+import com.example.app_movil_gastronomia.data.dto.caja.CajaHistorialDetalleDto;
+import com.example.app_movil_gastronomia.data.dto.caja.CajaHistorialResumenDto;
 import com.example.app_movil_gastronomia.data.dto.caja.CerrarCajaRequest;
 
 import java.util.List;
@@ -32,4 +34,10 @@ public interface CajaApi {
             @Path("id") int id,
             @Body CerrarCajaRequest request
     );
+
+    @GET("api/cajas/historial")
+    Call<List<CajaHistorialResumenDto>> getHistorial();
+
+    @GET("api/cajas/{id}/historial-detalle")
+    Call<CajaHistorialDetalleDto> getHistorialDetalle(@Path("id") int id);
 }

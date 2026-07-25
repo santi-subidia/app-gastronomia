@@ -33,4 +33,8 @@ public interface ICajaService
     /// Returns a single caja by ID, or null if not found.
     /// </summary>
     Task<CajaResponse?> ObtenerPorIdAsync(int id);
+
+    Task<IEnumerable<CajaHistorialResumenDTO>> ObtenerHistorialAsync();
+
+    Task<CajaHistorialDetalleDTO?> ObtenerHistorialDetalleAsync(int id);
 }

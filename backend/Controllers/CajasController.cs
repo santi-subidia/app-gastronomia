@@ -9,7 +9,7 @@ namespace ApiGastronomia.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "Cajero")]
 public class CajasController : ControllerBase
 {
     private readonly ICajaService _cajaService;
@@ -99,6 +99,23 @@ public class CajasController : ControllerBase
         var caja = await _cajaService.ObtenerPorIdAsync(id);
         if (caja is null)
             return NotFound(new { Mensaje = "Caja no encontrada." });
+
+        return Ok(caja);
+    }
+
+    [HttpGet("historial")]
+    public async Task<ActionResult<IEnumerable<CajaHistorialResumenDTO>>> GetHistorial()
+    {
+        var cajas = await _cajaService.ObtenerHistorialAsync();
+        return Ok(cajas);
+    }
+
+    [HttpGet("{id:int}/historial-detalle")]
+    public async Task<ActionResult<CajaHistorialDetalleDTO>> GetHistorialDetalle(int id)
+    {
+        var caja = await _cajaService.ObtenerHistorialDetalleAsync(id);
+        if (caja is null)
+            return NotFound(new { Mensaje = "Caja cerrada no encontrada." });
 
         return Ok(caja);
     }

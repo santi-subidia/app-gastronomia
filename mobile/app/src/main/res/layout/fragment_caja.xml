@@ -25,6 +25,15 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_historial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/caja_historial_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_header" />
+
         <!-- MODO 1: no hay una caja abierta. -->
         <LinearLayout
             android:id="@+id/group_no_caja"
@@ -35,7 +44,7 @@
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_header">
+             app:layout_constraintTop_toBottomOf="@id/button_historial">
 
             <TextView
                 android:layout_width="match_parent"
@@ -80,7 +89,7 @@
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_header">
+             app:layout_constraintTop_toBottomOf="@id/button_historial">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

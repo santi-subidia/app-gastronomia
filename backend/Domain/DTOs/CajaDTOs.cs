@@ -37,3 +37,55 @@ public record AperturaRequest(decimal MontoApertura);
 /// Request DTO for closing an existing caja (cierre).
 /// </summary>
 public record CierreRequest(decimal MontoCierreTeorico, decimal MontoCierreReal);
+
+public record CajaHistorialResumenDTO(
+    int Id,
+    string UsuarioAperturaNombre,
+    string? UsuarioCierreNombre,
+    DateTime FechaApertura,
+    DateTime FechaCierre,
+    decimal MontoApertura,
+    decimal MontoCierreTeorico,
+    decimal MontoCierreReal,
+    decimal DiferenciaCierre,
+    decimal IngresosEfectivo,
+    decimal IngresosTransferencia,
+    decimal IngresosTarjeta,
+    int CantidadPedidos
+);
+
+public record CajaHistorialDetalleDTO(
+    int Id,
+    int UsuarioAperturaId,
+    string UsuarioAperturaNombre,
+    int? UsuarioCierreId,
+    string? UsuarioCierreNombre,
+    DateTime FechaApertura,
+    DateTime FechaCierre,
+    decimal MontoApertura,
+    decimal MontoCierreTeorico,
+    decimal MontoCierreReal,
+    decimal DiferenciaCierre,
+    decimal IngresosEfectivo,
+    decimal IngresosTransferencia,
+    decimal IngresosTarjeta,
+    List<PedidoCajaDetalleDTO> Pedidos
+);
+
+public record PedidoCajaDetalleDTO(
+    int Id,
+    string Estado,
+    string? ClienteNombre,
+    string? MetodoVenta,
+    string? MetodoPago,
+    double Total,
+    DateTime FechaIngreso,
+    List<DetallePedidoCajaDTO> Detalles
+);
+
+public record DetallePedidoCajaDTO(
+    int ProductoId,
+    string Nombre,
+    int Cantidad,
+    double Precio
+);
