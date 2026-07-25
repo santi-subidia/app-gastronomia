@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.google.gson.Gson;
 
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class PedidoResumenDtoTest {
 
         assertNotNull(dto);
         assertEquals(1, dto.getId());
-        assertEquals("Pendiente", dto.getEstado());
+        assertEquals(EstadoPedidoEnum.PENDIENTE, dto.getEstado());
         assertEquals("Juan Pérez", dto.getClienteNombre());
         assertEquals("Delivery", dto.getMetodoVenta());
         assertEquals(15000.0, dto.getTotalEstimado(), 0.0001);
@@ -47,7 +48,7 @@ public class PedidoResumenDtoTest {
     public void serializesAllFieldsWithExpectedKeys() {
         PedidoResumenDto dto = new PedidoResumenDto();
         dto.setId(7);
-        dto.setEstado("EnCamino");
+        dto.setEstado(EstadoPedidoEnum.EN_CAMINO);
         dto.setClienteNombre("María");
         dto.setMetodoVenta("Retiro en local");
         dto.setTotalEstimado(9999.50);
@@ -79,14 +80,14 @@ public class PedidoResumenDtoTest {
     public void gettersReturnSetterValues() {
         PedidoResumenDto dto = new PedidoResumenDto();
         dto.setId(42);
-        dto.setEstado("Entregado");
+        dto.setEstado(EstadoPedidoEnum.ENTREGADO);
         dto.setClienteNombre("Carlos");
         dto.setMetodoVenta("Delivery");
         dto.setTotalEstimado(2500.0);
         dto.setFechaIngreso("2026-06-20T08:00:00Z");
 
         assertEquals(42, dto.getId());
-        assertEquals("Entregado", dto.getEstado());
+        assertEquals(EstadoPedidoEnum.ENTREGADO, dto.getEstado());
         assertEquals("Carlos", dto.getClienteNombre());
         assertEquals("Delivery", dto.getMetodoVenta());
         assertEquals(2500.0, dto.getTotalEstimado(), 0.0001);

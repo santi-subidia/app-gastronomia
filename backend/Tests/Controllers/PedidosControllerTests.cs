@@ -180,6 +180,28 @@ public class PedidosControllerTests
         Assert.Empty(dtos);
     }
 
+    [Fact]
+    public async Task GetPedidos_UsesCanonicalEnumValue_WhenDatabaseLabelDiffers()
+    {
+        var pedido = CreatePedido(
+            id: 8,
+            estadoNombre: "En preparación",
+            estadoId: (int)EstadoPedidoEnum.EnPreparacion);
+
+        var mockService = new Mock<IPedidoService>();
+        mockService
+            .Setup(s => s.ObtenerPedidosAsync())
+            .ReturnsAsync([pedido]);
+
+        var controller = CreateController(mockService.Object);
+
+        var result = await controller.GetPedidos();
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var dto = Assert.Single(Assert.IsAssignableFrom<IEnumerable<PedidoResumenDTO>>(okResult.Value!));
+        Assert.Equal("EnPreparacion", dto.Estado);
+    }
+
     // ================================================================
     // GET /api/pedidos/{id} — returns PedidoDetalleDTO
     // ================================================================

@@ -11,6 +11,7 @@ import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
 import com.example.app_movil_gastronomia.data.dto.signalr.NuevoPedidoMessage;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
+import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class CocinaHomeViewModel extends ViewModel {
     private final MutableLiveData<UiState<List<PedidoResumenDto>>> state = new MutableLiveData<>();
     private final Observer<UiState<List<PedidoResumenDto>>> repositoryObserver;
     private final Observer<NuevoPedidoMessage> nuevoPedidoObserver;
-    private final Observer<com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage> estadoCambiadoObserver;
+    private final Observer<EstadoCambiadoMessage> estadoCambiadoObserver;
     private final Observer<Boolean> connectedObserver;
 
 

@@ -23,7 +23,9 @@ import com.example.app_movil_gastronomia.databinding.FragmentCocinaHomeBinding;
 import com.example.app_movil_gastronomia.ui.pedido.PedidoAdapter;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -153,10 +155,12 @@ public class CocinaHomeFragment extends Fragment {
         binding.buttonRetry.setVisibility(View.VISIBLE);
     }
 
-    /**
-     * Conserva los pedidos de Cocina y acepta tanto los valores de API como
-     * la etiqueta visible "En Preparación".
-     */
+    private static final Set<EstadoPedidoEnum> ESTADOS_COCINA = EnumSet.of(
+            EstadoPedidoEnum.PENDIENTE,
+            EstadoPedidoEnum.EN_PREPARACION,
+            EstadoPedidoEnum.LISTO_PARA_RETIRAR
+    );
+
     static List<PedidoResumenDto> filterForCocina(List<PedidoResumenDto> pedidos, @Nullable EstadoPedidoEnum explicitFilter) {
         List<PedidoResumenDto> result = new ArrayList<>();
         if (pedidos == null) {
@@ -170,23 +174,10 @@ public class CocinaHomeFragment extends Fragment {
         return result;
     }
 
-    private static boolean isVisibleInCocina(String estado, @Nullable EstadoPedidoEnum explicitFilter) {
-        if (estado == null) return false;
-        String normalized = estado.trim().toLowerCase();
-
-        if (explicitFilter != null) {
-            String filterValue = explicitFilter.getApiValue().toLowerCase();
-            if (!(normalized.equals(filterValue) || normalized.replace(" ", "").equals(filterValue.replace(" ", "")))) {
-                return false;
-            }
-        }
-
-        return "pendiente".equals(normalized)
-                || "en preparacion".equals(normalized)
-                || "enpreparacion".equals(normalized)
-                || "listo".equals(normalized)
-                || "listo para retirar".equals(normalized)
-                || "listopararetirar".equals(normalized);
+    private static boolean isVisibleInCocina(EstadoPedidoEnum estado,
+                                             @Nullable EstadoPedidoEnum explicitFilter) {
+        return ESTADOS_COCINA.contains(estado)
+                && (explicitFilter == null || estado == explicitFilter);
     }
 
     private void navigateToDetail(PedidoResumenDto pedido) {

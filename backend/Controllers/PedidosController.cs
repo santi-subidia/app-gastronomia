@@ -157,7 +157,7 @@ public class PedidosController : ControllerBase
 
     private static PedidoResumenDTO MapToResumen(Pedido p) => new(
         Id: p.Id,
-        Estado: p.Estado.Nombre,
+        Estado: p.EstadoEnum.ToString(),
         ClienteNombre: p.ClienteNombre,
         MetodoVenta: p.MetodoVenta?.Nombre,
         TotalEstimado: p.TotalEstimado,
@@ -166,7 +166,7 @@ public class PedidosController : ControllerBase
 
     private static PedidoDetalleDTO MapToDetalle(Pedido p) => new PedidoDetalleDTO(
         Id: p.Id,
-        Estado: p.Estado.Nombre,
+        Estado: p.EstadoEnum.ToString(),
         ClienteNombre: p.ClienteNombre,
         ClienteDireccion: p.ClienteDireccion,
         MetodoVenta: p.MetodoVenta?.Nombre,

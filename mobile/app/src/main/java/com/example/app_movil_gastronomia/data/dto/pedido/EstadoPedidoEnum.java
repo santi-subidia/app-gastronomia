@@ -47,16 +47,4 @@ public enum EstadoPedidoEnum {
     public String getApiValue() {
         return apiValue;
     }
-
-    public static EstadoPedidoEnum fromApiValue(String value) {
-        if (value == null) {
-            return null;
-        }
-        for (EstadoPedidoEnum estado : values()) {
-            if (estado.dbValue.equals(value) || estado.apiValue.equals(value)) {
-                return estado;
-            }
-        }
-        return null;
-    }
 }

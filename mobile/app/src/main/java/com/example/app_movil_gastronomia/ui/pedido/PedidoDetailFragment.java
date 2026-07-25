@@ -129,7 +129,7 @@ public class PedidoDetailFragment extends Fragment {
             case LOADING:
                 break;
             case SUCCESS:
-                EstadoPedidoEnum nuevoEstado = EstadoPedidoEnum.fromApiValue(state.getData().getEstado());
+                EstadoPedidoEnum nuevoEstado = state.getData().getEstado();
                 String estadoStr = nuevoEstado != null ? PedidoAdapter.labelForEstado(nuevoEstado) : "";
                 
                 String mensaje = isCanceled(state.getData()) 
@@ -208,7 +208,7 @@ public class PedidoDetailFragment extends Fragment {
             }
         }
 
-        EstadoPedidoEnum estado = EstadoPedidoEnum.fromApiValue(pedido.getEstado());
+        EstadoPedidoEnum estado = pedido.getEstado();
         int statusColor = PedidoAdapter.colorForEstado(estado);
         binding.statusBanner.setBackgroundColor(statusColor);
         binding.statusBanner.setText(PedidoAdapter.labelForEstado(estado));
@@ -387,7 +387,7 @@ public class PedidoDetailFragment extends Fragment {
 
     private static boolean isCanceled(PedidoDetalleDto pedido) {
         return pedido != null
-                && EstadoPedidoEnum.fromApiValue(pedido.getEstado()) == EstadoPedidoEnum.CANCELADO;
+                && pedido.getEstado() == EstadoPedidoEnum.CANCELADO;
     }
 
     private void renderItems(List<DetallePedidoDto> detalles) {
@@ -478,7 +478,7 @@ public class PedidoDetailFragment extends Fragment {
         if (currentState == null || currentState.getData() == null) return;
         
         PedidoDetalleDto pedido = currentState.getData();
-        EstadoPedidoEnum estadoActual = EstadoPedidoEnum.fromApiValue(pedido.getEstado());
+        EstadoPedidoEnum estadoActual = pedido.getEstado();
         
         String role = tokenManager.getRole();
         if (role != null) role = role.toLowerCase(Locale.ROOT);

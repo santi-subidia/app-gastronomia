@@ -11,6 +11,7 @@ import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.caja.CajaDto;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.NuevoPedidoMessage;
 import com.example.app_movil_gastronomia.data.repository.contract.CajaRepository;
@@ -116,10 +117,9 @@ public class CajeroHomeViewModel extends ViewModel {
         if (pedidos == null) return 0;
         int count = 0;
         for (PedidoResumenDto p : pedidos) {
-            String estado = p.getEstado();
+            EstadoPedidoEnum estado = p.getEstado();
             if (estado == null) continue;
-            String normalized = estado.trim().toLowerCase();
-            if (!"entregado".equals(normalized) && !"cancelado".equals(normalized)) {
+            if (estado != EstadoPedidoEnum.ENTREGADO && estado != EstadoPedidoEnum.CANCELADO) {
                 count++;
             }
         }

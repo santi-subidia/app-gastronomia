@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.example.app_movil_gastronomia.data.dto.pedido.DetallePedidoDto;
+import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoDetalleDto;
 import com.google.gson.Gson;
 
@@ -61,7 +62,7 @@ public class PedidoDetalleDtoTest {
 
         assertNotNull(dto);
         assertEquals(1, dto.getId());
-        assertEquals("EnPreparacion", dto.getEstado());
+        assertEquals(EstadoPedidoEnum.EN_PREPARACION, dto.getEstado());
         assertEquals("Juan Pérez", dto.getClienteNombre());
         assertEquals("Av. Siempre Viva 742", dto.getClienteDireccion());
         assertEquals("Delivery", dto.getMetodoVenta());
@@ -111,7 +112,7 @@ public class PedidoDetalleDtoTest {
     public void serializesAllKeys() {
         PedidoDetalleDto dto = new PedidoDetalleDto();
         dto.setId(1);
-        dto.setEstado("Pendiente");
+        dto.setEstado(EstadoPedidoEnum.PENDIENTE);
         dto.setClienteNombre("Ana");
         dto.setClienteDireccion("Calle 1");
         dto.setMetodoVenta("Delivery");
@@ -141,7 +142,7 @@ public class PedidoDetalleDtoTest {
     public void nullBoxedFieldsAreOmittedFromJson() {
         PedidoDetalleDto dto = new PedidoDetalleDto();
         dto.setId(1);
-        dto.setEstado("Pendiente");
+        dto.setEstado(EstadoPedidoEnum.PENDIENTE);
         dto.setClienteNombre("Ana");
         dto.setClienteDireccion("Calle 1");
         dto.setMetodoVenta("Delivery");

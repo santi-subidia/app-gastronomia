@@ -8,7 +8,7 @@ public class PedidoResumenDto {
     private int id;
 
     @SerializedName("estado")
-    private String estado;
+    private EstadoPedidoEnum estado;
 
     @SerializedName("clienteNombre")
     private String clienteNombre;
@@ -30,11 +30,11 @@ public class PedidoResumenDto {
         this.id = id;
     }
 
-    public String getEstado() {
+    public EstadoPedidoEnum getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoPedidoEnum estado) {
         this.estado = estado;
     }
 

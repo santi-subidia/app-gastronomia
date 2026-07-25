@@ -52,8 +52,7 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
 
         holder.pedidoIdText.setText(String.format(Locale.getDefault(), "#%d", pedido.getId()));
 
-        String estadoStr = pedido.getEstado();
-        EstadoPedidoEnum estado = EstadoPedidoEnum.fromApiValue(estadoStr);
+        EstadoPedidoEnum estado = pedido.getEstado();
         int statusColor = colorForEstado(estado);
         int textColor = textColorForEstado(estado);
 

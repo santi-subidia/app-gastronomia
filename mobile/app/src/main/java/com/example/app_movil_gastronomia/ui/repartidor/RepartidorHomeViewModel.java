@@ -10,6 +10,7 @@ import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.signalr.PedidoFinalizadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.RepartidorAsignadoMessage;
 import com.example.app_movil_gastronomia.data.dto.signalr.EstadoCambiadoMessage;
@@ -130,24 +131,16 @@ public class RepartidorHomeViewModel extends ViewModel {
         }
     }
 
-    static boolean isEnCaminoOrListo(String estado) {
-        if (estado == null) return false;
-        String normalized = estado.trim().toLowerCase();
-        return "encamino".equals(normalized) || "en camino".equals(normalized) 
-            || "listoparetirar".equals(normalized) || "listo para retirar".equals(normalized);
+    static boolean isEnCaminoOrListo(EstadoPedidoEnum estado) {
+        return estado == EstadoPedidoEnum.EN_CAMINO
+                || estado == EstadoPedidoEnum.LISTO_PARA_RETIRAR;
     }
 
-    static boolean isVisibleOnDashboard(String estado) {
+    static boolean isVisibleOnDashboard(EstadoPedidoEnum estado) {
         if (isEnCaminoOrListo(estado)) {
             return true;
         }
-
-        if (estado == null) {
-            return false;
-        }
-
-        String normalized = estado.trim().toLowerCase();
-        return "entregado".equals(normalized);
+        return estado == EstadoPedidoEnum.ENTREGADO;
     }
 
     @Override

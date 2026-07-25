@@ -24,6 +24,7 @@ import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.TokenManager;
 import com.example.app_movil_gastronomia.core.UiState;
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
+import com.example.app_movil_gastronomia.data.dto.pedido.EstadoPedidoEnum;
 import com.example.app_movil_gastronomia.data.dto.signalr.PosicionGPSActualizadaMessage;
 import com.example.app_movil_gastronomia.data.repository.contract.PedidoRepository;
 
@@ -308,10 +309,8 @@ public class MapaViewModel extends ViewModel {
         return result;
     }
 
-    static boolean isEnCamino(String estado) {
-        if (estado == null) return false;
-        String normalized = estado.trim().toLowerCase();
-        return "encamino".equals(normalized) || "en camino".equals(normalized);
+    static boolean isEnCamino(EstadoPedidoEnum estado) {
+        return estado == EstadoPedidoEnum.EN_CAMINO;
     }
 
 
