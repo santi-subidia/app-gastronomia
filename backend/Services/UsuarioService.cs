@@ -128,10 +128,14 @@ public class UsuarioService : IUsuarioService
         if (fueraDeServicio.HasValue)
         {
             user.FueraDeServicio = fueraDeServicio.Value;
-            // Si lo marcan fuera de servicio, forzamos a que no esté disponible
             if (fueraDeServicio.Value)
             {
+                // Si lo marcan fuera de servicio, forzamos a que no esté disponible.
                 user.Disponible = false;
+            }
+            else
+            {
+                user.MotivoFueraDeServicio = null;
             }
         }
 

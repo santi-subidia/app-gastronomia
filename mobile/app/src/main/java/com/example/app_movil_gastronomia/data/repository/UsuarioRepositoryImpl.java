@@ -93,7 +93,9 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
     @Override
     public void updateDisponibilidad(int id, boolean disponible) {
         updateState.setValue(UiState.loading());
-        api.actualizarUsuario(id, new UpdateUserRequest(disponible)).enqueue(new Callback<UsuarioDto>() {
+        Boolean fueraDeServicio = disponible ? Boolean.FALSE : null;
+        api.actualizarUsuario(id, new UpdateUserRequest(disponible, fueraDeServicio))
+                .enqueue(new Callback<UsuarioDto>() {
             @Override
             public void onResponse(Call<UsuarioDto> call, Response<UsuarioDto> response) {
                 if (response.isSuccessful() && response.body() != null) {

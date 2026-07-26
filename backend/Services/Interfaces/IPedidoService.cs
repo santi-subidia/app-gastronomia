@@ -12,4 +12,5 @@ public interface IPedidoService
     Task<IEnumerable<Pedido>> ObtenerPedidosPorRepartidorAsync(int repartidorId);
     Task<Pedido> CambiarEstadoAsync(int pedidoId, EstadoPedidoEnum nuevoEstado);
     Task<Pedido> AsignarRepartidorAsync(int pedidoId, int repartidorId);
+    Task<Pedido> ReintentarEnCocinaAsync(int pedidoId);
 }

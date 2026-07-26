@@ -7,12 +7,8 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.app_movil_gastronomia.core.UiState;
-import com.example.app_movil_gastronomia.data.dto.catalogo.CatalogoItemDto;
 import com.example.app_movil_gastronomia.data.dto.configuracion.ConfiguracionDto;
-import com.example.app_movil_gastronomia.data.repository.contract.CatalogoRepository;
 import com.example.app_movil_gastronomia.data.repository.contract.ConfiguracionRepository;
-
-import java.util.List;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,7 +20,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 public class ConfiguracionViewModel extends ViewModel {
 
     private final ConfiguracionRepository repository;
-    private final CatalogoRepository catalogoRepository;
 
     private final MutableLiveData<UiState<ConfiguracionDto>> configState = new MutableLiveData<>();
     private final MutableLiveData<UiState<ConfiguracionDto>> saveState = new MutableLiveData<>();
@@ -37,9 +32,8 @@ public class ConfiguracionViewModel extends ViewModel {
     private boolean isSaving = false;
 
     @Inject
-    public ConfiguracionViewModel(ConfiguracionRepository repository, CatalogoRepository catalogoRepository) {
+    public ConfiguracionViewModel(ConfiguracionRepository repository) {
         this.repository = repository;
-        this.catalogoRepository = catalogoRepository;
 
         this.getConfigObserver = state -> {
             if (state == null) return;
@@ -84,15 +78,6 @@ public class ConfiguracionViewModel extends ViewModel {
 
     public void clearSaveState() {
         saveState.setValue(null);
-    }
-
-    public LiveData<List<CatalogoItemDto>> getMetodosPago() {
-        return catalogoRepository.getMetodosPago();
-    }
-
-    public int resolveMetodoPagoId(String nombre) {
-        if (!catalogoRepository.isReady()) return -1;
-        return catalogoRepository.resolveMetodoPagoId(nombre);
     }
 
     public void loadConfiguracion() {

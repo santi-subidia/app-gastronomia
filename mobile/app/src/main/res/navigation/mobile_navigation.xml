@@ -94,15 +94,7 @@
         <action
             android:id="@+id/action_nav_repartidor_home_to_nav_pedido_list"
             app:destination="@id/nav_pedido_list" />
-        <action
-            android:id="@+id/action_nav_repartidor_home_to_nav_mapa"
-            app:destination="@id/nav_mapa" />
     </fragment>
-
-    <fragment
-        android:id="@+id/nav_mapa"
-        android:name="com.example.app_movil_gastronomia.ui.repartidor.MapaFragment"
-        android:label="Mapa" />
 
     <fragment
         android:id="@+id/nav_pedido_list"

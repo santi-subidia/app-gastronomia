@@ -101,6 +101,18 @@
                 android:textColor="@color/chip_unselected_fg"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/chip_contingencia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/chip_unselected_bg"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                android:text="@string/status_contingency"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/chip_unselected_fg"
+                android:textStyle="bold" />
+
         </LinearLayout>
 
     </HorizontalScrollView>

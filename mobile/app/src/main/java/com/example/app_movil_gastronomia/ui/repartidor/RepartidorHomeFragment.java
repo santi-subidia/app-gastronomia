@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.app_movil_gastronomia.R;
 import com.example.app_movil_gastronomia.core.UiState;
-import com.example.app_movil_gastronomia.data.dto.usuario.UsuarioDto;
 import android.widget.Toast;
 
 import com.example.app_movil_gastronomia.data.dto.pedido.PedidoResumenDto;
@@ -75,7 +74,6 @@ public class RepartidorHomeFragment extends Fragment {
             }
         });
 
-        binding.fabViewMap.setOnClickListener(v -> navigateToMapa());
     }
 
     private void handleState(UiState<List<PedidoResumenDto>> state) {
@@ -158,11 +156,6 @@ public class RepartidorHomeFragment extends Fragment {
         args.putInt("pedidoId", pedido.getId());
         NavController controller = Navigation.findNavController(requireView());
         controller.navigate(R.id.nav_pedido_detail, args);
-    }
-
-    private void navigateToMapa() {
-        NavController controller = Navigation.findNavController(requireView());
-        controller.navigate(R.id.action_nav_repartidor_home_to_nav_mapa);
     }
 
     @Override

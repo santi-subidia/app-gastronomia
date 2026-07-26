@@ -433,9 +433,6 @@ public class MainActivity extends AppCompatActivity {
                 bottomNav.getMenu()
                         .add(0, R.id.nav_repartidor_home, 0, R.string.repartidor_title)
                         .setIcon(R.drawable.ic_home_24dp);
-                bottomNav.getMenu()
-                        .add(0, R.id.nav_mapa, 1, R.string.mapa_title)
-                        .setIcon(R.drawable.ic_mapa_24dp);
                 break;
             default:
                 return;

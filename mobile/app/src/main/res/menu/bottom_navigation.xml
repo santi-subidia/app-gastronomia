@@ -8,9 +8,8 @@
         el menú y agrega solo las opciones permitidas para cada rol. Los IDs deben
         coincidir con los destinos del grafo de navegación.
 
-        IMPORTANTE: BottomNavigationView admite como máximo 6 elementos al crearse,
-        por eso este conjunto está limitado a 6. nav_mapa se agrega programáticamente
-        para Repartidor y no necesita estar en este conjunto.
+         IMPORTANTE: BottomNavigationView admite como máximo 6 elementos al crearse,
+         por eso este conjunto está limitado a 6.
     -->
     <group android:checkableBehavior="single">
         <item

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ApiGastronomia.Domain;
 using ApiGastronomia.Domain.DTOs;
 using ApiGastronomia.Domain.Entities;
@@ -152,6 +153,32 @@ public class PedidosController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Cancela un pedido en contingencia y crea un nuevo intento para cocina.
+    /// </summary>
+    [HttpPost("{id:int}/reintentar-cocina")]
+    [Authorize(Roles = "Cajero")]
+    public async Task<ActionResult<PedidoDetalleDTO>> ReintentarEnCocina(int id)
+    {
+        try
+        {
+            var nuevoPedido = await _pedidoService.ReintentarEnCocinaAsync(id);
+            return Ok(MapToDetalle(nuevoPedido));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { Mensaje = ex.Message });
+        }
+        catch (BusinessRuleException ex)
+        {
+            return Conflict(new { Codigo = ex.Code, Mensaje = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { Mensaje = ex.Message });
+        }
+    }
+
     // ================================================================
     // ================================================================
 
@@ -189,7 +216,9 @@ public class PedidosController : ControllerBase
             Cantidad: d.Cantidad,
             Precio: d.Precio,
             TiempoMaquina: d.Producto?.Demora ?? 0
-        )).ToList()
+        )).ToList(),
+        PedidoOrigenId: p.PedidoOrigenId,
+        MotivoCancelacion: p.MotivoCancelacion
     ) with
     {
         DemoraPreparacionAprox = p.DemoraPreparacionAprox,

@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,6 +36,7 @@ public class DemoraRepositoryImpl implements DemoraRepository {
     private final MutableLiveData<UiState<DemoraDto>> _crearState = new MutableLiveData<>();
     private final MutableLiveData<UiState<DemoraDto>> _actualizarState = new MutableLiveData<>();
     private final MutableLiveData<UiState<Void>> _eliminarState = new MutableLiveData<>();
+    private final AtomicInteger demorasRequestGeneration = new AtomicInteger();
 
     @Inject
     public DemoraRepositoryImpl(DemoraApi demoraApi) {
@@ -43,12 +45,14 @@ public class DemoraRepositoryImpl implements DemoraRepository {
 
     @Override
     public LiveData<UiState<List<DemoraDto>>> getDemoras(Integer pedidoId) {
+        int requestGeneration = demorasRequestGeneration.incrementAndGet();
         _demorasState.setValue(UiState.loading());
 
         demoraApi.getDemoras(pedidoId).enqueue(new Callback<List<DemoraDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<DemoraDto>> call,
                                    @NonNull Response<List<DemoraDto>> response) {
+                if (requestGeneration != demorasRequestGeneration.get()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     _demorasState.setValue(UiState.success(response.body()));
                 } else {
@@ -58,6 +62,7 @@ public class DemoraRepositoryImpl implements DemoraRepository {
 
             @Override
             public void onFailure(@NonNull Call<List<DemoraDto>> call, @NonNull Throwable t) {
+                if (requestGeneration != demorasRequestGeneration.get()) return;
                 Log.e(TAG, "GetDemoras network failure", t);
                 _demorasState.setValue(UiState.error("No hay conexión a internet"));
             }

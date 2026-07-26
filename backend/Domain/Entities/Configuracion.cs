@@ -14,7 +14,7 @@ public class Configuracion
     public int? MetodoPagoDefaultId { get; set; }
 
     [ForeignKey(nameof(MetodoPagoDefaultId))]
-    public MetodoVenta? MetodoPagoDefault { get; set; }
+    public MetodoPago? MetodoPagoDefault { get; set; }
 
     [MaxLength(150)]
     [Column("nombreGastronomico")]

@@ -150,7 +150,10 @@ public class UsuariosController : ControllerBase
         }
 
         var usuarios = await _usuarioService.ObtenerUsuariosAsync();
-        var repartidores = usuarios.Where(u => u.RolNombre == "Repartidor" && u.Disponible);
+        var repartidores = usuarios.Where(u =>
+            u.RolNombre == "Repartidor"
+            && u.Disponible
+            && !u.FueraDeServicio);
 
         if (_context == null)
         {

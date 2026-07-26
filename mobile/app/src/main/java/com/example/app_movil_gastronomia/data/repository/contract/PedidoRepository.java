@@ -41,4 +41,12 @@ public interface PedidoRepository {
     LiveData<UiState<PedidoDetalleDto>> asignarRepartidor(int id, int repartidorId);
 
     LiveData<UiState<PedidoDetalleDto>> getAsignarRepartidorState();
+
+    void resetAsignarRepartidorState();
+
+    LiveData<UiState<PedidoDetalleDto>> reintentarEnCocina(int id);
+
+    LiveData<UiState<PedidoDetalleDto>> getReintentarEnCocinaState();
+
+    void resetReintentarEnCocinaState();
 }

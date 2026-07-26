@@ -25,14 +25,14 @@ public class ConfiguracionServiceTests
     }
 
     /// <summary>
-    /// Seeds a MetodoVenta into the context and returns (context, metodoVenta).
+    /// Seeds a MetodoPago into the context and returns (context, metodoPago).
     /// Needed for testing FK relationships.
     /// </summary>
-    private static (AppDbContext Context, MetodoVenta MetodoVenta) SeedMetodoVenta(
+    private static (AppDbContext Context, MetodoPago MetodoPago) SeedMetodoPago(
         AppDbContext context, string nombre = "Efectivo")
     {
-        var metodo = new MetodoVenta { Nombre = nombre };
-        context.MetodosVenta.Add(metodo);
+        var metodo = new MetodoPago { Nombre = nombre };
+        context.MetodoPago.Add(metodo);
         context.SaveChanges();
         return (context, metodo);
     }
@@ -87,9 +87,9 @@ public class ConfiguracionServiceTests
     [Fact]
     public async Task ObtenerAsync_ConfigExists_ReturnsConfiguracionResponse()
     {
-        // Arrange: seed a metodo venta and configuracion
+        // Arrange: seed a metodo pago and configuracion
         var context = CreateDbContext();
-        var (_, metodo) = SeedMetodoVenta(context, "Efectivo");
+        var (_, metodo) = SeedMetodoPago(context, "Efectivo");
         var (_, config) = SeedConfiguracion(context,
             metodoPagoDefaultId: metodo.Id,
             nombreGastronomico: "El Palenque",
@@ -195,7 +195,7 @@ public class ConfiguracionServiceTests
     {
         // Arrange: seed a config with known values
         var context = CreateDbContext();
-        var (_, metodo) = SeedMetodoVenta(context, "Mercado Pago");
+        var (_, metodo) = SeedMetodoPago(context, "Mercado Pago");
         var (_, config) = SeedConfiguracion(context,
             metodoPagoDefaultId: null,
             nombreGastronomico: "Viejo Nombre",
@@ -248,9 +248,9 @@ public class ConfiguracionServiceTests
     [Fact]
     public async Task CrearAsync_WithMetodoPagoDefaultId_IncludesNavigationNombre()
     {
-        // Arrange: seed a MetodoVenta, then create config referencing it
+        // Arrange: seed a MetodoPago, then create config referencing it
         var context = CreateDbContext();
-        var (_, metodo) = SeedMetodoVenta(context, "Tarjeta");
+        var (_, metodo) = SeedMetodoPago(context, "Tarjeta");
         var service = new ConfiguracionService(context);
 
         // Act: create config with MetodoPagoDefaultId

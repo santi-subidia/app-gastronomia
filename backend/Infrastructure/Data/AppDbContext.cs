@@ -53,11 +53,18 @@ public class AppDbContext : DbContext
              .HasForeignKey(p => p.RepartidorId)
              .OnDelete(DeleteBehavior.SetNull);
 
+            e.HasOne(p => p.PedidoOrigen)
+             .WithMany(p => p.PedidosReemplazo)
+             .HasForeignKey(p => p.PedidoOrigenId)
+             .OnDelete(DeleteBehavior.Restrict);
+
             // Pedido -> EstadoPedido
             e.HasOne(p => p.Estado)
              .WithMany(ep => ep.Pedidos)
              .HasForeignKey(p => p.EstadoId)
              .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(p => p.PedidoOrigenId);
 
             // Pedido -> MetodoPago
             e.HasOne(p => p.MetodoPago)
@@ -123,7 +130,7 @@ public class AppDbContext : DbContext
         });
 
         // ================================================================
-        // Configuracion -> MetodoVenta (metodo_pago_default_id)
+        // Configuracion -> MetodoPago (metodo_pago_default_id)
         // ================================================================
         modelBuilder.Entity<Configuracion>(e =>
         {

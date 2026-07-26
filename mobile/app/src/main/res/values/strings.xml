@@ -41,6 +41,7 @@
     <string name="status_ready">Listo</string>
     <string name="status_delivering">En Camino</string>
     <string name="status_delivered">Entregado</string>
+    <string name="status_contingency">Contingencia</string>
     <string name="no_orders">No hay pedidos</string>
     <string name="no_orders_state">No hay pedidos %s</string>
     <string name="order_detail_title">Pedido #%d</string>
@@ -85,17 +86,7 @@
     <string name="no_deliveries_assigned">No hay entregas asignadas</string>
     <string name="waiting_assignments">Esperando nuevas asignaciones...</string>
     <string name="delivery_completed">Entrega completada</string>
-    <string name="view_map">Ver Mapa</string>
-
-    <!-- Mapa del repartidor. -->
-    <string name="mapa_title">Mapa de Entregas</string>
-    <string name="active_deliveries">Entregas Activas</string>
-    <string name="my_location">Mi Ubicación GPS</string>
-    <string name="auto_send_label">Envío automático cada 8s</string>
-    <string name="send_position_now">Enviar Posición Ahora</string>
-    <string name="last_sent">Último envío: %s</string>
-    <string name="waiting_gps">Esperando GPS...</string>
-    <string name="gps_unavailable">GPS no disponible</string>
+    <!-- La ubicación se envía mediante el servicio GPS en segundo plano. -->
     <string name="route_calculating">Calculando ruta...</string>
     <string name="route_ready">Ruta lista</string>
     <string name="route_waiting_location">Esperando ubicación actual...</string>
@@ -175,8 +166,6 @@
     <string name="save_config">Guardar Configuraci\u00f3n</string>
     <string name="update_config">Actualizar Configuraci\u00f3n</string>
     <string name="config_nombre_hint">Nombre del gastron\u00f3mico</string>
-    <string name="config_metodo_pago_id_hint">ID método de pago por defecto</string>
-    <string name="config_metodo_pago_nombre_hint">Método de pago por defecto</string>
     <string name="config_latitud_hint">Latitud de partida</string>
     <string name="config_longitud_hint">Longitud de partida</string>
     <string name="config_max_pedidos_hint">Máximo de pedidos por repartidor</string>

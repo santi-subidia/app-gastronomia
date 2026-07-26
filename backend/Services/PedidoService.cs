@@ -116,7 +116,11 @@ public class PedidoService : IPedidoService
             .Include(p => p.Demoras)
             .FirstOrDefaultAsync(p => p.Id == id);
 
-        if (pedido is not null && pedido.DemoraAprox is null && _estimacionPedidoService is not null)
+        if (pedido is not null
+            && (pedido.DemoraAprox is null
+                || pedido.DemoraPreparacionAprox is null
+                || pedido.DemoraDemorasAprox is null)
+            && _estimacionPedidoService is not null)
         {
             await _estimacionPedidoService.CalcularAsync(pedido);
             await _context.SaveChangesAsync();
@@ -275,6 +279,120 @@ public class PedidoService : IPedidoService
 
         _logger.LogInformation("Pedido #{PedidoId}: {Anterior} -> {Nuevo}", pedidoId, estadoAnterior, nuevoEstado);
         return pedido;
+    }
+
+    public async Task<Pedido> ReintentarEnCocinaAsync(int pedidoId)
+    {
+        var pedidoOriginal = await _context.Pedidos
+            .Include(p => p.DetallePedidos)
+                .ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(p => p.Id == pedidoId)
+            ?? throw new KeyNotFoundException($"Pedido #{pedidoId} no encontrado.");
+
+        if (pedidoOriginal.EstadoEnum != EstadoPedidoEnum.Contingencia)
+        {
+            throw new InvalidOperationException(
+                "Solo se puede reenviar a cocina un pedido en estado 'Contingencia'.");
+        }
+
+        var yaTieneReemplazo = await _context.Pedidos.AnyAsync(p =>
+            p.PedidoOrigenId == pedidoId &&
+            p.EstadoId != (int)EstadoPedidoEnum.Cancelado &&
+            p.EstadoId != (int)EstadoPedidoEnum.Devuelto);
+
+        if (yaTieneReemplazo)
+        {
+            throw new InvalidOperationException(
+                $"El pedido #{pedidoId} ya tiene un reintento activo.");
+        }
+
+        var cajaAbierta = await _context.Cajas
+            .Where(c => c.FechaCierre == null)
+            .OrderByDescending(c => c.FechaApertura)
+            .FirstOrDefaultAsync()
+            ?? throw new BusinessRuleException(
+                "NO_OPEN_REGISTER",
+                "No hay una caja abierta para reenviar el pedido.");
+
+        var ahora = DateTime.UtcNow;
+        var nuevoPedido = new Pedido
+        {
+            CajaId = cajaAbierta.Id,
+            EstadoId = (int)EstadoPedidoEnum.Pendiente,
+            MetodoPagoId = pedidoOriginal.MetodoPagoId,
+            MetodoVentaId = pedidoOriginal.MetodoVentaId,
+            ClienteNombre = pedidoOriginal.ClienteNombre,
+            ClienteDireccion = pedidoOriginal.ClienteDireccion,
+            LatitudDestino = pedidoOriginal.LatitudDestino,
+            LongitudDestino = pedidoOriginal.LongitudDestino,
+            TotalEstimado = pedidoOriginal.TotalEstimado,
+            FechaIngreso = ahora,
+            PedidoOrigenId = pedidoOriginal.Id,
+            DetallePedidos = pedidoOriginal.DetallePedidos.Select(detalle => new DetallePedido
+            {
+                ProductoId = detalle.ProductoId,
+                Nombre = detalle.Nombre,
+                Precio = detalle.Precio,
+                Cantidad = detalle.Cantidad
+            }).ToList()
+        };
+
+        pedidoOriginal.EstadoId = (int)EstadoPedidoEnum.Cancelado;
+        pedidoOriginal.FechaFinalizado = ahora;
+        pedidoOriginal.MotivoCancelacion = "Reemplazado por reenvío a cocina desde Contingencia.";
+        pedidoOriginal.RepartidorId = null;
+
+        if (_estimacionPedidoService is not null)
+            await _estimacionPedidoService.CalcularAsync(nuevoPedido);
+
+        _context.Pedidos.Add(nuevoPedido);
+
+        Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
+        if (_context.Database.IsRelational())
+            transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            if (transaction is not null)
+                await transaction.CommitAsync();
+        }
+        catch
+        {
+            if (transaction is not null)
+                await transaction.RollbackAsync();
+            throw;
+        }
+        finally
+        {
+            if (transaction is not null)
+                await transaction.DisposeAsync();
+        }
+
+        var pedidoCreado = await ObtenerPedidoPorIdAsync(nuevoPedido.Id)
+            ?? throw new InvalidOperationException("No se pudo recuperar el pedido reenviado.");
+
+        await _hubContext.Clients.All.SendAsync("EstadoCambiado", new EstadoCambiadoMessage(
+            pedidoOriginal.Id,
+            EstadoPedidoEnum.Contingencia.ToString(),
+            EstadoPedidoEnum.Cancelado.ToString(),
+            ahora));
+
+        await _hubContext.Clients.All.SendAsync("PedidoFinalizado",
+            new PedidoFinalizadoMessage(pedidoOriginal.Id, EstadoPedidoEnum.Cancelado.ToString(), ahora));
+
+        await _hubContext.Clients.All.SendAsync("NuevoPedido", new NuevoPedidoMessage(
+            nuevoPedido.Id,
+            nuevoPedido.ClienteNombre ?? "Desconocido",
+            nuevoPedido.TotalEstimado,
+            ahora));
+
+        _logger.LogInformation(
+            "Pedido #{PedidoOriginalId} cancelado y reemplazado por pedido #{NuevoPedidoId} para cocina",
+            pedidoOriginal.Id,
+            pedidoCreado.Id);
+
+        return pedidoCreado;
     }
 
     public async Task<Pedido> AsignarRepartidorAsync(int pedidoId, int repartidorId)

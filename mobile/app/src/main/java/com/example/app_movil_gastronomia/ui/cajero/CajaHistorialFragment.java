@@ -53,10 +53,14 @@ public class CajaHistorialFragment extends Fragment {
             case LOADING:
                 binding.progressBar.setVisibility(View.VISIBLE);
                 binding.textError.setVisibility(View.GONE);
+                binding.buttonRetry.setVisibility(View.GONE);
+                binding.buttonRetry.setEnabled(false);
                 break;
             case SUCCESS:
                 binding.progressBar.setVisibility(View.GONE);
                 binding.textError.setVisibility(View.GONE);
+                binding.buttonRetry.setVisibility(View.GONE);
+                binding.buttonRetry.setEnabled(false);
                 adapter.submitList(state.getData());
                 binding.textEmpty.setVisibility(state.getData() == null || state.getData().isEmpty() ? View.VISIBLE : View.GONE);
                 break;
@@ -64,6 +68,8 @@ public class CajaHistorialFragment extends Fragment {
                 binding.progressBar.setVisibility(View.GONE);
                 binding.textEmpty.setVisibility(View.GONE);
                 binding.textError.setVisibility(View.VISIBLE);
+                binding.buttonRetry.setVisibility(View.VISIBLE);
+                binding.buttonRetry.setEnabled(true);
                 binding.textError.setText(state.getError() != null ? state.getError() : getString(R.string.error_generic));
                 break;
         }

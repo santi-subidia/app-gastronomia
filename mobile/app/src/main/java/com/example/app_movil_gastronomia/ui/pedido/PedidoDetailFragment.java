@@ -55,6 +55,7 @@ public class PedidoDetailFragment extends Fragment {
     private FragmentPedidoDetailBinding binding;
     private PedidoDetailViewModel viewModel;
     private int pedidoId;
+    private boolean demorasRequested;
 
     @Nullable
     @Override
@@ -71,10 +72,12 @@ public class PedidoDetailFragment extends Fragment {
         pedidoId = getArguments() != null ? getArguments().getInt("pedidoId", -1) : -1;
 
         viewModel = new ViewModelProvider(this).get(PedidoDetailViewModel.class);
+        viewModel.consumeAsignarRepartidor();
 
         viewModel.getDetailState().observe(getViewLifecycleOwner(), this::handleDetailState);
         viewModel.getCambiarEstadoState().observe(getViewLifecycleOwner(), this::handleCambiarEstadoResult);
         viewModel.getAsignarRepartidorState().observe(getViewLifecycleOwner(), this::handleAsignarRepartidorResult);
+        viewModel.getReintentarEnCocinaState().observe(getViewLifecycleOwner(), this::handleReintentarEnCocinaResult);
         viewModel.getRepartidoresDisponiblesState().observe(getViewLifecycleOwner(), this::handleRepartidoresResult);
         viewModel.getDemorasState().observe(getViewLifecycleOwner(), this::handleDemorasState);
         signalRService.getEstimacionPedidoActualizada().observe(
@@ -92,8 +95,8 @@ public class PedidoDetailFragment extends Fragment {
         binding.buttonCambiarEstado.setOnClickListener(v -> showCambiarEstadoDialog());
         binding.buttonCancelarPedido.setOnClickListener(v -> confirmCancelOrder());
         binding.buttonAsignarRepartidor.setOnClickListener(v -> viewModel.fetchRepartidoresDisponibles());
-        binding.buttonVerDemoras.setOnClickListener(v -> viewModel.loadDemoras(pedidoId));
-        binding.demorasButtonRetry.setOnClickListener(v -> viewModel.loadDemoras(pedidoId));
+        binding.buttonVerDemoras.setOnClickListener(v -> loadDemorasForCurrentPedido());
+        binding.demorasButtonRetry.setOnClickListener(v -> loadDemorasForCurrentPedido());
         binding.buttonRegistrarDemora.setOnClickListener(v -> {
 
             Bundle args = new Bundle();
@@ -158,18 +161,20 @@ public class PedidoDetailFragment extends Fragment {
                 Toast.makeText(requireContext(),
                         R.string.assign_driver,
                         Toast.LENGTH_SHORT).show();
+                viewModel.consumeAsignarRepartidor();
                 viewModel.loadPedido(pedidoId);
                 break;
             case ERROR:
                 Toast.makeText(requireContext(),
                         state.getError() != null ? state.getError() : getString(R.string.error_generic),
                         Toast.LENGTH_LONG).show();
+                viewModel.consumeAsignarRepartidor();
                 break;
         }
     }
 
     private void handleDemorasState(UiState<List<DemoraDto>> state) {
-        if (state == null) return;
+        if (state == null || !demorasRequested) return;
         switch (state.getStatus()) {
             case LOADING:
                 showDemorasLoading();
@@ -254,6 +259,7 @@ public class PedidoDetailFragment extends Fragment {
         
         if (isCajero) {
             binding.buttonVerDemoras.setVisibility(View.VISIBLE);
+            loadDemorasForCurrentPedido();
             
             if (estado == EstadoPedidoEnum.LISTO_PARA_RETIRAR) {
                 if (metodoVenta.toLowerCase(Locale.ROOT).contains("delivery")) {
@@ -277,7 +283,7 @@ public class PedidoDetailFragment extends Fragment {
                 binding.buttonAsignarRepartidor.setVisibility(View.VISIBLE);
                 binding.buttonCambiarEstado.setVisibility(View.VISIBLE);
                 binding.buttonCambiarEstado.setText("Mandar a rehacer (Cocina)");
-                binding.buttonCambiarEstado.setOnClickListener(v -> viewModel.cambiarEstado(pedidoId, EstadoPedidoEnum.PENDIENTE));
+                binding.buttonCambiarEstado.setOnClickListener(v -> confirmReintentarEnCocina());
             } else {
                 binding.buttonCambiarEstado.setVisibility(View.GONE);
                 binding.buttonAsignarRepartidor.setVisibility(View.GONE);
@@ -337,6 +343,12 @@ public class PedidoDetailFragment extends Fragment {
         renderItems(pedido.getDetallePedidos());
     }
 
+    private void loadDemorasForCurrentPedido() {
+        if (pedidoId <= 0) return;
+        demorasRequested = true;
+        viewModel.loadDemoras(pedidoId);
+    }
+
     private static String formatApiDate(String value) {
         if (value == null || value.isEmpty()) {
             return "";
@@ -383,6 +395,49 @@ public class PedidoDetailFragment extends Fragment {
                                 currentPedidoId, EstadoPedidoEnum.DEVUELTO))
                 .setNegativeButton(R.string.action_cancel, null)
                 .show();
+    }
+
+    private void confirmReintentarEnCocina() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Reenviar a cocina")
+                .setMessage("El pedido actual será cancelado y se creará un pedido nuevo sin las demoras anteriores.")
+                .setPositiveButton(R.string.action_confirm,
+                        (dialog, which) -> viewModel.reintentarEnCocina(pedidoId))
+                .setNegativeButton(R.string.action_cancel, null)
+                .show();
+    }
+
+    private void handleReintentarEnCocinaResult(UiState<PedidoDetalleDto> state) {
+        if (state == null) return;
+        switch (state.getStatus()) {
+            case LOADING:
+                binding.buttonCambiarEstado.setEnabled(false);
+                break;
+            case SUCCESS:
+                PedidoDetalleDto nuevoPedido = state.getData();
+                binding.buttonCambiarEstado.setEnabled(true);
+                int pedidoAnteriorId = pedidoId;
+                if (signalRService != null) {
+                    signalRService.salirDePedido(pedidoAnteriorId);
+                }
+                pedidoId = nuevoPedido.getId();
+                if (pedidoId > 0 && signalRService != null) {
+                    signalRService.unirseAPedido(pedidoId);
+                }
+                Toast.makeText(requireContext(),
+                        "Pedido reenviado a cocina como #" + pedidoId,
+                        Toast.LENGTH_LONG).show();
+                viewModel.consumeReintentarEnCocina();
+                viewModel.loadPedido(pedidoId);
+                break;
+            case ERROR:
+                binding.buttonCambiarEstado.setEnabled(true);
+                Toast.makeText(requireContext(),
+                        state.getError() != null ? state.getError() : getString(R.string.error_generic),
+                        Toast.LENGTH_LONG).show();
+                viewModel.consumeReintentarEnCocina();
+                break;
+        }
     }
 
     private static boolean isCanceled(PedidoDetalleDto pedido) {

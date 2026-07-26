@@ -95,6 +95,8 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
                 return Color.parseColor("#4CAF50");
             case EN_CAMINO:
                 return Color.parseColor("#9C27B0");
+            case CONTINGENCIA:
+                return Color.parseColor("#FF9800");
             case ENTREGADO:
                 return Color.parseColor("#9E9E9E");
             case RETIRADO:
@@ -131,6 +133,8 @@ public class PedidoAdapter extends RecyclerView.Adapter<PedidoAdapter.PedidoView
                 return "En Camino";
             case ENTREGADO:
                 return "Entregado";
+            case CONTINGENCIA:
+                return "Contingencia";
             case RETIRADO:
                 return "Retirado";
             case CANCELADO:

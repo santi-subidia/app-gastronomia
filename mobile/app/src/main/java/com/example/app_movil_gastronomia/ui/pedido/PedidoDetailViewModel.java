@@ -32,12 +32,14 @@ public class PedidoDetailViewModel extends ViewModel {
     private final MutableLiveData<UiState<PedidoDetalleDto>> detailState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> cambiarEstadoState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> asignarRepartidorState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<PedidoDetalleDto>> reintentarEnCocinaState = new MutableLiveData<>();
     private final MutableLiveData<UiState<List<UsuarioDto>>> repartidoresDisponiblesState = new MutableLiveData<>();
     private final MutableLiveData<UiState<List<DemoraDto>>> demorasState = new MutableLiveData<>();
 
     private final Observer<UiState<PedidoDetalleDto>> detailObserver;
     private final Observer<UiState<PedidoDetalleDto>> cambiarEstadoObserver;
     private final Observer<UiState<PedidoDetalleDto>> asignarRepartidorObserver;
+    private final Observer<UiState<PedidoDetalleDto>> reintentarEnCocinaObserver;
     private final Observer<UiState<List<UsuarioDto>>> repartidoresDisponiblesObserver;
     private final Observer<UiState<List<DemoraDto>>> demorasObserver;
 
@@ -54,16 +56,18 @@ public class PedidoDetailViewModel extends ViewModel {
         this.detailObserver = detailState::setValue;
         this.cambiarEstadoObserver = cambiarEstadoState::setValue;
         this.asignarRepartidorObserver = asignarRepartidorState::setValue;
+        this.reintentarEnCocinaObserver = reintentarEnCocinaState::setValue;
         this.repartidoresDisponiblesObserver = repartidoresDisponiblesState::setValue;
         this.demorasObserver = demorasState::setValue;
 
         pedidoRepository.getPedidoState().observeForever(detailObserver);
         pedidoRepository.getCambiarEstadoState().observeForever(cambiarEstadoObserver);
         pedidoRepository.getAsignarRepartidorState().observeForever(asignarRepartidorObserver);
+        pedidoRepository.getReintentarEnCocinaState().observeForever(reintentarEnCocinaObserver);
         usuarioRepository.getRepartidoresDisponiblesState().observeForever(repartidoresDisponiblesObserver);
         demoraRepository.getDemorasState().observeForever(demorasObserver);
 
-        observerRegistrationCount.addAndGet(5);
+        observerRegistrationCount.addAndGet(6);
     }
 
     public LiveData<UiState<PedidoDetalleDto>> getDetailState() {
@@ -94,6 +98,22 @@ public class PedidoDetailViewModel extends ViewModel {
         pedidoRepository.asignarRepartidor(id, repartidorId);
     }
 
+    public void consumeAsignarRepartidor() {
+        pedidoRepository.resetAsignarRepartidorState();
+    }
+
+    public LiveData<UiState<PedidoDetalleDto>> getReintentarEnCocinaState() {
+        return reintentarEnCocinaState;
+    }
+
+    public void reintentarEnCocina(int id) {
+        pedidoRepository.reintentarEnCocina(id);
+    }
+
+    public void consumeReintentarEnCocina() {
+        pedidoRepository.resetReintentarEnCocinaState();
+    }
+
     public LiveData<UiState<List<UsuarioDto>>> getRepartidoresDisponiblesState() {
         return repartidoresDisponiblesState;
     }
@@ -116,6 +136,7 @@ public class PedidoDetailViewModel extends ViewModel {
         pedidoRepository.getPedidoState().removeObserver(detailObserver);
         pedidoRepository.getCambiarEstadoState().removeObserver(cambiarEstadoObserver);
         pedidoRepository.getAsignarRepartidorState().removeObserver(asignarRepartidorObserver);
+        pedidoRepository.getReintentarEnCocinaState().removeObserver(reintentarEnCocinaObserver);
         usuarioRepository.getRepartidoresDisponiblesState().removeObserver(repartidoresDisponiblesObserver);
         demoraRepository.getDemorasState().removeObserver(demorasObserver);
     }

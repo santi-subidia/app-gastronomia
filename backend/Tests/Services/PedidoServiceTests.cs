@@ -68,7 +68,8 @@ public class PedidoServiceTests
             new EstadoPedido { Id = 5, Nombre = "Entregado" },
             new EstadoPedido { Id = 6, Nombre = "Retirado" },
             new EstadoPedido { Id = 7, Nombre = "Cancelado" },
-            new EstadoPedido { Id = 8, Nombre = "Devuelto" }
+            new EstadoPedido { Id = 8, Nombre = "Devuelto" },
+            new EstadoPedido { Id = 9, Nombre = "Contingencia" }
         );
         context.SaveChanges();
         return context;
@@ -1131,5 +1132,73 @@ public class PedidoServiceTests
         // Cleanup
         await context.Database.EnsureDeletedAsync();
         context.Dispose();
+    }
+
+    [Fact]
+    public async Task ReintentarEnCocinaAsync_CancelsOriginalAndCreatesNewPedidoWithoutDemoras()
+    {
+        var context = CreateDbContext();
+        SeedEstados(context);
+        var (_, metodoPago, metodoVenta, producto) = SeedFkData(context);
+        var (_, usuario) = SeedUsuario(context, rolNombre: "Cocina");
+        var caja = context.Cajas.Single();
+
+        var pedidoOriginal = new Pedido
+        {
+            EstadoId = (int)EstadoPedidoEnum.Contingencia,
+            Estado = context.EstadosPedidos.First(e => e.Id == (int)EstadoPedidoEnum.Contingencia),
+            CajaId = caja.Id,
+            MetodoPagoId = metodoPago.Id,
+            MetodoVentaId = metodoVenta.Id,
+            ClienteNombre = "Cliente contingencia",
+            ClienteDireccion = "Calle 123",
+            TotalEstimado = 5500,
+            DetallePedidos =
+            [
+                new()
+                {
+                    ProductoId = producto.Id,
+                    Nombre = "Pizza histórica",
+                    Precio = 5500,
+                    Cantidad = 2
+                }
+            ]
+        };
+
+        context.Pedidos.Add(pedidoOriginal);
+        context.SaveChanges();
+        context.Demoras.Add(new Demora
+        {
+            PedidoId = pedidoOriginal.Id,
+            UsuarioId = usuario.Id,
+            DemoraMinutos = 25,
+            Sector = "Repartidor",
+            Observaciones = "Problema en ruta"
+        });
+        context.SaveChanges();
+
+        var (service, _) = CreateService(context);
+
+        var nuevoPedido = await service.ReintentarEnCocinaAsync(pedidoOriginal.Id);
+
+        var originalPersistido = await context.Pedidos
+            .Include(p => p.Demoras)
+            .SingleAsync(p => p.Id == pedidoOriginal.Id);
+        var copiaPersistida = await context.Pedidos
+            .Include(p => p.DetallePedidos)
+            .Include(p => p.Demoras)
+            .SingleAsync(p => p.Id == nuevoPedido.Id);
+
+        Assert.Equal(EstadoPedidoEnum.Cancelado, originalPersistido.EstadoEnum);
+        Assert.NotNull(originalPersistido.FechaFinalizado);
+        Assert.Equal("Reemplazado por reenvío a cocina desde Contingencia.", originalPersistido.MotivoCancelacion);
+        Assert.Single(originalPersistido.Demoras);
+        Assert.Equal(originalPersistido.Id, copiaPersistida.PedidoOrigenId);
+        Assert.Equal(EstadoPedidoEnum.Pendiente, copiaPersistida.EstadoEnum);
+        Assert.Null(copiaPersistida.RepartidorId);
+        Assert.Empty(copiaPersistida.Demoras);
+        Assert.Single(copiaPersistida.DetallePedidos);
+        Assert.Equal("Pizza histórica", copiaPersistida.DetallePedidos.Single().Nombre);
+        Assert.Equal(2, copiaPersistida.DetallePedidos.Single().Cantidad);
     }
 }

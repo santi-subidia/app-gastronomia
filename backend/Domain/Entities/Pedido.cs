@@ -23,6 +23,14 @@ public class Pedido
     [ForeignKey(nameof(RepartidorId))]
     public Usuario? Repartidor { get; set; }
 
+    [Column("pedido_origen_id")]
+    public int? PedidoOrigenId { get; set; }
+
+    [ForeignKey(nameof(PedidoOrigenId))]
+    public Pedido? PedidoOrigen { get; set; }
+
+    public ICollection<Pedido> PedidosReemplazo { get; set; } = new List<Pedido>();
+
     [Column("estado_id")]
     public int EstadoId { get; set; }
 
@@ -87,6 +95,10 @@ public class Pedido
 
     [Column("fecha_finalizado")]
     public DateTime? FechaFinalizado { get; set; }
+
+    [MaxLength(255)]
+    [Column("motivo_cancelacion")]
+    public string? MotivoCancelacion { get; set; }
 
     // Propiedad calculada (no mapeada) para el enum
     [NotMapped]

@@ -40,7 +40,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <!--
-          Form column. Wraps the 5 user-editable fields (every DTO
+          Form column. Wraps the 4 user-editable fields (every DTO
           field except the server-assigned id) and the submit button.
           Hidden during loading / error; shown on success.
         -->
@@ -70,22 +70,6 @@
                     android:layout_height="wrap_content"
                     android:imeOptions="actionNext"
                     android:inputType="text|textCapWords" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Método de pago predeterminado. -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_metodo_pago_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="@string/config_metodo_pago_nombre_hint">
-
-                <AutoCompleteTextView
-                    android:id="@+id/input_metodo_pago"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- maxPedidosPorRepartidor -->

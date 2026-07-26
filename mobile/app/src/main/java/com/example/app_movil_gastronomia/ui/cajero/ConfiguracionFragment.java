@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.MotionEvent;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import android.Manifest;
@@ -138,21 +137,6 @@ public class ConfiguracionFragment extends Fragment {
 
         viewModel.getConfigState().observe(getViewLifecycleOwner(), this::renderConfigState);
         viewModel.getSaveState().observe(getViewLifecycleOwner(), this::renderSaveState);
-        viewModel.getMetodosPago().observe(getViewLifecycleOwner(), metodos -> {
-            if (metodos != null && binding != null) {
-                String[] nombres = new String[metodos.size()];
-                for (int i = 0; i < metodos.size(); i++) {
-                    nombres[i] = metodos.get(i).getNombre();
-                }
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                        requireContext(),
-                        android.R.layout.simple_dropdown_item_1line,
-                        nombres
-                );
-                binding.inputMetodoPago.setAdapter(adapter);
-            }
-        });
-
         binding.buttonSave.setOnClickListener(v -> submit());
         binding.buttonRetry.setOnClickListener(v -> viewModel.loadConfiguracion());
     }
@@ -239,7 +223,6 @@ public class ConfiguracionFragment extends Fragment {
     private void applyCreateMode() {
         binding.buttonSave.setText(R.string.save_config);
         binding.inputNombre.setText("");
-        binding.inputMetodoPago.setText("", false);
         binding.inputMaxPedidos.setText("");
         selectedLat = null;
         selectedLng = null;
@@ -249,9 +232,6 @@ public class ConfiguracionFragment extends Fragment {
         binding.buttonSave.setText(R.string.update_config);
         binding.inputNombre.setText(
                 dto.getNombreGastronomico() != null ? dto.getNombreGastronomico() : ""
-        );
-        binding.inputMetodoPago.setText(
-                dto.getMetodoPagoDefaultNombre() != null ? dto.getMetodoPagoDefaultNombre() : "", false
         );
         binding.inputMaxPedidos.setText(
                 dto.getMaxPedidosPorRepartidor() != null ? String.valueOf(dto.getMaxPedidosPorRepartidor()) : ""
@@ -273,18 +253,6 @@ public class ConfiguracionFragment extends Fragment {
     private void submit() {
         ConfiguracionDto dto = new ConfiguracionDto();
         dto.setNombreGastronomico(textOf(binding.inputNombre));
-        
-        String metodoNombre = textOf(binding.inputMetodoPago);
-        if (!TextUtils.isEmpty(metodoNombre)) {
-            int metodoId = viewModel.resolveMetodoPagoId(metodoNombre);
-            if (metodoId != -1) {
-                dto.setMetodoPagoDefaultId(metodoId);
-                dto.setMetodoPagoDefaultNombre(metodoNombre);
-            } else {
-                // Si no se puede resolver, se conserva el texto o se limpia.
-                dto.setMetodoPagoDefaultNombre(metodoNombre);
-            }
-        }
 
         dto.setLatitudPartida(selectedLat);
         dto.setLongitudPartida(selectedLng);

@@ -43,4 +43,7 @@ public interface PedidoApi {
             @Path("id") int id,
             @Body AsignarRepartidorRequest request
     );
+
+    @POST("api/pedidos/{id}/reintentar-cocina")
+    Call<PedidoDetalleDto> reintentarEnCocina(@Path("id") int id);
 }

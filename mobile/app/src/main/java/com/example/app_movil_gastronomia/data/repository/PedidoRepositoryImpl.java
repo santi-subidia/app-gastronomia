@@ -44,6 +44,7 @@ public class PedidoRepositoryImpl implements PedidoRepository {
     private final MutableLiveData<UiState<PedidoDetalleDto>> _crearState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> _cambiarEstadoState = new MutableLiveData<>();
     private final MutableLiveData<UiState<PedidoDetalleDto>> _asignarRepartidorState = new MutableLiveData<>();
+    private final MutableLiveData<UiState<PedidoDetalleDto>> _reintentarEnCocinaState = new MutableLiveData<>();
 
     @Inject
     public PedidoRepositoryImpl(PedidoApi pedidoApi, CatalogoRepository catalogoRepository) {
@@ -292,6 +293,47 @@ public class PedidoRepositoryImpl implements PedidoRepository {
     @Override
     public LiveData<UiState<PedidoDetalleDto>> getAsignarRepartidorState() {
         return _asignarRepartidorState;
+    }
+
+    @Override
+    public void resetAsignarRepartidorState() {
+        _asignarRepartidorState.setValue(null);
+    }
+
+    @Override
+    public LiveData<UiState<PedidoDetalleDto>> reintentarEnCocina(int id) {
+        _reintentarEnCocinaState.setValue(UiState.loading());
+
+        pedidoApi.reintentarEnCocina(id).enqueue(new Callback<PedidoDetalleDto>() {
+            @Override
+            public void onResponse(@NonNull Call<PedidoDetalleDto> call,
+                                   @NonNull Response<PedidoDetalleDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    _reintentarEnCocinaState.setValue(UiState.success(response.body()));
+                } else {
+                    _reintentarEnCocinaState.setValue(UiState.error(
+                            parseMensaje(response, "No se pudo reenviar el pedido a cocina")));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<PedidoDetalleDto> call, @NonNull Throwable t) {
+                Log.e(TAG, "ReintentarEnCocina network failure", t);
+                _reintentarEnCocinaState.setValue(UiState.error("No hay conexion a internet"));
+            }
+        });
+
+        return getReintentarEnCocinaState();
+    }
+
+    @Override
+    public LiveData<UiState<PedidoDetalleDto>> getReintentarEnCocinaState() {
+        return _reintentarEnCocinaState;
+    }
+
+    @Override
+    public void resetReintentarEnCocinaState() {
+        _reintentarEnCocinaState.setValue(null);
     }
 
     private static String parseMensaje(Response<?> response, String fallback) {

@@ -62,7 +62,9 @@ public record PedidoDetalleDTO(
     string? RepartidorNombre,
     int? CajaId,
     int EstadoId,
-    List<DetallePedidoDTO> DetallePedidos
+    List<DetallePedidoDTO> DetallePedidos,
+    int? PedidoOrigenId = null,
+    string? MotivoCancelacion = null
 )
 {
     public int? DemoraPreparacionAprox { get; init; }

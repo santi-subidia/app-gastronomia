@@ -87,6 +87,10 @@ public class PedidoListFragment extends Fragment {
             setActiveChip(binding.chipEntregado);
             viewModel.filterByEstado(EstadoPedidoEnum.ENTREGADO);
         });
+        binding.chipContingencia.setOnClickListener(v -> {
+            setActiveChip(binding.chipContingencia);
+            viewModel.filterByEstado(EstadoPedidoEnum.CONTINGENCIA);
+        });
     }
 
     private void setActiveChip(TextView chip) {
