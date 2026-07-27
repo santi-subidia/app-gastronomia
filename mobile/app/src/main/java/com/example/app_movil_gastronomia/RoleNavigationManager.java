@@ -21,7 +21,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.Locale;
 
-/** Configures navigation surfaces and drawer actions for the authenticated role. */
 public final class RoleNavigationManager {
     public interface Actions {
         void logout();
