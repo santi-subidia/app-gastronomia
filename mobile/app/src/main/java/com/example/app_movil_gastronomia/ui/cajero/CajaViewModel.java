@@ -86,6 +86,14 @@ public class CajaViewModel extends ViewModel {
         return cerrarState;
     }
 
+    public void consumeAbrirState() {
+        cajaRepository.resetAbrirState();
+    }
+
+    public void consumeCerrarState() {
+        cajaRepository.resetCerrarState();
+    }
+
     public void loadCajaStatus() {
         cajaRepository.getCajas("abiertas");
     }

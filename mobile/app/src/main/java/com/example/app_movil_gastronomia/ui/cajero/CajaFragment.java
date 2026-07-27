@@ -57,6 +57,8 @@ public class CajaFragment extends Fragment {
         binding.buttonHistorial.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_nav_caja_to_nav_caja_historial));
 
+        viewModel.consumeAbrirState();
+        viewModel.consumeCerrarState();
         viewModel.getCajaState().observe(getViewLifecycleOwner(), this::renderCaja);
         viewModel.getAbrirState().observe(getViewLifecycleOwner(), this::handleAbrir);
         viewModel.getCerrarState().observe(getViewLifecycleOwner(), this::handleCerrar);

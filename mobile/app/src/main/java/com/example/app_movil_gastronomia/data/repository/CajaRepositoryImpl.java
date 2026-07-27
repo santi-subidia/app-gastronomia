@@ -27,7 +27,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/** Repositorio REST de cajas con estados LiveData reutilizables por operación. */
 @Singleton
 public class CajaRepositoryImpl implements CajaRepository {
 
@@ -176,6 +175,11 @@ public class CajaRepositoryImpl implements CajaRepository {
         return _abrirState;
     }
 
+    @Override
+    public void resetAbrirState() {
+        _abrirState.setValue(null);
+    }
+
 
     @Override
     public LiveData<UiState<CajaDto>> cerrarCaja(int id, CerrarCajaRequest request) {
@@ -206,6 +210,11 @@ public class CajaRepositoryImpl implements CajaRepository {
     @Override
     public LiveData<UiState<CajaDto>> getCerrarState() {
         return _cerrarState;
+    }
+
+    @Override
+    public void resetCerrarState() {
+        _cerrarState.setValue(null);
     }
 
     @Override

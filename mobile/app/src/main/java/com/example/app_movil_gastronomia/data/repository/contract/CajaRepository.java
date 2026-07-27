@@ -29,9 +29,13 @@ public interface CajaRepository {
 
     LiveData<UiState<CajaDto>> getAbrirState();
 
+    void resetAbrirState();
+
     LiveData<UiState<CajaDto>> cerrarCaja(int id, CerrarCajaRequest request);
 
     LiveData<UiState<CajaDto>> getCerrarState();
+
+    void resetCerrarState();
 
     LiveData<UiState<List<CajaHistorialResumenDto>>> getHistorial();
 

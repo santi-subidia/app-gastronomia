@@ -24,7 +24,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/** Repositorio de autenticación con un estado LiveData reutilizable. */
 @Singleton
 public class AuthRepositoryImpl implements AuthRepository {
 

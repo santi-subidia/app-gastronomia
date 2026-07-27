@@ -26,7 +26,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/** Carga y mantiene en memoria los catálogos necesarios para resolver IDs. */
 @Singleton
 public class CatalogoRepositoryImpl implements CatalogoRepository {
 
@@ -47,7 +46,6 @@ public class CatalogoRepositoryImpl implements CatalogoRepository {
     @Nullable
     private volatile Map<String, Integer> metodoVentaIdByNombre;
 
-    private final AtomicInteger pendingLoads = new AtomicInteger(3);
     private volatile boolean estadosLoaded;
     private volatile boolean pagosLoaded;
     private volatile boolean ventasLoaded;
@@ -161,7 +159,6 @@ public class CatalogoRepositoryImpl implements CatalogoRepository {
         return map;
     }
 
-    /** Callback común para actualizar caché, estado de carga y errores. */
     private static final class CatalogCallback implements Callback<List<CatalogoItemDto>> {
 
         private final String logTag;

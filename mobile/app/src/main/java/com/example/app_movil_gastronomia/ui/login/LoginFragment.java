@@ -12,6 +12,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.example.app_movil_gastronomia.MainActivity;
+
 import com.example.app_movil_gastronomia.R;
 import com.example.app_movil_gastronomia.core.SignalRService;
 import com.example.app_movil_gastronomia.core.TokenManager;
@@ -76,8 +78,8 @@ public class LoginFragment extends Fragment {
             case SUCCESS:
                 showLoading(false);
                 connectSignalR();
-                if (getActivity() instanceof com.example.app_movil_gastronomia.MainActivity) {
-                    ((com.example.app_movil_gastronomia.MainActivity) getActivity()).onLoginSuccess();
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).onLoginSuccess();
                 }
                 navigateByRole(state.getData().getRolNombre());
                 break;
