@@ -23,7 +23,6 @@ import com.example.app_movil_gastronomia.data.dto.signalr.DemoraRegistradaMessag
 import java.util.HashSet;
 import java.util.Set;
 
-/** Coordinates real-time delay events and their Android notifications. */
 public final class DelayNotificationManager {
     public static final int PERMISSION_REQUEST_CODE = 1001;
 
